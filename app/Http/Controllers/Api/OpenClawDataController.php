@@ -278,13 +278,6 @@ class OpenClawDataController extends Controller
     {
         switch ($type) {
             case 'articles':
-                $content = $item['content'] ?? '';
-                if (strlen($content) < 1000) {
-                    return [
-                        'passed' => false,
-                        'message' => "文章内容不足 1000 字（当前：" . strlen($content) . "字）"
-                    ];
-                }
                 if (empty($item['source_url'])) {
                     return [
                         'passed' => false,
@@ -294,13 +287,6 @@ class OpenClawDataController extends Controller
                 break;
 
             case 'projects':
-                $description = $item['description'] ?? '';
-                if (strlen($description) < 200) {
-                    return [
-                        'passed' => false,
-                        'message' => "项目描述不足 200 字（当前：" . strlen($description) . "字）"
-                    ];
-                }
                 if (empty($item['url'])) {
                     return [
                         'passed' => false,
@@ -310,13 +296,6 @@ class OpenClawDataController extends Controller
                 break;
 
             case 'side_hustle_cases':
-                $content = $item['content'] ?? '';
-                if (strlen($content) < 1500) {
-                    return [
-                        'passed' => false,
-                        'message' => "案例内容不足 1500 字（当前：" . strlen($content) . "字）"
-                    ];
-                }
                 if (empty($item['resource_type']) || !in_array($item['resource_type'], ['article', 'video', 'disk', 'image'])) {
                     return [
                         'passed' => false,
@@ -329,23 +308,9 @@ class OpenClawDataController extends Controller
                         'message' => "缺少原始资源地址（resource_url）"
                     ];
                 }
-                // 验证是否包含操作步骤
-                if (!stripos($content, '步骤') && !stripos($content, '流程') && !preg_match('/[123]\.|第一步|第二步/', $content)) {
-                    return [
-                        'passed' => false,
-                        'message' => "案例内容未包含操作步骤"
-                    ];
-                }
                 break;
 
             case 'ai_tool_monetization':
-                $description = $item['description'] ?? '';
-                if (strlen($description) < 300) {
-                    return [
-                        'passed' => false,
-                        'message' => "工具描述不足 300 字（当前：" . strlen($description) . "字）"
-                    ];
-                }
                 if (empty($item['tool_url'])) {
                     return [
                         'passed' => false,
