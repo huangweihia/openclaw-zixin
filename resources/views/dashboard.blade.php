@@ -8,9 +8,20 @@
     @endphp
 
     <h1 class="text-3xl font-bold text-center mb-8 oc-heading">👤 个人中心</h1>
+    <div class="grid lg:grid-cols-12 gap-6 items-start">
+        <aside class="lg:col-span-3 oc-surface p-4">
+            <h3 class="text-sm font-bold oc-heading mb-3">菜单</h3>
+            <nav class="space-y-2">
+                <a href="#dash-profile" class="block text-sm oc-link">个人资料</a>
+                <a href="#dash-subscription" class="block text-sm oc-link">会员与订阅</a>
+                <a href="#dash-quick" class="block text-sm oc-link">快捷入口</a>
+                <a href="#dash-timeline" class="block text-sm oc-link">最近动态</a>
+            </nav>
+        </aside>
+        <div class="lg:col-span-9 space-y-8">
 
     {{-- 原型：用户信息卡片 + 编辑入口 + 统计 --}}
-    <div class="oc-surface p-6 md:p-8 mb-8">
+    <div id="dash-profile" class="oc-surface p-6 md:p-8">
         <div class="flex flex-col sm:flex-row sm:items-start gap-6">
             <div class="shrink-0 mx-auto sm:mx-0 text-center sm:text-left">
                 @if ($u->avatar)
@@ -41,8 +52,8 @@
                                 data-left="{{ (int) $vipSecondsLeft }}"
                             >倒计时加载中...</span>
                         @endif
-                    @elseif ($u->isVip() && $u->subscription_ends_at)
-                        <span class="oc-muted">有效期至 {{ $u->subscription_ends_at->format('Y-m-d') }}</span>
+                    @elseif ($vipExpiresAt)
+                        <span class="oc-muted">有效期至 {{ $vipExpiresAt->format('Y-m-d H:i') }}</span>
                     @endif
                 </div>
                 @if ($u->bio)
@@ -86,7 +97,7 @@
     @endif
 
     {{-- 订阅（独立条，原型外补充） --}}
-    <div class="oc-surface p-6 mb-8">
+    <div id="dash-subscription" class="oc-surface p-6">
         <h3 class="font-bold oc-heading mb-3">订阅</h3>
         @if ($u->isAdmin())
             <p class="text-sm oc-muted mb-4">超级管理员享有全站权益，无需开通 VIP。</p>
@@ -100,10 +111,30 @@
         @endif
         @if (in_array($u->role, ['vip', 'svip', 'admin'], true))
             <div class="mt-4 pt-4 border-t oc-border">
-                <h4 class="text-sm font-semibold oc-heading mb-2">邮件订阅（VIP / SVIP）</h4>
-                <form id="email-sub-form" class="flex flex-wrap gap-2 items-center">
+                <h4 class="text-sm font-semibold oc-heading mb-2">邮件订阅（可选内容 + 发送时间）</h4>
+                <form id="email-sub-form" class="space-y-3">
                     <input type="email" id="email-sub-input" class="oc-input" style="max-width:320px" value="{{ $u->email }}" required />
-                    <button type="submit" class="btn btn-secondary text-sm">订阅每日精选</button>
+                    <div class="grid sm:grid-cols-2 gap-3">
+                        @php
+                            $topicLabels = ['daily' => '每日精选', 'weekly' => '每周精选', 'notification' => '系统通知', 'promotion' => '活动推广'];
+                            $selectedTopics = $emailSubscription->subscribed_to ?? ['notification'];
+                            $topicSchedule = $emailSubscription->topic_schedule ?? [];
+                        @endphp
+                        @foreach ($topicLabels as $topicKey => $topicLabel)
+                            <label class="text-sm oc-muted flex items-center gap-2 flex-wrap">
+                                <input type="checkbox" class="email-sub-topic" value="{{ $topicKey }}" {{ in_array($topicKey, $selectedTopics, true) ? 'checked' : '' }} />
+                                <span class="min-w-[90px]">{{ $topicLabel }}</span>
+                                <input
+                                    type="time"
+                                    class="oc-input email-sub-time"
+                                    data-topic="{{ $topicKey }}"
+                                    value="{{ $topicSchedule[$topicKey] ?? '09:00' }}"
+                                    style="max-width:140px"
+                                />
+                            </label>
+                        @endforeach
+                    </div>
+                    <button type="submit" class="btn btn-secondary text-sm">保存订阅设置</button>
                 </form>
                 <p id="email-sub-msg" class="text-xs oc-muted mt-2 mb-0"></p>
             </div>
@@ -111,7 +142,7 @@
     </div>
 
     {{-- 快捷入口 --}}
-    <div class="mb-8">
+    <div id="dash-quick">
         <h3 class="text-sm font-bold oc-heading mb-4">快捷入口</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
             <a href="{{ route('user-posts.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-5 rounded-xl text-center">
@@ -161,6 +192,8 @@
             </ul>
         @endif
     </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -200,6 +233,18 @@
                     e.preventDefault();
                     const email = (input?.value || '').trim();
                     if (!email) return;
+                    const checked = Array.from(form.querySelectorAll('.email-sub-topic:checked')).map((x) => x.value);
+                    if (!checked.length) {
+                        msg.textContent = '请至少选择一个订阅内容';
+                        msg.style.color = '#b91c1c';
+                        return;
+                    }
+                    const schedule = {};
+                    form.querySelectorAll('.email-sub-time').forEach((el) => {
+                        const topic = el.getAttribute('data-topic');
+                        if (!topic) return;
+                        schedule[topic] = (el.value || '09:00').slice(0, 5);
+                    });
                     try {
                         const res = await fetch('/api/email-subscriptions', {
                             method: 'POST',
@@ -212,7 +257,8 @@
                             credentials: 'same-origin',
                             body: JSON.stringify({
                                 email,
-                                subscribed_to: ['daily', 'notification'],
+                                subscribed_to: checked,
+                                topic_schedule: schedule,
                             }),
                         });
                         const data = await res.json().catch(() => ({}));

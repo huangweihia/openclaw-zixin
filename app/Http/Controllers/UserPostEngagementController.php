@@ -18,7 +18,7 @@ class UserPostEngagementController extends Controller
 
         $user = $request->user();
 
-        return DB::transaction(function () use ($user, $userPost) {
+        return DB::transaction(function () use ($user, $userPost, $request) {
             $row = UserAction::query()
                 ->where('user_id', $user->id)
                 ->where('actionable_type', $userPost->getMorphClass())
@@ -59,7 +59,7 @@ class UserPostEngagementController extends Controller
 
         $user = $request->user();
 
-        return DB::transaction(function () use ($user, $userPost) {
+        return DB::transaction(function () use ($user, $userPost, $request) {
             $row = UserAction::query()
                 ->where('user_id', $user->id)
                 ->where('actionable_type', $userPost->getMorphClass())

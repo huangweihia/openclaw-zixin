@@ -259,7 +259,7 @@
                             <h3 class="text-2xl font-bold mb-3 text-gray-800 shrink-0 line-clamp-2">{{ $preview['title'] }}</h3>
                             <p class="text-gray-600 mb-0 flex-1 text-sm leading-relaxed line-clamp-4">{{ $preview['summary'] }}</p>
                             <span class="oc-cta-primary mt-6 shrink-0">开通 VIP 查看</span>
-                            @include('partials.access-mask', [
+                            @include('partials.vip-mask', [
                                 'title' => 'VIP 专属内容',
                                 'desc' => '开通会员后可查看完整案例、工具与 SOP 内容。',
                                 'cta' => '立即开通 VIP',

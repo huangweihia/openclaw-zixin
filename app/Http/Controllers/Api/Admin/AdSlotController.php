@@ -11,14 +11,25 @@ use Illuminate\Validation\Rule;
 
 class AdSlotController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $perPage = (int) $request->query('per_page', 20);
+        $perPage = max(10, min($perPage, 100));
+        $q = trim((string) $request->query('q', ''));
+
         $slots = AdSlot::query()
+            ->when($q !== '', function ($builder) use ($q) {
+                $builder->where(function ($sub) use ($q) {
+                    $sub->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('code', 'like', '%'.$q.'%');
+                });
+            })
             ->orderByDesc('sort')
             ->orderBy('name')
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
-        return response()->json(['slots' => $slots]);
+        return response()->json($slots);
     }
 
     public function store(Request $request): JsonResponse

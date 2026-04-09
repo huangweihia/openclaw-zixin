@@ -99,6 +99,7 @@ async function sendTest() {
         </div>
         <p class="pg__lead">
             表 <code>email_settings</code>（键值对）。连通性测试使用环境变量中的 <code>MAIL_*</code>，与注册发信等共用 Laravel Mail。
+            订阅推荐键：<code>mail_sub_batch_size</code>（每批发送数）、<code>mail_sub_daily_cap</code>（每日最大发送数，0 不限）。
         </p>
         <div class="test-card">
             <h2 class="test-card__title">发送测试邮件</h2>

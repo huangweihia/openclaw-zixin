@@ -68,6 +68,14 @@ class SideHustleCaseWebController extends Controller
 
         $bodyHtml = Str::markdown((string) $sideHustleCase->content);
         $stepsHtml = $sideHustleCase->steps ? Str::markdown((string) $sideHustleCase->steps) : null;
+        $recommendCases = SideHustleCase::query()
+            ->where('status', 'approved')
+            ->whereKeyNot($sideHustleCase->id)
+            ->where('visibility', 'public')
+            ->orderByDesc('like_count')
+            ->orderByDesc('view_count')
+            ->limit(6)
+            ->get(['id', 'title', 'slug', 'like_count', 'view_count']);
 
         $comments = $sideHustleCase->comments()
             ->whereNull('parent_id')
@@ -92,6 +100,7 @@ class SideHustleCaseWebController extends Controller
             'case' => $sideHustleCase,
             'bodyHtml' => $bodyHtml,
             'stepsHtml' => $stepsHtml,
+            'recommendCases' => $recommendCases,
             'comments' => $comments,
             'likedCommentIds' => $likedCommentIds,
         ]);

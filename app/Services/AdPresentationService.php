@@ -45,10 +45,12 @@ class AdPresentationService
 
         // 仅使用广告位兜底素材（图片/标题/链接/HTML）
         if ($this->slotHasDefaultCreative($slot)) {
+            $position = strtolower((string) ($slot->position ?? ''));
+            $type = strtolower((string) ($slot->type ?? ''));
             return [
                 'kind' => 'default',
                 'slot' => $slot,
-                'floating' => $slot->type === 'float',
+                'floating' => $type === 'float' || in_array($position, ['left', 'right', 'top', 'bottom'], true),
             ];
         }
 
@@ -101,10 +103,6 @@ class AdPresentationService
     {
         $slots = AdSlot::query()
             ->where('is_active', true)
-            ->where(function ($q) {
-                $q->where('type', 'float')
-                    ->orWhereIn('position', ['left', 'right']);
-            })
             ->orderByDesc('sort')
             ->orderBy('id')
             ->limit(5)

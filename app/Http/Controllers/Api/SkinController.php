@@ -36,7 +36,8 @@ class SkinController extends Controller
         if (!$user) {
             // 未登录用户返回默认皮肤
             $defaultSkin = SkinConfig::where('is_active', true)
-                ->where('type', 'default')
+                ->where('type', 'free')
+                ->orderByDesc('sort')
                 ->first(['id', 'name', 'code', 'css_variables']);
 
             return response()->json([
@@ -54,7 +55,8 @@ class SkinController extends Controller
 
         if (!$userSkin || !$userSkin->skinConfig) {
             $defaultSkin = SkinConfig::where('is_active', true)
-                ->where('type', 'default')
+                ->where('type', 'free')
+                ->orderByDesc('sort')
                 ->first(['id', 'name', 'code', 'css_variables']);
 
             return response()->json([
@@ -105,11 +107,19 @@ class SkinController extends Controller
             ], 404);
         }
 
-        // 检查是否为 VIP 皮肤（如果需要权限控制）
-        if ($skinConfig->type === 'vip' && ! $user->hasMemberMenuPrivileges()) {
+        $role = strtolower((string) ($user->role ?? 'user'));
+        $isVip = in_array($role, ['vip', 'svip', 'admin'], true);
+        $isSvip = in_array($role, ['svip', 'admin'], true);
+        if ($skinConfig->type === 'vip' && ! $isVip) {
             return response()->json([
                 'success' => false,
                 'message' => '该皮肤仅限 VIP 用户使用',
+            ], 403);
+        }
+        if ($skinConfig->type === 'svip' && ! $isSvip) {
+            return response()->json([
+                'success' => false,
+                'message' => '该皮肤仅限 SVIP 用户使用',
             ], 403);
         }
 

@@ -34,20 +34,23 @@
             position: absolute;
             inset: 0;
             border-radius: inherit;
-            backdrop-filter: blur(6px);
-            background: rgba(15, 23, 42, 0.22);
+            backdrop-filter: blur(3px);
+            background: rgba(15, 23, 42, 0.58);
         }
         .oc-access-mask__panel {
             position: relative;
             z-index: 1;
             border-radius: 14px;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             border: 1px solid rgba(148, 163, 184, 0.4);
             box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
             padding: 18px 16px;
             text-align: center;
             max-width: 360px;
             width: calc(100% - 24px);
+        }
+        .oc-access-mask--svip .oc-access-mask__backdrop {
+            background: rgba(30, 27, 75, 0.62);
         }
     </style>
     @stack('head')

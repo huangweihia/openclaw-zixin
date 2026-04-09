@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
+import AdminPagination from '../components/AdminPagination.vue';
 
 const adSlotTypeOpts = enumOptions('adSlotType');
 const adAudienceOpts = enumOptions('adAudience');
@@ -13,6 +14,9 @@ const positionOpts = [
 ];
 
 const rows = ref([]);
+const perPage = ref(20);
+const query = ref('');
+const meta = ref({ current_page: 1, last_page: 1 });
 const err = ref('');
 const saveErr = ref('');
 const msg = ref('');
@@ -41,17 +45,19 @@ const emptyForm = () => ({
 
 const form = ref(emptyForm());
 
-async function load() {
+async function load(page = 1) {
     err.value = '';
     try {
-        const { data } = await axios.get('/api/admin/ad-slots');
-        rows.value = data.slots ?? [];
+        const { data } = await axios.get('/api/admin/ad-slots', { params: { page, per_page: perPage.value, q: query.value || undefined } });
+        rows.value = data.data ?? [];
+        meta.value = { current_page: data.current_page || 1, last_page: data.last_page || 1 };
     } catch {
         err.value = '加载失败';
     }
 }
 
-onMounted(load);
+onMounted(() => load(1));
+watch([perPage, query], () => load(1));
 
 function openCreate() {
     saveErr.value = '';
@@ -133,7 +139,7 @@ async function toggle(s) {
     err.value = '';
     try {
         await axios.post(`/api/admin/ad-slots/${s.id}/toggle`);
-        await load();
+        await load(meta.value.current_page || 1);
     } catch {
         err.value = '操作失败';
     }
@@ -146,7 +152,7 @@ async function createSlot() {
         await axios.post('/api/admin/ad-slots', payload);
         msg.value = '已创建';
         closeModal();
-        await load();
+        await load(1);
     } catch {
         saveErr.value = '创建失败';
     }
@@ -160,7 +166,7 @@ async function saveEdit() {
         await axios.put(`/api/admin/ad-slots/${editing.value.id}`, payload);
         msg.value = '已保存';
         closeModal();
-        await load();
+        await load(meta.value.current_page || 1);
     } catch {
         saveErr.value = '保存失败';
     }
@@ -172,6 +178,13 @@ async function saveEdit() {
         <div class="head">
             <h1 class="page-title">广告位</h1>
             <div class="head__actions">
+                <input v-model="query" type="search" class="search" placeholder="搜索名称/代码" />
+                <select v-model="perPage" class="per-page">
+                    <option :value="10">10 / 页</option>
+                    <option :value="20">20 / 页</option>
+                    <option :value="50">50 / 页</option>
+                    <option :value="100">100 / 页</option>
+                </select>
                 <button type="button" class="btn primary" @click="openCreate">新建广告位</button>
             </div>
         </div>
@@ -210,6 +223,11 @@ async function saveEdit() {
             </table>
             <p v-if="rows.length === 0" class="empty">暂无广告位</p>
         </div>
+        <AdminPagination
+            v-if="meta.last_page > 1"
+            :meta="meta"
+            @go="load"
+        />
 
         <div v-if="showCreate || editing" class="modal" @click.self="closeModal">
             <div class="modal__box modal__box--lg" @click.stop>
@@ -357,6 +375,18 @@ async function saveEdit() {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.65rem;
+}
+.search {
+    min-width: 180px;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+}
+.per-page {
+    padding: 0.4rem 0.55rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
 }
 .link-out {
     font-size: 0.85rem;

@@ -3,11 +3,15 @@ import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { enumLabel } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const status = ref('');
+const q = ref('');
 const rows = ref([]);
 const meta = ref(null);
 const total = ref(0);
+const perPage = ref(25);
 const loading = ref(false);
 const err = ref('');
 const detail = ref(null);
@@ -17,9 +21,12 @@ async function load(page = 1) {
     err.value = '';
     loading.value = true;
     try {
-        const params = { page };
+        const params = { page, per_page: perPage.value };
         if (status.value) {
             params.status = status.value;
+        }
+        if (q.value.trim()) {
+            params.q = q.value.trim();
         }
         const { data } = await axios.get('/api/admin/email-logs', { params });
         rows.value = data.data ?? [];
@@ -33,7 +40,18 @@ async function load(page = 1) {
 }
 
 onMounted(() => load(1));
-watch(status, () => load(1));
+watch([status, perPage], () => load(1));
+
+let searchTimer;
+function onSearchInput() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => load(1), 350);
+}
+
+function onPerPageChange(next) {
+    perPage.value = Number(next) || 25;
+    load(1);
+}
 
 async function openDetail(r) {
     detail.value = null;
@@ -58,8 +76,17 @@ function fmtTime(v) {
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">邮件发送记录</h1>
+    <AdminPageShell title="邮件发送记录" :loading="loading">
+        <template #toolbar>
+            <input
+                v-model="q"
+                class="search"
+                type="search"
+                placeholder="搜索收件人/主题/模板键"
+                autocomplete="off"
+                @input="onSearchInput"
+            />
+        </template>
         <el-tabs v-model="status" class="tabs" type="card">
             <el-tab-pane label="全部" name="" />
             <el-tab-pane label="待发送" name="pending" />
@@ -67,7 +94,7 @@ function fmtTime(v) {
             <el-tab-pane label="发送失败" name="failed" />
         </el-tabs>
         <p v-if="err" class="err">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -95,14 +122,16 @@ function fmtTime(v) {
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无记录</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
             :last-page="meta.last_page"
             :total="total"
+            :per-page="perPage"
             :loading="loading"
             @update:page="load"
+            @update:per-page="onPerPageChange"
         />
 
         <div v-if="detail" class="modal" @click.self="closeDetail">
@@ -143,25 +172,23 @@ function fmtTime(v) {
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.page-title {
-    margin: 0 0 1rem;
-    font-size: 1.5rem;
+.search {
+    width: 100%;
+    max-width: 360px;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.95rem;
 }
 .tabs {
     margin-bottom: 0.75rem;
 }
 .err {
     color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    overflow: auto;
 }
 .table {
     width: 100%;

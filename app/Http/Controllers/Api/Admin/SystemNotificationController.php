@@ -11,17 +11,28 @@ use Illuminate\Validation\Rule;
 
 class SystemNotificationController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         // 兜底：修复历史上“已发布但未入站内信”的遗留通知。
         app(SystemNotificationInboxDispatcher::class)->dispatchBacklog(50);
 
-        return response()->json([
-            'notifications' => SystemNotification::query()
-                ->with('creator:id,name')
-                ->orderByDesc('id')
-                ->get(),
-        ]);
+        $perPage = (int) $request->query('per_page', 20);
+        $perPage = max(10, min($perPage, 100));
+        $q = trim((string) $request->query('q', ''));
+
+        $rows = SystemNotification::query()
+            ->with('creator:id,name')
+            ->when($q !== '', function ($builder) use ($q) {
+                $builder->where(function ($sub) use ($q) {
+                    $sub->where('title', 'like', '%'.$q.'%')
+                        ->orWhere('content', 'like', '%'.$q.'%');
+                });
+            })
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return response()->json($rows);
     }
 
     public function store(Request $request): JsonResponse

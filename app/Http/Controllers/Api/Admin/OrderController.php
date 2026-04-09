@@ -13,14 +13,27 @@ class OrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         $status = $request->query('status');
+        $perPage = (int) $request->query('per_page', 25);
+        $perPage = max(10, min($perPage, 100));
+        $q = trim((string) $request->query('q', ''));
 
         $orders = Order::query()
             ->with('user:id,name,email')
             ->when(in_array($status, ['pending', 'paid', 'failed', 'refunded'], true), function ($query) use ($status) {
                 $query->where('status', $status);
             })
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('order_no', 'like', '%'.$q.'%')
+                        ->orWhere('payment_id', 'like', '%'.$q.'%')
+                        ->orWhereHas('user', function ($uq) use ($q) {
+                            $uq->where('email', 'like', '%'.$q.'%')
+                                ->orWhere('name', 'like', '%'.$q.'%');
+                        });
+                });
+            })
             ->orderByDesc('id')
-            ->paginate(25)
+            ->paginate($perPage)
             ->withQueryString();
 
         return response()->json($orders);

@@ -17,10 +17,11 @@ const err = ref('');
 const banner = ref('');
 const editingId = ref(null);
 const editTopics = ref([]);
+const editSchedule = ref({});
 const editUnsub = ref(false);
 
 const addOpen = ref(false);
-const addForm = ref({ email: '', user_id: '', topics: ['notification'] });
+const addForm = ref({ email: '', user_id: '', topics: ['notification'], schedule: { notification: '09:00' } });
 const addUserQuery = ref('');
 const addUserSuggestions = ref([]);
 const addSelectedUser = ref(null);
@@ -74,6 +75,7 @@ function toggleEditTopic(v) {
         arr.push(v);
     }
     editTopics.value = arr;
+    if (!editSchedule.value[v]) editSchedule.value[v] = '09:00';
 }
 
 async function load(page = 1) {
@@ -119,6 +121,7 @@ function closeAddModal() {
 function startEdit(row) {
     editingId.value = row.id;
     editTopics.value = [...(row.subscribed_to || [])];
+    editSchedule.value = { ...(row.topic_schedule || {}) };
     editUnsub.value = !!row.is_unsubscribed;
 }
 
@@ -131,6 +134,7 @@ async function saveEdit(row) {
     try {
         await axios.put(`/api/admin/email-subscriptions/${row.id}`, {
             subscribed_to: editTopics.value.length ? editTopics.value : ['notification'],
+            topic_schedule: editSchedule.value,
             is_unsubscribed: editUnsub.value,
         });
         editingId.value = null;
@@ -168,6 +172,7 @@ async function submitAdd() {
     const payload = {
         email: addForm.value.email.trim(),
         subscribed_to: addForm.value.topics?.length ? addForm.value.topics : ['notification'],
+        topic_schedule: addForm.value.schedule || {},
     };
     const uid = addForm.value.user_id?.trim();
     if (uid) {
@@ -176,7 +181,7 @@ async function submitAdd() {
     try {
         await axios.post('/api/admin/email-subscriptions', payload);
         closeAddModal();
-        addForm.value = { email: '', user_id: '', topics: ['notification'] };
+        addForm.value = { email: '', user_id: '', topics: ['notification'], schedule: { notification: '09:00' } };
         clearAddUser();
         await load(1);
     } catch (e) {
@@ -238,9 +243,14 @@ const publicUnsubExample = computed(() => {
                                         @change="toggleEditTopic(t.v)"
                                     />
                                     {{ t.label }}
+                                    <input v-if="topicChecked(editTopics, t.v)" v-model="editSchedule[t.v]" type="time" class="time-input" />
                                 </label>
                             </template>
-                            <span v-else class="mono">{{ (r.subscribed_to || []).join(', ') || '—' }}</span>
+                            <span v-else class="mono">
+                                {{
+                                    (r.subscribed_to || []).map((k) => `${k}${r.topic_schedule?.[k] ? '@' + r.topic_schedule[k] : ''}`).join(', ') || '—'
+                                }}
+                            </span>
                         </td>
                         <td>
                             <template v-if="editingId === r.id">
@@ -326,10 +336,17 @@ const publicUnsubExample = computed(() => {
                                         const i = arr.indexOf(t.v);
                                         i >= 0 ? arr.splice(i, 1) : arr.push(t.v);
                                         addForm.topics = arr.length ? arr : ['notification'];
+                                        if (!addForm.schedule[t.v]) addForm.schedule[t.v] = '09:00';
                                     }
                                 "
                             />
                             {{ t.label }}
+                            <input
+                                v-if="topicChecked(addForm.topics, t.v)"
+                                v-model="addForm.schedule[t.v]"
+                                type="time"
+                                class="time-input"
+                            />
                         </label>
                     </div>
                 </div>
@@ -432,6 +449,13 @@ const publicUnsubExample = computed(() => {
     margin-right: 0.65rem;
     font-size: 0.82rem;
     cursor: pointer;
+}
+.time-input {
+    margin-left: 0.25rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0.1rem 0.2rem;
+    font-size: 0.75rem;
 }
 .chk-row {
     display: flex;

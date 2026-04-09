@@ -29,6 +29,7 @@ class PublicEmailSubscriptionController extends Controller
             'email' => ['required', 'email', 'max:255'],
             'subscribed_to' => ['nullable', 'array', 'min:1'],
             'subscribed_to.*' => ['string', Rule::in(EmailSubscription::TOPICS)],
+            'topic_schedule' => ['nullable', 'array'],
         ]);
 
         $topics = $data['subscribed_to'] ?? [EmailSubscription::TOPIC_NOTIFICATION];
@@ -39,6 +40,17 @@ class PublicEmailSubscriptionController extends Controller
             $sub->user_id = $user->id;
         }
         $sub->subscribed_to = $topics;
+        $topicSchedule = [];
+        foreach (($data['topic_schedule'] ?? []) as $topic => $time) {
+            if (! in_array((string) $topic, EmailSubscription::TOPICS, true)) {
+                continue;
+            }
+            $timeStr = trim((string) $time);
+            if (preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $timeStr)) {
+                $topicSchedule[(string) $topic] = $timeStr;
+            }
+        }
+        $sub->topic_schedule = $topicSchedule ?: null;
         $sub->is_unsubscribed = false;
         $sub->unsubscribed_at = null;
         if (empty($sub->unsubscribe_token)) {
@@ -50,6 +62,7 @@ class PublicEmailSubscriptionController extends Controller
             'ok' => true,
             'email' => $sub->email,
             'subscribed_to' => $sub->subscribed_to,
+            'topic_schedule' => $sub->topic_schedule,
         ], $wasNew ? 201 : 200);
     }
 

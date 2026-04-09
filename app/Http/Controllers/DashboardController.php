@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use App\Models\Comment;
+use App\Models\EmailSubscription;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\UserAction;
@@ -51,11 +52,15 @@ class DashboardController extends Controller
         $vipDays = null;
         $vipSecondsLeft = null;
         $vipIsUrgent = false;
+        $vipExpiresAt = $u->subscription_ends_at;
         if ($u->isVip() && $u->subscription_ends_at && $u->subscription_ends_at->isFuture()) {
             $vipDays = (int) now()->startOfDay()->diffInDays($u->subscription_ends_at->copy()->startOfDay());
             $vipSecondsLeft = now()->diffInSeconds($u->subscription_ends_at, false);
             $vipIsUrgent = $vipDays <= 3;
         }
+        $emailSubscription = EmailSubscription::query()
+            ->where('email', $u->email)
+            ->first();
 
         $roleLabel = match ($u->role) {
             'svip' => 'SVIP',
@@ -76,6 +81,8 @@ class DashboardController extends Controller
             'vipDays',
             'vipSecondsLeft',
             'vipIsUrgent',
+            'vipExpiresAt',
+            'emailSubscription',
             'roleLabel',
             'timeline',
         ));

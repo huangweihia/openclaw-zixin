@@ -27,6 +27,7 @@ class EmailSubscription extends Model
         'user_id',
         'email',
         'subscribed_to',
+        'topic_schedule',
         'is_unsubscribed',
         'unsubscribed_at',
         'unsubscribe_token',
@@ -34,6 +35,7 @@ class EmailSubscription extends Model
 
     protected $casts = [
         'subscribed_to' => 'array',
+        'topic_schedule' => 'array',
         'is_unsubscribed' => 'boolean',
         'unsubscribed_at' => 'datetime',
     ];

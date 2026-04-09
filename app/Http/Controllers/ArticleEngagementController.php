@@ -19,7 +19,7 @@ class ArticleEngagementController extends Controller
 
         $user = $request->user();
 
-        return DB::transaction(function () use ($user, $article) {
+        return DB::transaction(function () use ($user, $article, $request) {
             $row = UserAction::query()
                 ->where('user_id', $user->id)
                 ->where('actionable_type', $article->getMorphClass())
@@ -61,7 +61,7 @@ class ArticleEngagementController extends Controller
 
         $user = $request->user();
 
-        return DB::transaction(function () use ($user, $article) {
+        return DB::transaction(function () use ($user, $article, $request) {
             $row = UserAction::query()
                 ->where('user_id', $user->id)
                 ->where('actionable_type', $article->getMorphClass())

@@ -15,7 +15,7 @@ class ProjectEngagementController extends Controller
     {
         $user = $request->user();
 
-        return DB::transaction(function () use ($user, $project) {
+        return DB::transaction(function () use ($user, $project, $request) {
             $row = UserAction::query()
                 ->where('user_id', $user->id)
                 ->where('actionable_type', $project->getMorphClass())

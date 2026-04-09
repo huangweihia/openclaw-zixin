@@ -49,12 +49,14 @@ class EmailSubscriptionController extends Controller
             'user_id' => ['nullable', 'exists:users,id'],
             'subscribed_to' => ['required', 'array', 'min:1'],
             'subscribed_to.*' => ['string', Rule::in(EmailSubscription::TOPICS)],
+            'topic_schedule' => ['nullable', 'array'],
         ]);
 
         $sub = EmailSubscription::query()->create([
             'email' => $data['email'],
             'user_id' => $data['user_id'] ?? null,
             'subscribed_to' => $data['subscribed_to'],
+            'topic_schedule' => $this->normalizeTopicSchedule($data['topic_schedule'] ?? null),
             'is_unsubscribed' => false,
             'unsubscribed_at' => null,
         ]);
@@ -69,6 +71,7 @@ class EmailSubscriptionController extends Controller
             'user_id' => ['nullable', 'exists:users,id'],
             'subscribed_to' => ['sometimes', 'array', 'min:1'],
             'subscribed_to.*' => ['string', Rule::in(EmailSubscription::TOPICS)],
+            'topic_schedule' => ['sometimes', 'array'],
             'is_unsubscribed' => ['sometimes', 'boolean'],
         ]);
 
@@ -84,6 +87,9 @@ class EmailSubscriptionController extends Controller
         }
 
         $emailSubscription->fill($data);
+        if (array_key_exists('topic_schedule', $data)) {
+            $emailSubscription->topic_schedule = $this->normalizeTopicSchedule($data['topic_schedule']);
+        }
         $emailSubscription->save();
 
         return response()->json($emailSubscription->fresh()->load('user:id,name,email'));
@@ -102,5 +108,24 @@ class EmailSubscriptionController extends Controller
         $emailSubscription->save();
 
         return response()->json($emailSubscription->only(['id', 'unsubscribe_token']));
+    }
+
+    private function normalizeTopicSchedule(?array $raw): ?array
+    {
+        if (! is_array($raw) || $raw === []) {
+            return null;
+        }
+        $out = [];
+        foreach ($raw as $topic => $time) {
+            if (! in_array((string) $topic, EmailSubscription::TOPICS, true)) {
+                continue;
+            }
+            $timeStr = trim((string) $time);
+            if (preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $timeStr)) {
+                $out[(string) $topic] = $timeStr;
+            }
+        }
+
+        return $out ?: null;
     }
 }

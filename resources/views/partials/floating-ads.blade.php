@@ -6,9 +6,21 @@
         @foreach ($floatingAdPacks as $idx => $pack)
             @php
                 $slot = $pack['slot'];
-                $w = max(80, (int) ($slot->width ?? 120));
-                $h = max(80, (int) ($slot->height ?? 160));
-                $style = 'position:fixed;z-index:40;bottom:' . (6 + $idx * 7) . 'rem;right:1rem;width:' . $w . 'px;max-height:' . $h . 'px;';
+                $type = strtolower((string) ($slot->type ?? 'float'));
+                $position = strtolower((string) ($slot->position ?? 'right'));
+                $w = max(120, (int) ($slot->width ?? ($type === 'banner' ? 320 : 240)));
+                $h = max(120, (int) ($slot->height ?? ($type === 'banner' ? 120 : 320)));
+                $base = 'position:fixed;z-index:40;bottom:' . (4 + $idx * 6) . 'rem;';
+                if ($position === 'left') {
+                    $base .= 'left:1rem;';
+                } elseif ($position === 'top') {
+                    $base = 'position:fixed;z-index:40;top:' . (4 + $idx * 6) . 'rem;left:50%;transform:translateX(-50%);';
+                } elseif ($position === 'bottom') {
+                    $base = 'position:fixed;z-index:40;bottom:1rem;left:50%;transform:translateX(-50%);';
+                } else {
+                    $base .= 'right:1rem;';
+                }
+                $style = $base . 'width:' . $w . 'px;max-height:' . $h . 'px;';
                 $slotKey = 'float-' . ($slot->code ?? $slot->id) . '-' . $idx;
             @endphp
             <div class="oc-floating-ad-wrap" style="{{ $style }}" data-oc-float-ad="{{ e($slotKey) }}">
@@ -32,14 +44,14 @@
                         @if ($slot->default_image_url)
                             <img src="{{ $slot->default_image_url }}" alt="{{ $slot->default_title ?? '' }}" class="w-full object-contain max-h-40 block" style="max-height: {{ $h - 28 }}px" loading="lazy" />
                         @endif
-                        <span class="block text-[10px] px-2 py-1 oc-heading truncate bg-[var(--white,#fff)]">{{ $slot->default_title ?? '推广' }}</span>
+                        <span class="block text-xs px-2 py-1 oc-heading truncate bg-[var(--white,#fff)]">{{ $slot->default_title ?? '推广' }}</span>
                     </a>
                 @else
                     <div class="oc-floating-ad rounded-xl overflow-hidden shadow-xl border oc-border bg-[var(--white,#fff)]">
                         @if ($slot->default_image_url)
                             <img src="{{ $slot->default_image_url }}" alt="{{ $slot->default_title ?? '' }}" class="w-full object-contain max-h-40 block" style="max-height: {{ $h - 28 }}px" loading="lazy" />
                         @endif
-                        <span class="block text-[10px] px-2 py-1 oc-heading truncate bg-[var(--white,#fff)]">{{ $slot->default_title ?? '推广' }}</span>
+                        <span class="block text-xs px-2 py-1 oc-heading truncate bg-[var(--white,#fff)]">{{ $slot->default_title ?? '推广' }}</span>
                     </div>
                 @endif
             </div>

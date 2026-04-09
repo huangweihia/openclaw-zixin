@@ -29,7 +29,24 @@ if [ ! -f "artisan" ] || [ ! -f "$COMPOSE_FILE" ]; then
 fi
 
 echo "[1/3] pull latest code..."
-git pull --ff-only origin main
+# Optimization for slow servers:
+# - protocol v2 + partial clone blob filter to reduce transfer
+# - depth=1 shallow fetch by default (override with GIT_DEPTH=0 to disable)
+REMOTE="${GIT_REMOTE:-origin}"
+BRANCH="${GIT_BRANCH:-main}"
+DEPTH="${GIT_DEPTH:-1}"
+FILTER="${GIT_FILTER:-blob:none}"
+
+if [ "$DEPTH" = "0" ]; then
+  echo "git fetch (full) from $REMOTE $BRANCH..."
+  git -c protocol.version=2 fetch --prune --no-tags "$REMOTE" "$BRANCH"
+else
+  echo "git fetch (depth=$DEPTH, filter=$FILTER) from $REMOTE $BRANCH..."
+  git -c protocol.version=2 fetch --prune --no-tags --filter="$FILTER" --depth="$DEPTH" "$REMOTE" "$BRANCH"
+fi
+
+echo "git fast-forward merge..."
+git merge --ff-only FETCH_HEAD
 
 echo "[2/3] run migrate (no data reset)..."
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan migrate --force

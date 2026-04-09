@@ -2,13 +2,20 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
+import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const orderStatusOpts = enumOptions('orderStatus');
 const orderTabs = computed(() => [{ value: '', label: '全部' }, ...orderStatusOpts]);
 
 const status = ref('');
+const q = ref('');
 const orders = ref([]);
 const meta = ref(null);
+const total = ref(0);
+const perPage = ref(25);
+const loading = ref(false);
 const loadErr = ref('');
 const formErr = ref('');
 const msg = ref('');
@@ -23,26 +30,41 @@ const form = ref({
 
 async function load(page = 1) {
     loadErr.value = '';
+    loading.value = true;
     try {
         const { data } = await axios.get('/api/admin/orders', {
-            params: { page, status: status.value || undefined },
+            params: { page, status: status.value || undefined, per_page: perPage.value, q: q.value || undefined },
         });
         orders.value = data.data ?? [];
+        total.value = data.total ?? 0;
         meta.value = {
             current_page: data.current_page,
             last_page: data.last_page,
         };
     } catch {
         loadErr.value = '无法加载订单';
+    } finally {
+        loading.value = false;
     }
 }
 
 onMounted(() => load(1));
 
-watch(status, () => load(1));
+watch([status, perPage], () => load(1));
 
 function setTab(v) {
     status.value = v;
+}
+
+let searchTimer;
+function onSearchInput() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => load(1), 350);
+}
+
+function onPerPageChange(next) {
+    perPage.value = Number(next) || 25;
+    load(1);
 }
 
 async function openEdit(o) {
@@ -89,8 +111,17 @@ async function saveOrder() {
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">订单管理</h1>
+    <AdminPageShell title="订单管理" :loading="loading">
+        <template #toolbar>
+            <input
+                v-model="q"
+                type="search"
+                class="search"
+                placeholder="搜索订单号/用户邮箱"
+                autocomplete="off"
+                @input="onSearchInput"
+            />
+        </template>
         <nav class="tabs">
             <button
                 v-for="t in orderTabs"
@@ -106,7 +137,7 @@ async function saveOrder() {
         <p v-if="loadErr" class="msg-err">{{ loadErr }}</p>
         <p v-if="formErr && !editing" class="msg-err">{{ formErr }}</p>
         <p v-if="msg" class="msg-ok">{{ msg }}</p>
-        <div class="table-wrap">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -137,20 +168,17 @@ async function saveOrder() {
                 </tbody>
             </table>
             <p v-if="orders.length === 0" class="empty">暂无订单</p>
-        </div>
-        <div v-if="meta && meta.last_page > 1" class="pager">
-            <button type="button" :disabled="meta.current_page <= 1" @click="load(meta.current_page - 1)">
-                上一页
-            </button>
-            <span>{{ meta.current_page }} / {{ meta.last_page }}</span>
-            <button
-                type="button"
-                :disabled="meta.current_page >= meta.last_page"
-                @click="load(meta.current_page + 1)"
-            >
-                下一页
-            </button>
-        </div>
+        </AdminCard>
+        <AdminPagination
+            v-if="meta"
+            :current-page="meta.current_page"
+            :last-page="meta.last_page"
+            :total="total"
+            :per-page="perPage"
+            :loading="loading"
+            @update:page="load"
+            @update:per-page="onPerPageChange"
+        />
 
         <div v-if="editing" class="modal" @click.self="closeEdit">
             <div class="modal__box" @click.stop>
@@ -173,13 +201,17 @@ async function saveOrder() {
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.page-title {
-    margin: 0 0 1rem;
-    font-size: 1.5rem;
+.search {
+    width: 100%;
+    max-width: 320px;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.95rem;
 }
 .tabs {
     display: flex;
@@ -266,12 +298,6 @@ async function saveOrder() {
     border-color: #2563eb;
     color: #fff;
 }
-.table-wrap {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
-    overflow: auto;
-}
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -302,11 +328,5 @@ async function saveOrder() {
     padding: 1.5rem;
     color: #64748b;
     margin: 0;
-}
-.pager {
-    margin-top: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
 }
 </style>

@@ -1,7 +1,10 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
+import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const sysNotifPriorityOpts = enumOptions('systemNotifPriority');
 const sysNotifTypeOpts = enumOptions('systemNotifType');
@@ -11,6 +14,11 @@ const err = ref('');
 const msg = ref('');
 const mode = ref('');
 const editing = ref(null);
+const q = ref('');
+const perPage = ref(20);
+const meta = ref({ current_page: 1, last_page: 1 });
+const total = ref(0);
+const loading = ref(false);
 const form = ref({
     title: '',
     content: '',
@@ -35,13 +43,18 @@ function reset() {
     };
 }
 
-async function load() {
+async function load(page = 1) {
     err.value = '';
+    loading.value = true;
     try {
-        const { data } = await axios.get('/api/admin/system-notifications');
-        rows.value = data.notifications ?? [];
+        const { data } = await axios.get('/api/admin/system-notifications', { params: { page, per_page: perPage.value, q: q.value || undefined } });
+        rows.value = data.data ?? [];
+        total.value = data.total ?? 0;
+        meta.value = { current_page: data.current_page || 1, last_page: data.last_page || 1 };
     } catch {
         err.value = '加载失败';
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -101,31 +114,53 @@ function openEdit(r) {
 
 async function toggle(r) {
     await axios.post(`/api/admin/system-notifications/${r.id}/toggle-publish`);
-    await load();
+    await load(meta.value.current_page || 1);
 }
 
 async function removeRow(r) {
     if (!confirm(`删除「${r.title}」？`)) return;
     await axios.delete(`/api/admin/system-notifications/${r.id}`);
     msg.value = '已删除';
-    await load();
+    await load(meta.value.current_page || 1);
 }
 
-onMounted(load);
+onMounted(() => load(1));
+watch([perPage], () => load(1));
+
+let searchTimer;
+function onSearchInput() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => load(1), 350);
+}
+
+function onPerPageChange(next) {
+    perPage.value = Number(next) || 20;
+    load(1);
+}
 </script>
 
 <template>
-    <div class="pg">
-        <div class="pg__head">
-            <h1 class="pg__title">系统通知</h1>
+    <AdminPageShell
+        title="系统通知"
+        lead="数据表 system_notifications；首次发布时会批量写入用户站内信（notifications）。"
+        :loading="loading"
+    >
+        <template #actions>
             <button type="button" class="btn btn--pri" @click="openCreate">新建</button>
-        </div>
-        <p class="pg__lead">
-            数据表 system_notifications；<strong>首次发布</strong>时会批量写入用户站内信（notifications / 功能清单 27 闭环）。
-        </p>
+        </template>
+        <template #toolbar>
+            <input
+                v-model="q"
+                type="search"
+                class="search"
+                placeholder="搜索标题/内容"
+                autocomplete="off"
+                @input="onSearchInput"
+            />
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !mode" class="bad">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="tbl">
                 <thead>
                     <tr>
@@ -153,7 +188,17 @@ onMounted(load);
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无</p>
-        </div>
+        </AdminCard>
+        <AdminPagination
+            v-if="meta"
+            :current-page="meta.current_page"
+            :last-page="meta.last_page"
+            :total="total"
+            :per-page="perPage"
+            :loading="loading"
+            @update:page="load"
+            @update:per-page="onPerPageChange"
+        />
         <div v-if="mode" class="modal" @click.self="closeFormModal">
             <div class="modal__box" @click.stop>
                 <h2>{{ mode === 'create' ? '新建' : '编辑' }}</h2>
@@ -192,26 +237,17 @@ onMounted(load);
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.pg__head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.35rem;
-}
-.pg__title {
-    margin: 0;
-    font-size: 1.5rem;
-}
-.pg__lead {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
-    color: #64748b;
+.search {
+    width: 100%;
+    max-width: 360px;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.95rem;
 }
 .ok {
     color: #166534;
@@ -225,12 +261,6 @@ onMounted(load);
     gap: 0.4rem;
     margin-bottom: 0.65rem;
     font-size: 0.85rem;
-}
-.card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    overflow: auto;
 }
 .tbl {
     width: 100%;
