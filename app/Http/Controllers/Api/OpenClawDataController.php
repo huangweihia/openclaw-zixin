@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Models\OpenclawTaskLog;
 use App\Models\Project;
 use App\Models\SideHustleCase;
 use App\Models\AiToolMonetization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * OpenClaw 数据接收控制器
@@ -38,6 +40,36 @@ class OpenClawDataController extends Controller
      */
     public function store(Request $request)
     {
+        $startedAt = now();
+        $itemsCount = count($request->input('items', []));
+        $typeFromRequest = (string) $request->input('type', '');
+
+        // 只要请求打到接口，就先落一条任务日志（便于后台可观测）
+        $taskLog = OpenclawTaskLog::query()->create([
+            'task_name' => 'openclaw:data:push',
+            'task_id' => null,
+            'task_type' => OpenclawTaskLog::TYPE_AI_CONTENT,
+            'status' => OpenclawTaskLog::STATUS_SUCCESS, // 先写入，后续会更新为最终状态
+            'duration_ms' => null,
+            'data_summary' => [
+                'type' => $typeFromRequest,
+                'ip' => $request->ip(),
+                'user_agent' => (string) $request->userAgent(),
+            ],
+            'total_items' => $itemsCount,
+            'success_count' => 0,
+            'failed_count' => 0,
+            'skipped_count' => 0,
+            'api_endpoint' => '/api/openclaw/data',
+            // 这里是“对方推送到我方”的入站请求，用 push_status 表示接收结果
+            'push_status' => OpenclawTaskLog::PUSH_SUCCESS,
+            'push_response' => 'received',
+            'error_message' => null,
+            'error_details' => null,
+            'started_at' => $startedAt,
+            'finished_at' => null,
+        ]);
+
         // 🔥🔥 测试输出 - 证明控制器被调用 🔥🔥🔥
         $testOutput = "\n\n===== 🦀 OPENCLAW CONTROLLER CALLED! 🦀 =====\n";
         $testOutput .= "Time: " . now()->toDateTimeString() . "\n";
@@ -70,6 +102,17 @@ class OpenClawDataController extends Controller
                 'provided_token' => $token,
                 'expected_token' => config('services.openclaw.token')
             ]);
+
+            $durationMs = (int) max(0, now()->diffInMilliseconds($startedAt));
+            $taskLog->update([
+                'status' => OpenclawTaskLog::STATUS_ERROR,
+                'duration_ms' => $durationMs,
+                'push_status' => OpenclawTaskLog::PUSH_FAILED,
+                'push_response' => 'unauthorized',
+                'error_message' => 'Unauthorized: Invalid API Token',
+                'finished_at' => now(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized: Invalid API Token'
@@ -78,13 +121,27 @@ class OpenClawDataController extends Controller
 
         \Log::info('Token 验证通过');
 
-        // 验证请求数据
-        $validated = $request->validate([
-            'type' => 'required|string|in:articles,projects,side_hustle_cases,ai_tool_monetization',
-            'items' => 'required|array|min:1'
-        ], [
-            'type.in' => '类型必须是：articles, projects, side_hustle_cases, ai_tool_monetization'
-        ]);
+        // 验证请求数据（如果 422，也要把原因写进任务日志）
+        try {
+            $validated = $request->validate([
+                'type' => 'required|string|in:articles,projects,side_hustle_cases,ai_tool_monetization',
+                'items' => 'required|array|min:1'
+            ], [
+                'type.in' => '类型必须是：articles, projects, side_hustle_cases, ai_tool_monetization'
+            ]);
+        } catch (ValidationException $e) {
+            $durationMs = (int) max(0, now()->diffInMilliseconds($startedAt));
+            $taskLog->update([
+                'status' => OpenclawTaskLog::STATUS_ERROR,
+                'duration_ms' => $durationMs,
+                'push_status' => OpenclawTaskLog::PUSH_FAILED,
+                'push_response' => 'validation_failed',
+                'error_message' => 'Validation failed',
+                'error_details' => json_encode($e->errors(), JSON_UNESCAPED_UNICODE),
+                'finished_at' => now(),
+            ]);
+            throw $e;
+        }
 
         $type = $validated['type'];
         $items = $validated['items'];
@@ -159,6 +216,24 @@ class OpenClawDataController extends Controller
                 'failed' => $failed
             ]);
 
+            $durationMs = (int) max(0, now()->diffInMilliseconds($startedAt));
+            $finalStatus = $failed > 0
+                ? OpenclawTaskLog::STATUS_ERROR
+                : (($saved === 0 && $skipped > 0) ? OpenclawTaskLog::STATUS_SKIPPED : OpenclawTaskLog::STATUS_SUCCESS);
+
+            $taskLog->update([
+                'status' => $finalStatus,
+                'duration_ms' => $durationMs,
+                'success_count' => $saved,
+                'failed_count' => $failed,
+                'skipped_count' => $skipped,
+                'push_status' => OpenclawTaskLog::PUSH_SUCCESS,
+                'push_response' => 'processed',
+                'error_message' => $failed > 0 ? '部分数据保存失败' : null,
+                'error_details' => $failed > 0 ? json_encode(array_slice($errors, 0, 10), JSON_UNESCAPED_UNICODE) : null,
+                'finished_at' => now(),
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => "成功保存 {$saved} 条数据",
@@ -175,6 +250,17 @@ class OpenClawDataController extends Controller
                 'type' => $type,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
+            ]);
+
+            $durationMs = (int) max(0, now()->diffInMilliseconds($startedAt));
+            $taskLog->update([
+                'status' => OpenclawTaskLog::STATUS_ERROR,
+                'duration_ms' => $durationMs,
+                'push_status' => OpenclawTaskLog::PUSH_FAILED,
+                'push_response' => 'exception',
+                'error_message' => $e->getMessage(),
+                'error_details' => substr($e->getTraceAsString(), 0, 8000),
+                'finished_at' => now(),
             ]);
             
             return response()->json([
