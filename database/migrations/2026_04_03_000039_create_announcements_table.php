@@ -1,0 +1,41 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('announcements', function (Blueprint $table) {
+            $table->id();
+            $table->string('title', 255)->comment('公告标题');
+            $table->longText('content')->comment('公告内容（HTML）');
+            $table->enum('priority', ['low', 'medium', 'high'])->default('medium')->comment('优先级');
+            $table->boolean('is_published')->default(false)->comment('是否已发布');
+            $table->timestamp('published_at')->nullable()->comment('发布时间');
+            $table->timestamp('expires_at')->nullable()->comment('过期时间');
+            $table->unsignedBigInteger('created_by')->nullable()->comment('创建人 ID');
+            $table->timestamps();
+            
+            // Foreign key
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            
+            // Indexes
+            $table->index('priority');
+            $table->index('is_published');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('announcements');
+    }
+};

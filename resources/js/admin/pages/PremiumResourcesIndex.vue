@@ -1,0 +1,326 @@
+<script setup>
+import { onMounted, ref } from 'vue';
+import axios from 'axios';
+import { enumLabel, enumOptions } from '../constants/labels';
+
+const prTypeOpts = enumOptions('premiumResourceType');
+const prVisibilityOpts = enumOptions('resourceVisibility').filter((o) => o.value === 'public' || o.value === 'vip');
+
+const rows = ref([]);
+const err = ref('');
+const msg = ref('');
+const mode = ref('');
+const editing = ref(null);
+const form = ref({
+    title: '',
+    slug: '',
+    summary: '',
+    type: 'pdf',
+    content: '',
+    download_link: '',
+    extract_code: '',
+    original_price: '',
+    tags_json: '[]',
+    visibility: 'vip',
+});
+
+function reset() {
+    form.value = {
+        title: '',
+        slug: '',
+        summary: '',
+        type: 'pdf',
+        content: '',
+        download_link: '',
+        extract_code: '',
+        original_price: '',
+        tags_json: '[]',
+        visibility: 'vip',
+    };
+}
+
+async function load() {
+    err.value = '';
+    try {
+        const { data } = await axios.get('/api/admin/premium-resources');
+        rows.value = data.resources ?? [];
+    } catch {
+        err.value = '加载失败';
+    }
+}
+
+function tagsPayload() {
+    try {
+        const t = JSON.parse(form.value.tags_json || '[]');
+        return Array.isArray(t) ? t : [];
+    } catch {
+        return [];
+    }
+}
+
+async function save() {
+    msg.value = '';
+    err.value = '';
+    const payload = {
+        title: form.value.title,
+        summary: form.value.summary || null,
+        type: form.value.type,
+        content: form.value.content || null,
+        download_link: form.value.download_link || null,
+        extract_code: form.value.extract_code || null,
+        original_price: form.value.original_price === '' ? null : Number(form.value.original_price),
+        tags: tagsPayload(),
+        visibility: form.value.visibility,
+    };
+    try {
+        if (mode.value === 'create') await axios.post('/api/admin/premium-resources', payload);
+        else await axios.put(`/api/admin/premium-resources/${editing.value.id}`, payload);
+        msg.value = '已保存';
+        mode.value = '';
+        editing.value = null;
+        await load();
+    } catch (e) {
+        err.value = e.response?.data?.message || '保存失败';
+    }
+}
+
+function closeFormModal() {
+    mode.value = '';
+    err.value = '';
+    editing.value = null;
+}
+
+function openCreate() {
+    err.value = '';
+    mode.value = 'create';
+    editing.value = null;
+    reset();
+}
+
+function openEdit(r) {
+    err.value = '';
+    mode.value = 'edit';
+    editing.value = r;
+    form.value = {
+        title: r.title,
+        slug: r.slug,
+        summary: r.summary || '',
+        type: r.type,
+        content: r.content || '',
+        download_link: r.download_link || '',
+        extract_code: r.extract_code || '',
+        original_price: r.original_price != null ? String(r.original_price) : '',
+        tags_json: JSON.stringify(r.tags || []),
+        visibility: r.visibility,
+    };
+}
+
+async function removeRow(r) {
+    if (!confirm(`删除「${r.title}」？`)) return;
+    await axios.delete(`/api/admin/premium-resources/${r.id}`);
+    msg.value = '已删除';
+    await load();
+}
+
+onMounted(load);
+</script>
+
+<template>
+    <div class="pg">
+        <div class="pg__head">
+            <h1 class="pg__title">会员资源</h1>
+            <el-button type="primary" size="small" @click="openCreate">新建</el-button>
+        </div>
+        <p class="pg__lead">数据表 premium_resources：slug 唯一；tags 存 JSON 数组。</p>
+        <p v-if="msg" class="ok">{{ msg }}</p>
+        <p v-if="err && !mode" class="bad">{{ err }}</p>
+        <div class="card">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>标题</th>
+                        <th>别名</th>
+                        <th>类型</th>
+                        <th>可见</th>
+                        <th />
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="r in rows" :key="r.id">
+                        <td>{{ r.title }}</td>
+                        <td class="mono">{{ r.slug }}</td>
+                        <td>{{ enumLabel('premiumResourceType', r.type) }}</td>
+                        <td>{{ enumLabel('resourceVisibility', r.visibility) }}</td>
+                        <td class="act">
+                            <button type="button" class="lnk" @click="openEdit(r)">编辑</button>
+                            <button type="button" class="lnk lnk--d" @click="removeRow(r)">删除</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <p v-if="rows.length === 0" class="empty">暂无数据</p>
+        </div>
+        <div v-if="mode" class="modal" @click.self="closeFormModal">
+            <div class="modal__box modal__box--lg" @click.stop>
+                <h2>{{ mode === 'create' ? '新建' : '编辑' }}</h2>
+                <p v-if="err" class="admin-modal-err">{{ err }}</p>
+                <label class="fld"><span>标题</span><input v-model="form.title" type="text" /></label>
+                <div v-if="mode === 'create'" class="fld fld--note">
+                    <span>URL 别名</span>
+                    <span class="fld-hint">保存后由系统根据标题自动生成，用于前台地址；创建后不可改。</span>
+                </div>
+                <label v-else class="fld">
+                    <span>URL 别名</span>
+                    <span class="fld-hint">仅展示。</span>
+                    <p class="fld-readonly mono">{{ form.slug }}</p>
+                </label>
+                <label class="fld"><span>摘要</span><input v-model="form.summary" type="text" /></label>
+                <label class="fld">
+                    <span>类型</span>
+                    <select v-model="form.type">
+                        <option v-for="o in prTypeOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
+                    </select>
+                </label>
+                <label class="fld">
+                    <span>可见性</span>
+                    <select v-model="form.visibility">
+                        <option v-for="o in prVisibilityOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
+                    </select>
+                </label>
+                <label class="fld"><span>下载链接</span><input v-model="form.download_link" type="text" /></label>
+                <label class="fld"><span>提取码</span><input v-model="form.extract_code" type="text" /></label>
+                <label class="fld"><span>原价</span><input v-model="form.original_price" type="text" /></label>
+                <label class="fld"><span>标签 JSON 数组</span><textarea v-model="form.tags_json" rows="2" /></label>
+                <label class="fld"><span>详情 HTML</span><textarea v-model="form.content" rows="6" /></label>
+                <div class="modal__btns">
+                    <el-button size="small" @click="closeFormModal">取消</el-button>
+                    <el-button type="primary" size="small" @click="save">保存</el-button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style scoped>
+.pg__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+.pg__title {
+    margin: 0;
+    font-size: 1.5rem;
+}
+.pg__lead {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+.ok {
+    color: #166534;
+}
+.bad {
+    color: #b91c1c;
+}
+.card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: auto;
+}
+.tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+.tbl th,
+.tbl td {
+    padding: 0.5rem 0.65rem;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+}
+.tbl th {
+    background: #f8fafc;
+    font-weight: 600;
+}
+.mono {
+    font-family: ui-monospace, monospace;
+    font-size: 0.78rem;
+}
+.act {
+    display: flex;
+    gap: 0.5rem;
+}
+.lnk {
+    border: none;
+    background: none;
+    color: #2563eb;
+    cursor: pointer;
+    padding: 0;
+}
+.lnk--d {
+    color: #b91c1c;
+}
+.empty {
+    padding: 1rem;
+    color: #94a3b8;
+    margin: 0;
+}
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 80;
+    padding: 1rem;
+}
+.modal__box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal__box--lg {
+    max-width: 640px;
+}
+.fld {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0.65rem;
+    font-size: 0.85rem;
+}
+.fld input,
+.fld select,
+.fld textarea {
+    padding: 0.45rem 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+}
+.modal__btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+.btn {
+    padding: 0.45rem 0.85rem;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    cursor: pointer;
+}
+.btn--pri {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+}
+</style>

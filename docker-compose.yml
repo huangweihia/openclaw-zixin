@@ -1,0 +1,63 @@
+# OpenClaw 智信 · Docker Compose（与本目录 Laravel 同层）
+#
+# 本文件位于 Laravel 应用根目录（含 artisan、public/、docker/）。
+# 在「本文件所在目录」执行 docker compose，例如：
+#   Windows:  cd D:\...\openclaw_zhixin\_laravel_temp
+#   服务器:  cd /opt/zixin/openclaw-zixin   （若整仓只含 Laravel 根内容）
+#
+# 挂载说明：「当前目录 .」即 Laravel 根 → 容器 /var/www/html
+# 默认 HTTP：宿主机 8083 → 容器 80 → http://localhost:8083/
+#
+services:
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      # vendor 命名卷：避免 Windows 挂载数万小文件导致 autoload 极慢。
+      # 首次为空时：php 镜像 entrypoint 会自动 composer install；亦可手动 exec composer install，
+      # 或从本机复制：docker compose cp ./vendor/. php:/var/www/html/vendor/
+      - .:/var/www/html
+      - zhixin-vendor:/var/www/html/vendor
+    depends_on:
+      - mysql
+      - redis
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8083:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - php
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: aiside123456
+      MYSQL_DATABASE: openclaw_zhixin
+      MYSQL_USER: ai_side
+      MYSQL_PASSWORD: aiside123456
+    command:
+      [
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci",
+        "--default-authentication-plugin=mysql_native_password",
+      ]
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3309:3306"
+
+  redis:
+    image: redis:7.0-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mysql-data:
+  redis-data:
+  zhixin-vendor:

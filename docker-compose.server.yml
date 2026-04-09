@@ -1,0 +1,69 @@
+# =============================================================================
+# 服务器部署用 Compose（与本文件同目录即为 Laravel 根：含 artisan、docker/）
+# =============================================================================
+# 与 docker-compose.yml 区别：Nginx 映射为 80:80；MySQL 仅绑定 127.0.0.1:3309
+#
+# 启动：
+#   cd /path/to/laravel-root   # 例如 /opt/zixin/openclaw-zixin
+#   docker compose -f docker-compose.server.yml up -d --build
+#
+# Laravel .env 建议至少设置：
+#   APP_URL=http://你的域名或IP
+#   DB_HOST=mysql
+#   REDIS_HOST=redis
+#
+# 安全：生产请修改 MySQL 密码、限制数据库端口仅本机访问或去掉 ports 映射。
+# =============================================================================
+
+name: openclaw-zixin
+
+services:
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - zhixin-vendor:/var/www/html/vendor
+    depends_on:
+      - mysql
+      - redis
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - php
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: aiside123456
+      MYSQL_DATABASE: openclaw_zhixin
+      MYSQL_USER: ai_side
+      MYSQL_PASSWORD: aiside123456
+    command:
+      [
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci",
+        "--default-authentication-plugin=mysql_native_password",
+      ]
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3309:3306"
+
+  redis:
+    image: redis:7.0-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mysql-data:
+  redis-data:
+  zhixin-vendor:
