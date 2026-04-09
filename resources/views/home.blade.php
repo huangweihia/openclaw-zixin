@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @auth
         <meta name="user-id" content="{{ auth()->id() }}">
+        <meta name="user-role" content="{{ auth()->user()->role }}">
     @endauth
     <title>{{ $ocSite['site_name'] ?? 'OpenClaw 智信' }}</title>
     <script>
@@ -88,6 +89,10 @@
             width: min(360px, calc(100vw - 2.5rem));
             flex: 0 0 auto;
         }
+        .oc-feature-card {
+            width: min(340px, calc(100vw - 2.5rem));
+            flex: 0 0 auto;
+        }
     </style>
 </head>
 <body class="bg-gray-50 pt-16">
@@ -131,6 +136,53 @@
             </div>
         </div>
     </section>
+
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-10">🔥 精品内容</h2>
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">精品文章</h3>
+                    <div class="oc-testimonial-slider"><div class="oc-testimonial-track">
+                        @foreach ([$featuredArticles, $featuredArticles] as $grp)
+                            @foreach ($grp as $a)
+                                <a href="{{ route('articles.show', $a) }}" class="oc-feature-card bg-gray-50 rounded-xl p-5 block" style="text-decoration:none;color:inherit;">
+                                    <div class="font-semibold line-clamp-2">{{ $a->title }}</div>
+                                    <div class="text-xs text-gray-500 mt-2">👍 {{ number_format((int) $a->like_count) }} · 👁 {{ number_format((int) $a->view_count) }}</div>
+                                </a>
+                            @endforeach
+                        @endforeach
+                    </div></div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4">精品项目</h3>
+                    <div class="oc-testimonial-slider"><div class="oc-testimonial-track">
+                        @foreach ([$featuredProjects, $featuredProjects] as $grp)
+                            @foreach ($grp as $p)
+                                <a href="{{ route('projects.show', $p) }}" class="oc-feature-card bg-gray-50 rounded-xl p-5 block" style="text-decoration:none;color:inherit;">
+                                    <div class="font-semibold line-clamp-2">{{ $p->name }}</div>
+                                    <div class="text-xs text-gray-500 mt-2">⭐ {{ number_format((int) $p->stars) }} · ⑂ {{ number_format((int) $p->forks) }}</div>
+                                </a>
+                            @endforeach
+                        @endforeach
+                    </div></div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4">精品案例</h3>
+                    <div class="oc-testimonial-slider"><div class="oc-testimonial-track">
+                        @foreach ([$featuredCases, $featuredCases] as $grp)
+                            @foreach ($grp as $c)
+                                <a href="{{ route('cases.show', $c) }}" class="oc-feature-card bg-gray-50 rounded-xl p-5 block" style="text-decoration:none;color:inherit;">
+                                    <div class="font-semibold line-clamp-2">{{ $c->title }}</div>
+                                    <div class="text-xs text-gray-500 mt-2">👍 {{ number_format((int) $c->like_count) }} · 👁 {{ number_format((int) $c->view_count) }}</div>
+                                </a>
+                            @endforeach
+                        @endforeach
+                    </div></div>
+                </div>
+            </div>
+        </div>
+    </section>
     
     <!-- 数据展示区 -->
     <section class="py-20 bg-white">
@@ -158,7 +210,7 @@
     
     <!-- 实时动态区 -->
     <section class="py-20 bg-gray-50">
-        <div class="max-w-4xl mx-auto px-4">
+        <div class="max-w-7xl mx-auto px-4">
             <h2 class="text-4xl font-bold text-center mb-12">
                 📢 实时动态
             </h2>
@@ -202,14 +254,16 @@
             <div class="grid md:grid-cols-3 gap-8 items-stretch">
                 @foreach ($vipPreviews as $preview)
                     @if (! empty($preview['locked']))
-                        <div class="bg-gray-50 rounded-2xl p-8 card-hover relative ring-1 ring-gray-200 flex flex-col h-full min-h-[280px]">
-                            <div class="absolute top-4 right-4 text-4xl" aria-hidden="true">🔒</div>
+                        <div class="bg-gray-50 rounded-2xl p-8 card-hover relative ring-1 ring-gray-200 flex flex-col h-full min-h-[280px] overflow-hidden">
                             <div class="text-5xl mb-4 shrink-0">{{ $preview['icon'] }}</div>
                             <h3 class="text-2xl font-bold mb-3 text-gray-800 shrink-0 line-clamp-2">{{ $preview['title'] }}</h3>
                             <p class="text-gray-600 mb-0 flex-1 text-sm leading-relaxed line-clamp-4">{{ $preview['summary'] }}</p>
-                            <a href="{{ route('pricing') }}" class="oc-cta-primary mt-6 shrink-0">
-                                开通 VIP 查看
-                            </a>
+                            <span class="oc-cta-primary mt-6 shrink-0">开通 VIP 查看</span>
+                            @include('partials.access-mask', [
+                                'title' => 'VIP 专属内容',
+                                'desc' => '开通会员后可查看完整案例、工具与 SOP 内容。',
+                                'cta' => '立即开通 VIP',
+                            ])
                         </div>
                     @else
                         <a href="{{ $preview['url'] }}" class="flex flex-col h-full min-h-[280px] bg-gray-50 rounded-2xl p-8 card-hover relative oc-home-vip-card" style="text-decoration: none; color: inherit;">

@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use App\Models\UserAction;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ArticleEngagementController extends Controller
 {
-    public function toggleLike(Request $request, Article $article): RedirectResponse
+    public function toggleLike(Request $request, Article $article): RedirectResponse|JsonResponse
     {
         if (! $article->is_published) {
             abort(404);
@@ -42,11 +43,17 @@ class ArticleEngagementController extends Controller
                 $message = '点赞成功';
             }
 
+            $liked = ! $row;
+            $count = (int) (Article::query()->whereKey($article->id)->value('like_count') ?? 0);
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['ok' => true, 'liked' => $liked, 'count' => $count, 'message' => $message]);
+            }
+
             return back()->with('success', $message);
         });
     }
 
-    public function toggleFavorite(Request $request, Article $article): RedirectResponse
+    public function toggleFavorite(Request $request, Article $article): RedirectResponse|JsonResponse
     {
         if (! $article->is_published) {
             abort(404);
@@ -74,6 +81,11 @@ class ArticleEngagementController extends Controller
                     'type' => 'favorite',
                 ]);
                 $message = '已加入收藏';
+            }
+
+            $favorited = ! $row;
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['ok' => true, 'favorited' => $favorited, 'message' => $message]);
             }
 
             return back()->with('success', $message);

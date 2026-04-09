@@ -49,8 +49,12 @@ class DashboardController extends Controller
         $handle = '@'.Str::before($u->email, '@');
 
         $vipDays = null;
+        $vipSecondsLeft = null;
+        $vipIsUrgent = false;
         if ($u->isVip() && $u->subscription_ends_at && $u->subscription_ends_at->isFuture()) {
             $vipDays = (int) now()->startOfDay()->diffInDays($u->subscription_ends_at->copy()->startOfDay());
+            $vipSecondsLeft = now()->diffInSeconds($u->subscription_ends_at, false);
+            $vipIsUrgent = $vipDays <= 3;
         }
 
         $roleLabel = match ($u->role) {
@@ -70,6 +74,8 @@ class DashboardController extends Controller
             'footprintCount',
             'handle',
             'vipDays',
+            'vipSecondsLeft',
+            'vipIsUrgent',
             'roleLabel',
             'timeline',
         ));

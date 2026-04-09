@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\UserAction;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ProjectEngagementController extends Controller
 {
-    public function toggleFavorite(Request $request, Project $project): RedirectResponse
+    public function toggleFavorite(Request $request, Project $project): RedirectResponse|JsonResponse
     {
         $user = $request->user();
 
@@ -34,6 +35,11 @@ class ProjectEngagementController extends Controller
                     'type' => 'favorite',
                 ]);
                 $message = '已加入收藏';
+            }
+
+            $favorited = ! $row;
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['ok' => true, 'favorited' => $favorited, 'message' => $message]);
             }
 
             return back()->with('success', $message);

@@ -2,12 +2,17 @@
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
+import AdminPagination from '../components/AdminPagination.vue';
 
 const ptPlatformOpts = enumOptions('privateTrafficPlatform');
 const ptCategoryOpts = enumOptions('privateTrafficCategory');
 const ptVisibilityOpts = enumOptions('resourceVisibility').filter((o) => o.value === 'public' || o.value === 'vip');
 
 const rows = ref([]);
+const perPage = ref(20);
+const meta = ref(null);
+const total = ref(0);
+const query = ref('');
 const err = ref('');
 const msg = ref('');
 const mode = ref('');
@@ -57,14 +62,20 @@ function reset() {
     };
 }
 
-async function load() {
+async function load(page = 1) {
     err.value = '';
     try {
-        const { data } = await axios.get('/api/admin/private-traffic-sops');
-        rows.value = data.sops ?? [];
+        const { data } = await axios.get('/api/admin/private-traffic-sops', { params: { page, per_page: perPage.value, q: query.value || undefined } });
+        rows.value = data.data ?? [];
+        total.value = data.total ?? 0;
+        meta.value = { current_page: data.current_page || 1, last_page: data.last_page || 1 };
     } catch {
         err.value = '加载失败';
     }
+}
+function onPerPageChange(v) {
+    perPage.value = Number(v) || 20;
+    load(1);
 }
 
 async function save() {
@@ -90,7 +101,7 @@ async function save() {
         msg.value = '已保存';
         mode.value = '';
         editing.value = null;
-        await load();
+        await load(meta.value?.current_page || 1);
     } catch {
         err.value = '保存失败';
     }
@@ -134,7 +145,7 @@ async function removeRow(r) {
     if (!confirm(`删除「${r.title}」？`)) return;
     await axios.delete(`/api/admin/private-traffic-sops/${r.id}`);
     msg.value = '已删除';
-    await load();
+    await load(meta.value?.current_page || 1);
 }
 
 onMounted(load);
@@ -147,6 +158,10 @@ onMounted(load);
             <button type="button" class="btn btn--pri" @click="openCreate">新建</button>
         </div>
         <p class="pg__lead">数据表 private_traffic_sops</p>
+        <div class="flt">
+            <input v-model.trim="query" type="text" placeholder="搜索标题/别名/摘要" @keyup.enter="load(1)" />
+            <button type="button" class="btn" @click="load(1)">搜索</button>
+        </div>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !mode" class="bad">{{ err }}</p>
         <div class="card">
@@ -173,6 +188,15 @@ onMounted(load);
             </table>
             <p v-if="rows.length === 0" class="empty">暂无数据</p>
         </div>
+        <AdminPagination
+            v-if="meta"
+            :current-page="meta.current_page"
+            :last-page="meta.last_page"
+            :total="total"
+            :per-page="perPage"
+            @update:page="load"
+            @update:per-page="onPerPageChange"
+        />
         <div v-if="mode" class="modal" @click.self="closeFormModal">
             <div class="modal__box modal__box--lg" @click.stop>
                 <h2>{{ mode === 'create' ? '新建' : '编辑' }}</h2>
@@ -238,6 +262,18 @@ onMounted(load);
     margin: 0 0 1rem;
     font-size: 0.85rem;
     color: #64748b;
+}
+.flt {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+}
+.flt input {
+    flex: 1;
+    max-width: 360px;
+    padding: 0.45rem 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
 }
 .ok {
     color: #166534;

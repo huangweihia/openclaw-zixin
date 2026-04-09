@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\EmailLogWriter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -92,13 +93,16 @@ class ProfileController extends Controller
         }
 
         try {
+            $subject = 'OpenClaw 智信 - 修改邮箱验证码';
             Mail::raw(
                 "你正在将 OpenClaw 智信账号绑定邮箱修改为：{$email}\n验证码：{$code}（5 分钟内有效）\n如非本人操作请忽略。",
-                function ($message) use ($email) {
-                    $message->to($email)->subject('OpenClaw 智信 - 修改邮箱验证码');
+                function ($message) use ($email, $subject) {
+                    $message->to($email)->subject($subject);
                 }
             );
+            EmailLogWriter::sent((int) $user->id, $email, $subject, 'profile_email_change_code');
         } catch (\Throwable $e) {
+            EmailLogWriter::failed((int) $user->id, $email, 'OpenClaw 智信 - 修改邮箱验证码', $e->getMessage(), 'profile_email_change_code');
             Log::warning('profile email change code failed', [
                 'user_id' => $user->id,
                 'email' => $email,

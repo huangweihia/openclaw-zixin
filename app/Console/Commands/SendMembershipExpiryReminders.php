@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\SiteSetting;
 use App\Models\User;
+use App\Support\EmailLogWriter;
 use App\Services\WeCom\WeComMessageService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -48,10 +49,13 @@ class SendMembershipExpiryReminders extends Command
                     $plain = "【{$site}】您的会员将在 {$end->toDateString()} 到期，请及时续费以免权益中断。";
 
                     try {
+                        $subject = $site.' · 会员即将到期提醒';
                         Mail::raw($plain, function ($message) use ($user, $site) {
                             $message->to($user->email)->subject($site.' · 会员即将到期提醒');
                         });
+                        EmailLogWriter::sent((int) $user->id, (string) $user->email, $subject, 'membership_expiry_reminder');
                     } catch (\Throwable $e) {
+                        EmailLogWriter::failed((int) $user->id, (string) $user->email, $site.' · 会员即将到期提醒', $e->getMessage(), 'membership_expiry_reminder');
                         $this->warn('邮件发送失败 user#'.$user->id.'：'.$e->getMessage());
                     }
 

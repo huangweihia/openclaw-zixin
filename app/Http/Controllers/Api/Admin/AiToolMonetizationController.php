@@ -11,11 +11,25 @@ use Illuminate\Validation\Rule;
 
 class AiToolMonetizationController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        return response()->json([
-            'tools' => AiToolMonetization::query()->orderByDesc('id')->get(),
-        ]);
+        $perPage = (int) $request->query('per_page', 20);
+        $perPage = max(10, min($perPage, 100));
+        $q = trim((string) $request->query('q', ''));
+
+        $rows = AiToolMonetization::query()
+            ->when($q !== '', function ($builder) use ($q) {
+                $builder->where(function ($sub) use ($q) {
+                    $sub->where('tool_name', 'like', '%'.$q.'%')
+                        ->orWhere('slug', 'like', '%'.$q.'%')
+                        ->orWhere('tool_url', 'like', '%'.$q.'%');
+                });
+            })
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return response()->json($rows);
     }
 
     public function store(Request $request): JsonResponse

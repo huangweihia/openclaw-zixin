@@ -11,14 +11,26 @@ use Illuminate\Validation\Rule;
 
 class SideHustleCaseController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        return response()->json([
-            'cases' => SideHustleCase::query()
-                ->with('user:id,name')
-                ->orderByDesc('id')
-                ->get(),
-        ]);
+        $perPage = (int) $request->query('per_page', 20);
+        $perPage = max(10, min($perPage, 100));
+        $q = trim((string) $request->query('q', ''));
+
+        $rows = SideHustleCase::query()
+            ->with('user:id,name')
+            ->when($q !== '', function ($builder) use ($q) {
+                $builder->where(function ($sub) use ($q) {
+                    $sub->where('title', 'like', '%'.$q.'%')
+                        ->orWhere('slug', 'like', '%'.$q.'%')
+                        ->orWhere('summary', 'like', '%'.$q.'%');
+                });
+            })
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return response()->json($rows);
     }
 
     public function store(Request $request): JsonResponse

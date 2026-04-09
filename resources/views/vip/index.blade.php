@@ -16,8 +16,44 @@
         @endauth
     </div>
 
+    @auth
+        <div class="max-w-5xl mx-auto mb-8">
+            <div class="oc-surface p-6">
+                <h2 class="text-lg font-bold oc-heading mb-2">当前权益</h2>
+                <div class="text-sm oc-muted">
+                    @if ($memberRole === 'admin')
+                        超级管理员：拥有全站所有权限（含 VIP/SVIP）。
+                    @elseif ($memberRole === 'svip')
+                        当前身份：SVIP
+                    @elseif ($memberRole === 'vip')
+                        当前身份：VIP
+                    @else
+                        当前身份：普通用户（未开通会员）
+                    @endif
+                </div>
+                @if ($memberExpiresAt)
+                    <p class="text-sm mt-2 oc-heading">
+                        权益到期时间：{{ $memberExpiresAt->format('Y-m-d H:i') }}
+                        @if ($memberDaysLeft !== null)
+                            （剩余 {{ $memberDaysLeft }} 天）
+                        @endif
+                    </p>
+                @endif
+            </div>
+        </div>
+    @endauth
+
     <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12 items-stretch">
         @foreach ($plans as $key => $plan)
+            @php
+                $hidePlan = false;
+                if (auth()->check()) {
+                    $hidePlan = ($memberRole === 'svip' || $memberRole === 'admin') && $key === 'vip';
+                }
+            @endphp
+            @if ($hidePlan)
+                @continue
+            @endif
             <div class="oc-surface p-6 flex flex-col h-full min-h-[360px] {{ $key === 'vip' ? 'vip-plan-highlight' : '' }}">
                 <h2 class="text-lg font-bold oc-heading mb-2 shrink-0">{{ $plan['name'] }}</h2>
                 @if (! empty($plan['promo_label']))
@@ -37,7 +73,11 @@
                 </ul>
                 <div class="mt-auto shrink-0">
                 @if (in_array($key, ['vip', 'svip'], true))
-                    <a href="{{ route('pricing') }}#plan-{{ $key }}" class="btn btn-primary w-full text-sm vip-plan-cta">查看方案并开通</a>
+                    @if (auth()->check() && (($memberRole === 'vip' && $key === 'vip') || ($memberRole === 'svip' && $key === 'svip') || $memberRole === 'admin'))
+                        <a href="{{ route('dashboard') }}" class="btn btn-secondary w-full text-sm vip-plan-cta">已拥有该权益，去个人中心</a>
+                    @else
+                        <a href="{{ route('pricing') }}#plan-{{ $key }}" class="btn btn-primary w-full text-sm vip-plan-cta">查看方案并开通</a>
+                    @endif
                 @else
                     <span class="text-xs oc-muted block text-center">默认权益，注册即用</span>
                 @endif

@@ -161,18 +161,33 @@ function applySkin(skinCode, options = {}) {
 // 切换皮肤
 async function changeSkin(skinCode) {
     const skin = skins.value.find(s => s.code === skinCode);
-    
-    // 检查是否为 VIP 皮肤
-    if (skin && skin.type === 'vip') {
-        // VIP 皮肤需要登录
-        window.location.href = '/login';
-        return;
+    const isLoggedIn = !!document.querySelector('meta[name="user-id"]');
+    const role = (document.querySelector('meta[name="user-role"]')?.getAttribute('content') || '').toLowerCase();
+    const skinType = String(skin?.type || '').toLowerCase();
+
+    if (skin && (skinType === 'vip' || skinType === 'svip')) {
+        if (!isLoggedIn) {
+            const ret = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = `/login?return=${ret}`;
+            return;
+        }
+        const isAdmin = role === 'admin';
+        const isVip = role === 'vip' || role === 'svip' || isAdmin;
+        const isSvip = role === 'svip' || isAdmin;
+        if (skinType === 'vip' && !isVip) {
+            window.location.href = '/max/pricing';
+            return;
+        }
+        if (skinType === 'svip' && !isSvip) {
+            window.location.href = '/max/pricing';
+            return;
+        }
     }
     
     loading.value = true;
     try {
         // 未登录时只保存到 localStorage，不调用 API
-        if (!document.querySelector('meta[name="user-id"]')) {
+        if (!isLoggedIn) {
             // 未登录，直接保存到本地
             currentSkin.value = skin;
             applySkin(skinCode);
@@ -302,7 +317,8 @@ onMounted(async () => {
                         ></div>
                         <div class="skin-option__info">
                             <span class="skin-option__name">{{ skin.name }}</span>
-                            <span v-if="skin.type === 'vip'" class="skin-option__badge vip">VIP</span>
+                            <span v-if="String(skin.type || '').toLowerCase() === 'vip'" class="skin-option__badge vip">VIP</span>
+                            <span v-if="String(skin.type || '').toLowerCase() === 'svip'" class="skin-option__badge svip">SVIP</span>
                         </div>
                     </div>
                 </div>
@@ -460,6 +476,10 @@ onMounted(async () => {
 
 .skin-option__badge.vip {
     background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+}
+.skin-option__badge.svip {
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
     color: #fff;
 }
 

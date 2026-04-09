@@ -6,18 +6,21 @@
     $isLiked = in_array($c->id, $likedIds, true);
     $replyRouteName = match ($ctx) {
         'project' => 'projects.comments.reply',
+        'case' => 'cases.comments.reply',
         'sop' => 'sops.comments.reply',
         'user_post' => 'posts.comments.reply',
         default => 'articles.comments.reply',
     };
     $likeRoute = match ($ctx) {
         'project' => route('projects.comments.like', $c),
+        'case' => route('cases.comments.like', $c),
         'sop' => route('sops.comments.like', $c),
         'user_post' => route('posts.comments.like', $c),
         default => route('articles.comments.like', $c),
     };
     $reportRoute = match ($ctx) {
         'project' => route('projects.comments.report', $c),
+        'case' => route('cases.comments.report', $c),
         'sop' => route('sops.comments.report', $c),
         'user_post' => route('posts.comments.report', $c),
         default => route('articles.comments.report', $c),

@@ -7,6 +7,7 @@ use App\Models\EmailTemplate;
 use App\Models\SiteSetting;
 use App\Models\User;
 use App\Services\PointsService;
+use App\Support\EmailLogWriter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -56,7 +57,9 @@ class RegisterController extends Controller
             Mail::raw("你的 OpenClaw 智信验证码是：{$code}（5 分钟内有效）", function ($message) use ($email) {
                 $message->to($email)->subject('OpenClaw 智信 - 注册验证码');
             });
+            EmailLogWriter::sent(null, $email, 'OpenClaw 智信 - 注册验证码', 'register_verification');
         } catch (\Throwable $e) {
+            EmailLogWriter::failed(null, $email, 'OpenClaw 智信 - 注册验证码', $e->getMessage(), 'register_verification');
             Log::warning('send register email code failed', [
                 'email' => $email,
                 'error' => $e->getMessage(),
@@ -146,7 +149,9 @@ class RegisterController extends Controller
                 $message->to($user->email)->subject($subject);
                 $message->text($plain);
             });
+            EmailLogWriter::sent($user->id, (string) $user->email, $subject, 'register_welcome');
         } catch (\Throwable $e) {
+            EmailLogWriter::failed($user->id, (string) $user->email, $subject, $e->getMessage(), 'register_welcome');
             Log::warning('welcome email failed after register', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),

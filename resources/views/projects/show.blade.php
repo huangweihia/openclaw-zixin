@@ -49,11 +49,21 @@
                 </div>
             @endif
 
-            @if ($project->tags && count($project->tags))
+            @php
+                $projectTags = $project->tags;
+                if (is_string($projectTags)) {
+                    $decodedTags = json_decode($projectTags, true);
+                    $projectTags = is_array($decodedTags) ? $decodedTags : [];
+                }
+                if (! is_array($projectTags)) {
+                    $projectTags = [];
+                }
+            @endphp
+            @if (! empty($projectTags))
                 <div class="oc-surface p-6 mb-8">
                     <h2 class="text-lg font-bold mb-3 oc-heading">技术栈 / 标签</h2>
                     <div class="flex flex-wrap gap-2">
-                        @foreach ($project->tags as $tag)
+                        @foreach ($projectTags as $tag)
                             <a href="{{ route('projects.index', ['q' => $tag]) }}" class="oc-filter-pill text-xs">{{ $tag }}</a>
                         @endforeach
                     </div>
@@ -62,9 +72,9 @@
 
             <div class="flex flex-wrap gap-3 mb-10">
                 @auth
-                    <form method="post" action="{{ route('projects.favorite', $project) }}">
+                    <form method="post" action="{{ route('projects.favorite', $project) }}" class="oc-engage-ajax">
                         @csrf
-                        <button type="submit" class="btn {{ $userFavorited ? 'btn-primary' : 'btn-secondary' }}">
+                        <button type="submit" class="btn {{ $userFavorited ? 'btn-primary' : 'btn-secondary' }}" data-on-text="⭐ 已收藏" data-off-text="☆ 收藏项目">
                             {{ $userFavorited ? '⭐ 已收藏' : '☆ 收藏项目' }}
                         </button>
                     </form>
@@ -123,4 +133,5 @@
 
     @include('partials.comment-report-modal')
     @include('partials.comment-scripts')
+    @include('partials.engagement-scripts')
 @endsection

@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\VipController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DashboardOrderController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SearchController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\AnnouncementWebController;
 use App\Http\Controllers\SvipCustomSubscriptionWebController;
 use App\Http\Controllers\WeComOAuthController;
 use App\Http\Controllers\SideHustleCaseWebController;
+use App\Http\Controllers\SideHustleCaseCommentController;
 use App\Http\Controllers\AiToolWebController;
 use App\Http\Controllers\PrivateTrafficSopWebController;
 use App\Http\Controllers\SopCommentController;
@@ -88,6 +90,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/edit', [DashboardController::class, 'edit'])->name('dashboard.edit');
     Route::get('/dashboard/comments', [DashboardController::class, 'comments'])->name('dashboard.comments');
+    Route::get('/dashboard/orders', [DashboardOrderController::class, 'index'])->name('dashboard.orders');
+    Route::post('/dashboard/orders/{order}/review', [DashboardOrderController::class, 'review'])->name('dashboard.orders.review');
     Route::get('/dashboard/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
     Route::delete('/dashboard/favorites/{userAction}', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
     Route::post('/dashboard/favorites/bulk-delete', [FavoriteController::class, 'bulkDestroy'])->name('favorites.bulk-delete');
@@ -143,6 +147,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{userPost}/comments', [UserPostCommentController::class, 'store'])->name('posts.comments.store');
 
     Route::post('/sops/{privateTrafficSop:slug}/comments', [SopCommentController::class, 'store'])->name('sops.comments.store');
+    Route::post('/cases/{sideHustleCase}/comments', [SideHustleCaseCommentController::class, 'store'])->name('cases.comments.store');
 });
 
 Route::middleware('guest')->group(function () {
@@ -172,5 +177,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/sops/comments/{comment}/reply', [SopCommentController::class, 'reply'])->name('sops.comments.reply');
     Route::post('/sops/comments/{comment}/like', [SopCommentController::class, 'like'])->name('sops.comments.like');
     Route::post('/sops/comments/{comment}/report', [SopCommentController::class, 'report'])->name('sops.comments.report');
+    Route::post('/cases/comments/{comment}/reply', [SideHustleCaseCommentController::class, 'reply'])->name('cases.comments.reply');
+    Route::post('/cases/comments/{comment}/like', [SideHustleCaseCommentController::class, 'like'])->name('cases.comments.like');
+    Route::post('/cases/comments/{comment}/report', [SideHustleCaseCommentController::class, 'report'])->name('cases.comments.report');
 });
 

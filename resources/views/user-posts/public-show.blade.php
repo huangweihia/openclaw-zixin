@@ -43,15 +43,15 @@
         @if ($canReadFull)
             <div class="flex flex-wrap gap-3 mt-8">
                 @auth
-                    <form method="post" action="{{ route('posts.like', $post) }}">
+                    <form method="post" action="{{ route('posts.like', $post) }}" class="oc-engage-ajax">
                         @csrf
-                        <button type="submit" class="btn {{ $userLiked ? 'btn-primary' : 'btn-secondary' }}">
+                        <button type="submit" class="btn {{ $userLiked ? 'btn-primary' : 'btn-secondary' }}" data-on-text="❤️ 已赞" data-off-text="🤍 点赞">
                             {{ $userLiked ? '❤️ 已赞' : '🤍 点赞' }} · {{ number_format($post->like_count) }}
                         </button>
                     </form>
-                    <form method="post" action="{{ route('posts.favorite', $post) }}">
+                    <form method="post" action="{{ route('posts.favorite', $post) }}" class="oc-engage-ajax">
                         @csrf
-                        <button type="submit" class="btn {{ $userFavorited ? 'btn-primary' : 'btn-secondary' }}">
+                        <button type="submit" class="btn {{ $userFavorited ? 'btn-primary' : 'btn-secondary' }}" data-on-text="⭐ 已收藏" data-off-text="☆ 收藏">
                             {{ $userFavorited ? '⭐ 已收藏' : '☆ 收藏' }}
                         </button>
                     </form>
@@ -89,4 +89,5 @@
             </section>
         @endif
     </div>
+    @include('partials.engagement-scripts')
 @endsection

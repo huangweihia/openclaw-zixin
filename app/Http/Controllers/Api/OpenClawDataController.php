@@ -187,6 +187,10 @@ class OpenClawDataController extends Controller
                         \Log::info("保存成功", ['type' => $type, 'index' => $index]);
                     } elseif ($result === 'skipped') {
                         $skipped++;
+                        $errors[] = [
+                            'index' => $index,
+                            'reason' => '重复数据，已跳过（依据唯一 URL）',
+                        ];
                         \Log::info("跳过重复数据", ['type' => $type, 'index' => $index]);
                     } else {
                         $failed++;
@@ -337,7 +341,7 @@ class OpenClawDataController extends Controller
             'category_id' => null,
             'title' => $item['title'] ?? '无标题',
             'slug' => Str::slug($item['title'] ?? 'article') . '-' . time() . '-' . rand(1000, 9999),
-            'summary' => $item['summary'] ?? null,
+            'summary' => $this->clip($item['summary'] ?? null, 500),
             'content' => $item['content'] ?? null,
             'cover_image' => $item['cover_image'] ?? null,
             'author_id' => null, // 可以设置为系统用户 ID
@@ -369,7 +373,7 @@ class OpenClawDataController extends Controller
             'stars' => $item['stars'] ?? 0,
             'forks' => $item['forks'] ?? 0,
             'score' => $item['score'] ?? 0,
-            'tags' => isset($item['tags']) ? json_encode($item['tags']) : null,
+            'tags' => $this->normalizeJsonArray($item['tags'] ?? null),
             'monetization' => null,
             'difficulty' => $item['difficulty'] ?? 'medium',
             'is_featured' => $item['is_featured'] ?? 0,
@@ -416,7 +420,7 @@ class OpenClawDataController extends Controller
         SideHustleCase::create([
             'title' => $item['title'] ?? '无标题',
             'slug' => Str::slug($item['title'] ?? 'case') . '-' . time() . '-' . rand(1000, 9999),
-            'summary' => $item['description'] ?? null,
+            'summary' => $this->clip($item['description'] ?? null, 500),
             'content' => $item['content'] ?? null,
             'category' => $category,
             'type' => $type,
@@ -428,7 +432,7 @@ class OpenClawDataController extends Controller
             'actual_income' => null,
             'income_screenshots' => null,
             'steps' => $item['content'] ?? null, // 使用 content 作为步骤
-            'tools' => isset($item['tags']) ? json_encode($item['tags']) : null,
+            'tools' => $this->normalizeJsonArray($item['tags'] ?? null),
             'pitfalls' => null,
             'willing_to_consult' => 0,
             'contact_info' => null,
@@ -487,9 +491,11 @@ class OpenClawDataController extends Controller
             'available_in_china' => 0, // 默认需要梯子
             'pricing_model' => $pricingModel,
             'content' => $item['description'] ?? null,
-            'monetization_scenes' => isset($item['tags']) ? json_encode($item['tags']) : null,
+            'monetization_scenes' => $this->normalizeJsonArray($item['tags'] ?? null),
             'prompt_templates' => null,
-            'pricing_reference' => isset($item['pricing_details']) ? json_encode([['service' => '定价', 'price' => $item['pricing_details']]]) : null,
+            'pricing_reference' => isset($item['pricing_details'])
+                ? [['service' => '定价', 'price' => $this->clip((string) $item['pricing_details'], 255)]]
+                : null,
             'channels' => null,
             'delivery_standards' => null,
             'visibility' => $item['is_vip'] ? 'vip' : 'public',
@@ -499,5 +505,38 @@ class OpenClawDataController extends Controller
         ]);
 
         return 'saved';
+    }
+
+    private function clip(mixed $value, int $max): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $s = trim((string) $value);
+        if ($s === '') {
+            return null;
+        }
+
+        return mb_substr($s, 0, $max);
+    }
+
+    private function normalizeJsonArray(mixed $value): ?array
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                return array_values(array_map(static fn ($v) => (string) $v, $decoded));
+            }
+
+            return [(string) $value];
+        }
+        if (is_array($value)) {
+            return array_values(array_map(static fn ($v) => (string) $v, $value));
+        }
+
+        return [(string) $value];
     }
 }

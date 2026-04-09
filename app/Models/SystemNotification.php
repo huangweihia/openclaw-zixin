@@ -12,6 +12,7 @@ class SystemNotification extends Model
         'content',
         'priority',
         'type',
+        'audience',
         'action_url',
         'is_published',
         'expires_at',

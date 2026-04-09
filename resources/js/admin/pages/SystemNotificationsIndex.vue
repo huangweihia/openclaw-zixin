@@ -16,6 +16,7 @@ const form = ref({
     content: '',
     priority: 'medium',
     type: 'system',
+    audience: 'all',
     action_url: '',
     is_published: false,
     expires_at: '',
@@ -27,6 +28,7 @@ function reset() {
         content: '',
         priority: 'medium',
         type: 'system',
+        audience: 'all',
         action_url: '',
         is_published: false,
         expires_at: '',
@@ -51,6 +53,7 @@ async function save() {
         content: form.value.content,
         priority: form.value.priority,
         type: form.value.type,
+        audience: form.value.audience,
         action_url: form.value.action_url || null,
         is_published: form.value.is_published,
         expires_at: form.value.expires_at || null,
@@ -89,6 +92,7 @@ function openEdit(r) {
         content: r.content,
         priority: r.priority,
         type: r.type,
+        audience: r.audience || 'all',
         action_url: r.action_url || '',
         is_published: !!r.is_published,
         expires_at: r.expires_at ? r.expires_at.slice(0, 16) : '',
@@ -127,6 +131,7 @@ onMounted(load);
                     <tr>
                         <th>标题</th>
                         <th>类型</th>
+                        <th>人群</th>
                         <th>发布</th>
                         <th>站内推送</th>
                         <th />
@@ -136,6 +141,7 @@ onMounted(load);
                     <tr v-for="r in rows" :key="r.id">
                         <td>{{ r.title }}</td>
                         <td>{{ enumLabel('systemNotifType', r.type) }}</td>
+                        <td class="muted">{{ r.audience || 'all' }}</td>
                         <td>{{ r.is_published ? '是' : '否' }}</td>
                         <td>{{ r.inbox_dispatched_at ? '已推送' : '—' }}</td>
                         <td class="act">
@@ -164,6 +170,17 @@ onMounted(load);
                     <span>类型</span>
                     <select v-model="form.type">
                         <option v-for="o in sysNotifTypeOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
+                    </select>
+                </label>
+                <label class="fld">
+                    <span>派发人群</span>
+                    <select v-model="form.audience">
+                        <option value="all">所有用户</option>
+                        <option value="non_member">非会员（普通用户）</option>
+                        <option value="member">会员（VIP/SVIP/管理员）</option>
+                        <option value="vip">VIP（含管理员）</option>
+                        <option value="svip">SVIP（含管理员）</option>
+                        <option value="admin">仅管理员</option>
                     </select>
                 </label>
                 <label class="fld"><span>跳转 URL</span><input v-model="form.action_url" type="text" /></label>

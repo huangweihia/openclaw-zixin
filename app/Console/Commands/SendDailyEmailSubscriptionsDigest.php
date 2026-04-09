@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Article;
 use App\Models\EmailSubscription;
 use App\Models\SiteSetting;
+use App\Support\EmailLogWriter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
@@ -63,11 +64,14 @@ class SendDailyEmailSubscriptionsDigest extends Command
                         continue;
                     }
                     try {
+                        $subject = $site.' · 每日内容精选';
                         Mail::html($html, function ($message) use ($email, $site) {
                             $message->to($email)->subject($site.' · 每日内容精选');
                         });
+                        EmailLogWriter::sent($sub->user_id ? (int) $sub->user_id : null, $email, $subject, 'daily_digest');
                         $sent++;
                     } catch (\Throwable $e) {
+                        EmailLogWriter::failed($sub->user_id ? (int) $sub->user_id : null, $email, $site.' · 每日内容精选', $e->getMessage(), 'daily_digest');
                         $this->warn('发送失败 '.$email.'：'.$e->getMessage());
                     }
                 }

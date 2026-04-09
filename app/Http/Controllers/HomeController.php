@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\AiToolMonetization;
+use App\Models\Article;
+use App\Models\Project;
 use App\Support\PricingConfig;
 use App\Models\PrivateTrafficSop;
 use App\Models\SideHustleCase;
@@ -28,13 +30,19 @@ class HomeController extends Controller
 
         $pricingPlans = $this->homePricingPlans();
         $testimonials = $this->homeTestimonials();
+        $featuredArticles = $this->featuredArticles();
+        $featuredProjects = $this->featuredProjects();
+        $featuredCases = $this->featuredCases();
 
         return view('home', compact(
             'vipActivities',
             'homeStats',
             'vipPreviews',
             'pricingPlans',
-            'testimonials'
+            'testimonials',
+            'featuredArticles',
+            'featuredProjects',
+            'featuredCases'
         ));
     }
 
@@ -391,5 +399,34 @@ class HomeController extends Controller
             'lifetime' => '终身会员',
             default => (string) $plan,
         };
+    }
+
+    private function featuredArticles()
+    {
+        return Article::query()
+            ->where('is_published', true)
+            ->orderByDesc('like_count')
+            ->orderByDesc('view_count')
+            ->limit(8)
+            ->get(['id', 'title', 'slug', 'like_count', 'view_count']);
+    }
+
+    private function featuredProjects()
+    {
+        return Project::query()
+            ->orderByDesc('stars')
+            ->orderByDesc('forks')
+            ->limit(8)
+            ->get(['id', 'name', 'stars', 'forks']);
+    }
+
+    private function featuredCases()
+    {
+        return SideHustleCase::query()
+            ->where('status', 'approved')
+            ->orderByDesc('like_count')
+            ->orderByDesc('view_count')
+            ->limit(8)
+            ->get(['id', 'title', 'slug', 'like_count', 'view_count']);
     }
 }

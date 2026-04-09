@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\SideHustleCase;
 use App\Models\UserPost;
+use App\Models\CommentLike;
+use App\Support\CommentThreadBuilder;
 use App\Support\ViewHistoryRecorder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -67,10 +69,31 @@ class SideHustleCaseWebController extends Controller
         $bodyHtml = Str::markdown((string) $sideHustleCase->content);
         $stepsHtml = $sideHustleCase->steps ? Str::markdown((string) $sideHustleCase->steps) : null;
 
+        $comments = $sideHustleCase->comments()
+            ->whereNull('parent_id')
+            ->where('is_hidden', false)
+            ->latest()
+            ->with(['user'])
+            ->paginate(20)
+            ->withQueryString();
+        CommentThreadBuilder::attachNestedReplies($comments, $sideHustleCase);
+
+        $likedCommentIds = [];
+        if ($request->user()) {
+            $ids = CommentThreadBuilder::collectTreeCommentIds($comments);
+            $likedCommentIds = CommentLike::query()
+                ->where('user_id', $request->user()->id)
+                ->whereIn('comment_id', $ids)
+                ->pluck('comment_id')
+                ->all();
+        }
+
         return view('cases.show', [
             'case' => $sideHustleCase,
             'bodyHtml' => $bodyHtml,
             'stepsHtml' => $stepsHtml,
+            'comments' => $comments,
+            'likedCommentIds' => $likedCommentIds,
         ]);
     }
 }

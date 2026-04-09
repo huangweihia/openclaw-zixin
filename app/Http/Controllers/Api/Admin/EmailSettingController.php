@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\EmailSetting;
+use App\Support\EmailLogWriter;
 use App\Support\AdminUniqueCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -73,7 +74,9 @@ class EmailSettingController extends Controller
             Mail::html($body, function ($message) use ($data, $subject) {
                 $message->to($data['to'])->subject($subject);
             });
+            EmailLogWriter::sent(null, (string) $data['to'], $subject, 'admin_mail_test');
         } catch (Throwable $e) {
+            EmailLogWriter::failed(null, (string) $data['to'], $subject, $e->getMessage(), 'admin_mail_test');
             return response()->json([
                 'message' => '发送失败：'.$e->getMessage(),
             ], 422);

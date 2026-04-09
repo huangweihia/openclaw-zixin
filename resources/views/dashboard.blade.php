@@ -30,7 +30,17 @@
                 <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-sm">
                     <span class="font-semibold oc-heading">{{ $roleLabel }}</span>
                     @if ($vipDays !== null)
-                        <span class="oc-muted">剩余 <strong class="oc-heading">{{ $vipDays }}</strong> 天</span>
+                        <span class="{{ !empty($vipIsUrgent) ? 'text-red-600 font-semibold' : 'oc-muted' }}">
+                            剩余 <strong class="oc-heading">{{ $vipDays }}</strong> 天
+                        </span>
+                        @if (!empty($vipIsUrgent) && !empty($vipSecondsLeft) && $vipSecondsLeft > 0)
+                            <span
+                                id="vip-expiry-countdown"
+                                class="text-xs px-2 py-1 rounded-full"
+                                style="background: #fee2e2; color: #b91c1c;"
+                                data-left="{{ (int) $vipSecondsLeft }}"
+                            >倒计时加载中...</span>
+                        @endif
                     @elseif ($u->isVip() && $u->subscription_ends_at)
                         <span class="oc-muted">有效期至 {{ $u->subscription_ends_at->format('Y-m-d') }}</span>
                     @endif
@@ -88,6 +98,16 @@
                 <a href="{{ route('payments.confirm', ['plan' => 'vip']) }}" class="btn btn-secondary text-sm">去支付页</a>
             </div>
         @endif
+        @if (in_array($u->role, ['vip', 'svip', 'admin'], true))
+            <div class="mt-4 pt-4 border-t oc-border">
+                <h4 class="text-sm font-semibold oc-heading mb-2">邮件订阅（VIP / SVIP）</h4>
+                <form id="email-sub-form" class="flex flex-wrap gap-2 items-center">
+                    <input type="email" id="email-sub-input" class="oc-input" style="max-width:320px" value="{{ $u->email }}" required />
+                    <button type="submit" class="btn btn-secondary text-sm">订阅每日精选</button>
+                </form>
+                <p id="email-sub-msg" class="text-xs oc-muted mt-2 mb-0"></p>
+            </div>
+        @endif
     </div>
 
     {{-- 快捷入口 --}}
@@ -109,6 +129,10 @@
             <a href="{{ route('dashboard.comments') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-5 rounded-xl text-center">
                 <span class="text-2xl" aria-hidden="true">💬</span>
                 <span class="text-sm font-semibold oc-heading">我的评论</span>
+            </a>
+            <a href="{{ route('dashboard.orders') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-5 rounded-xl text-center">
+                <span class="text-2xl" aria-hidden="true">💳</span>
+                <span class="text-sm font-semibold oc-heading">我的订单</span>
             </a>
             @if ($u->role === 'svip' || $u->isAdmin())
                 <a href="{{ route('svip-subscriptions.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-5 rounded-xl text-center">
@@ -138,3 +162,68 @@
         @endif
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        (function () {
+            const el = document.getElementById('vip-expiry-countdown');
+            if (!el) return;
+            let left = Number(el.getAttribute('data-left') || 0);
+            const pad = (n) => String(n).padStart(2, '0');
+            const render = () => {
+                if (!Number.isFinite(left) || left <= 0) {
+                    el.textContent = '已到期，请尽快续费';
+                    return;
+                }
+                const d = Math.floor(left / 86400);
+                const h = Math.floor((left % 86400) / 3600);
+                const m = Math.floor((left % 3600) / 60);
+                const s = Math.floor(left % 60);
+                el.textContent = `剩余 ${d}天 ${pad(h)}:${pad(m)}:${pad(s)}`;
+            };
+            render();
+            setInterval(function () {
+                left -= 1;
+                render();
+            }, 1000);
+        })();
+    </script>
+    @if (in_array($u->role, ['vip', 'svip', 'admin'], true))
+        <script>
+            (function () {
+                const form = document.getElementById('email-sub-form');
+                if (!form) return;
+                const input = document.getElementById('email-sub-input');
+                const msg = document.getElementById('email-sub-msg');
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                form.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const email = (input?.value || '').trim();
+                    if (!email) return;
+                    try {
+                        const res = await fetch('/api/email-subscriptions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Accept: 'application/json',
+                                'X-CSRF-TOKEN': token,
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({
+                                email,
+                                subscribed_to: ['daily', 'notification'],
+                            }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        msg.textContent = res.ok ? '订阅成功，后续可在后台邮件订阅管理查看。' : (data.message || '订阅失败，请稍后重试');
+                        msg.style.color = res.ok ? '#166534' : '#b91c1c';
+                    } catch (err) {
+                        msg.textContent = '网络异常，请稍后重试';
+                        msg.style.color = '#b91c1c';
+                    }
+                });
+            })();
+        </script>
+    @endif
+@endpush

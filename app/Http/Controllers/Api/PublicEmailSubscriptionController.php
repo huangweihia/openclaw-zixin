@@ -20,6 +20,11 @@ class PublicEmailSubscriptionController extends Controller
             return response()->json(['message' => '服务暂不可用'], 503);
         }
 
+        $user = $request->user();
+        if (! $user || ! in_array((string) $user->role, ['vip', 'svip', 'admin'], true)) {
+            return response()->json(['message' => '仅 VIP / SVIP / 管理员可订阅'], 403);
+        }
+
         $data = $request->validate([
             'email' => ['required', 'email', 'max:255'],
             'subscribed_to' => ['nullable', 'array', 'min:1'],
@@ -30,8 +35,8 @@ class PublicEmailSubscriptionController extends Controller
 
         $sub = EmailSubscription::query()->firstOrNew(['email' => $data['email']]);
         $wasNew = ! $sub->exists;
-        if ($wasNew && $request->user()) {
-            $sub->user_id = $request->user()->id;
+        if ($wasNew) {
+            $sub->user_id = $user->id;
         }
         $sub->subscribed_to = $topics;
         $sub->is_unsubscribed = false;

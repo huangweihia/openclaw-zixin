@@ -13,6 +13,9 @@ class SystemNotificationController extends Controller
 {
     public function index(): JsonResponse
     {
+        // 兜底：修复历史上“已发布但未入站内信”的遗留通知。
+        app(SystemNotificationInboxDispatcher::class)->dispatchBacklog(50);
+
         return response()->json([
             'notifications' => SystemNotification::query()
                 ->with('creator:id,name')
@@ -91,6 +94,7 @@ class SystemNotificationController extends Controller
             'content' => [$requireAll ? 'required' : 'sometimes', 'string'],
             'priority' => ['sometimes', Rule::in(['low', 'medium', 'high'])],
             'type' => ['sometimes', Rule::in(['system', 'announcement', 'maintenance'])],
+            'audience' => ['sometimes', Rule::in(['all', 'user', 'vip', 'svip', 'admin', 'member', 'non_member'])],
             'action_url' => ['nullable', 'string', 'max:255'],
             'is_published' => ['sometimes', 'boolean'],
             'expires_at' => ['nullable', 'date'],

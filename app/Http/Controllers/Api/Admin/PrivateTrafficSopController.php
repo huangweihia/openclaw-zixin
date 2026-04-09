@@ -11,11 +11,25 @@ use Illuminate\Validation\Rule;
 
 class PrivateTrafficSopController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        return response()->json([
-            'sops' => PrivateTrafficSop::query()->orderByDesc('id')->get(),
-        ]);
+        $perPage = (int) $request->query('per_page', 20);
+        $perPage = max(10, min($perPage, 100));
+        $q = trim((string) $request->query('q', ''));
+
+        $rows = PrivateTrafficSop::query()
+            ->when($q !== '', function ($builder) use ($q) {
+                $builder->where(function ($sub) use ($q) {
+                    $sub->where('title', 'like', '%'.$q.'%')
+                        ->orWhere('slug', 'like', '%'.$q.'%')
+                        ->orWhere('summary', 'like', '%'.$q.'%');
+                });
+            })
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return response()->json($rows);
     }
 
     public function store(Request $request): JsonResponse

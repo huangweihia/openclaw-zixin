@@ -56,15 +56,15 @@
 
             <div class="flex flex-wrap gap-3 mt-8">
                 @auth
-                    <form method="post" action="{{ route('articles.like', $article) }}">
+                    <form method="post" action="{{ route('articles.like', $article) }}" class="oc-engage-ajax">
                         @csrf
-                        <button type="submit" class="btn {{ $userLiked ? 'btn-primary' : 'btn-secondary' }}">
+                        <button type="submit" class="btn {{ $userLiked ? 'btn-primary' : 'btn-secondary' }}" data-on-text="❤️ 已赞" data-off-text="🤍 点赞">
                             {{ $userLiked ? '❤️ 已赞' : '🤍 点赞' }} · {{ number_format($article->like_count) }}
                         </button>
                     </form>
-                    <form method="post" action="{{ route('articles.favorite', $article) }}">
+                    <form method="post" action="{{ route('articles.favorite', $article) }}" class="oc-engage-ajax">
                         @csrf
-                        <button type="submit" class="btn {{ $userFavorited ? 'btn-primary' : 'btn-secondary' }}">
+                        <button type="submit" class="btn {{ $userFavorited ? 'btn-primary' : 'btn-secondary' }}" data-on-text="⭐ 已收藏" data-off-text="☆ 收藏">
                             {{ $userFavorited ? '⭐ 已收藏' : '☆ 收藏' }}
                         </button>
                     </form>
@@ -132,6 +132,7 @@
 
     @include('partials.comment-report-modal')
     @include('partials.comment-scripts')
+    @include('partials.engagement-scripts')
 
     @if ($article->cover_image)
         <div id="cover-modal" class="oc-modal-overlay hidden" role="dialog" aria-modal="true">

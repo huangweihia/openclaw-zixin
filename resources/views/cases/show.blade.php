@@ -27,5 +27,33 @@
                 </section>
             @endif
         </div>
+
+        <section class="mt-10 oc-surface p-6">
+            <h2 class="text-xl font-bold mb-4 oc-heading">评论</h2>
+            @auth
+                <form method="post" action="{{ route('cases.comments.store', $case) }}" class="oc-comment-form-ajax mb-8">
+                    @csrf
+                    <input type="hidden" name="ajax" value="1" />
+                    <label class="oc-label" for="case-comment-content">发表评论</label>
+                    <textarea name="content" id="case-comment-content" rows="4" required minlength="1" class="oc-input mb-2" placeholder="输入评论内容"></textarea>
+                    <button type="submit" class="btn btn-primary text-sm">发表评论</button>
+                </form>
+            @else
+                <p class="text-sm mb-4 oc-muted">
+                    <a href="{{ route('login', ['return' => request()->path()]) }}" class="oc-link font-semibold" style="text-decoration: none;">请先登录</a> 后发表评论
+                </p>
+            @endauth
+            <div id="comments-list">
+                @forelse ($comments as $comment)
+                    @include('partials.comment-thread', ['root' => $comment, 'likedIds' => $likedCommentIds ?? [], 'commentContext' => 'case'])
+                @empty
+                    <p class="text-sm oc-muted oc-comments-empty m-0">暂无评论</p>
+                @endforelse
+            </div>
+            <div class="mt-6">{{ $comments->onEachSide(1)->links() }}</div>
+        </section>
     </article>
+
+    @include('partials.comment-report-modal')
+    @include('partials.comment-scripts')
 @endsection

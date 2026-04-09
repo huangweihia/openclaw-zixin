@@ -101,7 +101,10 @@ class AdPresentationService
     {
         $slots = AdSlot::query()
             ->where('is_active', true)
-            ->where('type', 'float')
+            ->where(function ($q) {
+                $q->where('type', 'float')
+                    ->orWhereIn('position', ['left', 'right']);
+            })
             ->orderByDesc('sort')
             ->orderBy('id')
             ->limit(5)
