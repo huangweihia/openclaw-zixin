@@ -8,14 +8,26 @@ set -euo pipefail
 # - clear/cache optimize for Laravel
 #
 # Usage:
-#   bash scripts/server-update.sh
-# Optional:
-#   REPO_DIR=/opt/zixin/openclaw-zixin bash scripts/server-update.sh
+#   bash /opt/openclaw-zixin/scripts/server-update.sh
+#   ./scripts/server-update.sh
+#
+# Auto detect repository root:
+# 1) REPO_DIR env (if provided)
+# 2) parent directory of this script
+# 3) current working directory
 
-REPO_DIR="${REPO_DIR:-/opt/zixin/openclaw-zixin}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+DEFAULT_REPO_DIR="$(cd -- "$SCRIPT_DIR/.." >/dev/null 2>&1 && pwd)"
+REPO_DIR="${REPO_DIR:-$DEFAULT_REPO_DIR}"
 COMPOSE_FILE="docker-compose.server.yml"
 
 cd "$REPO_DIR"
+
+if [ ! -f "artisan" ] || [ ! -f "$COMPOSE_FILE" ]; then
+  echo "Error: invalid Laravel repo directory: $REPO_DIR"
+  echo "Please run this script from repo root, or set REPO_DIR explicitly."
+  exit 1
+fi
 
 echo "[1/7] pull latest code..."
 git pull --ff-only origin main
