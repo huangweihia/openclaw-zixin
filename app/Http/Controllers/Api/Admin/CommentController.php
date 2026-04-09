@@ -14,6 +14,8 @@ class CommentController extends Controller
     public function index(Request $request): JsonResponse
     {
         $hidden = $request->query('hidden');
+        $perPage = (int) $request->query('per_page', 30);
+        $perPage = max(10, min($perPage, 100));
 
         $paginator = Comment::query()
             ->with([
@@ -24,7 +26,7 @@ class CommentController extends Controller
                 $query->where('is_hidden', $hidden === '1');
             })
             ->orderByDesc('id')
-            ->paginate(30)
+            ->paginate($perPage)
             ->withQueryString();
 
         return response()->json(

@@ -98,9 +98,8 @@
     {{-- 通栏横幅：仅当 home-banner 后台「展示位置」为顶部（或留空）时渲染；左右侧改由下方侧栏展示 --}}
     @include('partials.ad-slot', ['code' => 'home-banner', 'bannerPlacement' => 'top'])
 
-    <div class="max-w-7xl mx-auto px-4 flex gap-6 items-start w-full">
-        @include('partials.ad-rail', ['railPosition' => 'left'])
-        <div class="flex-1 min-w-0">
+    <div class="max-w-7xl mx-auto px-4 w-full">
+        <div class="w-full min-w-0">
     <section class="hero-gradient text-white py-32 min-h-[600px] flex flex-col justify-center">
         <div class="max-w-7xl mx-auto px-4 text-center w-full">
             <h1 class="text-5xl md:text-6xl font-bold mb-6 flex flex-wrap items-center justify-center gap-4">
@@ -324,7 +323,6 @@
     </section>
 
         </div>
-        @include('partials.ad-rail', ['railPosition' => 'right'])
     </div>
 
     {{-- 通栏底部：仅当 home-banner 展示位置为「底部」时由 partial 内逻辑决定是否输出 --}}

@@ -14,6 +14,8 @@ class ArticleController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $published = $request->query('published');
+        $perPage = (int) $request->query('per_page', 20);
+        $perPage = max(10, min($perPage, 100));
 
         $articles = Article::query()
             ->with(['category:id,name,slug', 'author:id,name,email'])
@@ -31,7 +33,7 @@ class ArticleController extends Controller
                 $query->where('category_id', (int) $request->query('category_id'));
             })
             ->orderByDesc('id')
-            ->paginate(20)
+            ->paginate($perPage)
             ->withQueryString();
 
         return response()->json($articles);

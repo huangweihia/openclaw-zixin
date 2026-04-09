@@ -13,6 +13,8 @@ class ProjectController extends Controller
     public function index(Request $request): JsonResponse
     {
         $q = trim((string) $request->query('q', ''));
+        $perPage = (int) $request->query('per_page', 20);
+        $perPage = max(10, min($perPage, 100));
 
         $projects = Project::query()
             ->with('category:id,name,slug')
@@ -24,7 +26,7 @@ class ProjectController extends Controller
                 });
             })
             ->orderByDesc('id')
-            ->paginate(20)
+            ->paginate($perPage)
             ->withQueryString();
 
         return response()->json($projects);

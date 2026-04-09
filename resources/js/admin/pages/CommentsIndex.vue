@@ -7,6 +7,7 @@ const filter = ref('');
 const rows = ref([]);
 const meta = ref(null);
 const total = ref(0);
+const perPage = ref(30);
 const loading = ref(false);
 const err = ref('');
 
@@ -21,6 +22,7 @@ async function load(page = 1) {
         if (filter.value === 'visible') {
             params.hidden = '0';
         }
+        params.per_page = perPage.value;
         const { data } = await axios.get('/api/admin/comments', { params });
         rows.value = data.data ?? [];
         total.value = data.total ?? 0;
@@ -65,6 +67,11 @@ function typeLabel(t) {
     }
     const s = t.split('\\').pop();
     return s || t;
+}
+
+function onPerPageChange(next) {
+    perPage.value = Number(next) || 30;
+    load(1);
 }
 </script>
 
@@ -115,8 +122,10 @@ function typeLabel(t) {
             :current-page="meta.current_page"
             :last-page="meta.last_page"
             :total="total"
+            :per-page="perPage"
             :loading="loading"
             @update:page="load"
+            @update:per-page="onPerPageChange"
         />
     </div>
 </template>

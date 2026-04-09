@@ -10,6 +10,7 @@ const q = ref('');
 const users = ref([]);
 const meta = ref(null);
 const total = ref(0);
+const perPage = ref(20);
 const loadErr = ref('');
 const loading = ref(false);
 
@@ -18,7 +19,7 @@ async function load(page = 1) {
     loadErr.value = '';
     try {
         const { data } = await axios.get('/api/admin/users', {
-            params: { page, q: q.value || undefined },
+            params: { page, per_page: perPage.value, q: q.value || undefined },
         });
         users.value = data.data ?? [];
         total.value = data.total ?? 0;
@@ -43,6 +44,11 @@ function onSearchInput() {
 
 function goEdit(id) {
     router.push({ name: 'user-edit', params: { id: String(id) } });
+}
+
+function onPerPageChange(next) {
+    perPage.value = Number(next) || 20;
+    load(1);
 }
 </script>
 
@@ -100,8 +106,10 @@ function goEdit(id) {
             :current-page="meta.current_page"
             :last-page="meta.last_page"
             :total="total"
+            :per-page="perPage"
             :loading="loading"
             @update:page="load"
+            @update:per-page="onPerPageChange"
         />
     </div>
 </template>

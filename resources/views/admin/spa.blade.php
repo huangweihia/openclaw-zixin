@@ -14,6 +14,19 @@
     <script>
         window.__ADMIN_ROUTER_BASE__ = @json($routerBase);
     </script>
+    <style>
+        /* 线上兜底：即使旧构建缓存未更新，后台按钮文字也保持可见 */
+        #admin-app .btn,
+        #admin-app button.btn {
+            color: #0f172a;
+        }
+        #admin-app .btn.primary,
+        #admin-app .btn.btn--pri,
+        #admin-app button.btn.primary,
+        #admin-app button.btn.btn--pri {
+            color: #fff !important;
+        }
+    </style>
     @vite(['resources/js/admin/main.js'])
 </head>
 <body>

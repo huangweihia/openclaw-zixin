@@ -9,6 +9,7 @@ const router = useRouter();
 const q = ref('');
 const rows = ref([]);
 const meta = ref(null);
+const perPage = ref(20);
 const err = ref('');
 let searchT;
 
@@ -22,7 +23,7 @@ function syncFilterFromRoute() {
 async function load(page = 1) {
     err.value = '';
     try {
-        const params = { page, q: q.value.trim() || undefined };
+        const params = { page, per_page: perPage.value, q: q.value.trim() || undefined };
         if (publishedFilter.value === '0' || publishedFilter.value === '1') {
             params.published = publishedFilter.value;
         }
@@ -72,6 +73,11 @@ async function removeRow(id) {
     } catch {
         err.value = '删除失败';
     }
+}
+
+function onPerPageChange(next) {
+    perPage.value = Number(next) || 20;
+    load(1);
 }
 </script>
 
@@ -131,7 +137,9 @@ async function removeRow(id) {
             v-if="meta"
             :current-page="meta.current_page"
             :last-page="meta.last_page"
+            :per-page="perPage"
             @update:page="load"
+            @update:per-page="onPerPageChange"
         />
     </div>
 </template>

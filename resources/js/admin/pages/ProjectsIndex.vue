@@ -2,11 +2,14 @@
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import AdminPagination from '../components/AdminPagination.vue';
 
 const router = useRouter();
 const q = ref('');
 const rows = ref([]);
 const meta = ref(null);
+const total = ref(0);
+const perPage = ref(20);
 const err = ref('');
 let searchT;
 
@@ -14,9 +17,10 @@ async function load(page = 1) {
     err.value = '';
     try {
         const { data } = await axios.get('/api/admin/projects', {
-            params: { page, q: q.value.trim() || undefined },
+            params: { page, per_page: perPage.value, q: q.value.trim() || undefined },
         });
         rows.value = data.data ?? [];
+        total.value = data.total ?? 0;
         meta.value = { current_page: data.current_page, last_page: data.last_page };
     } catch {
         err.value = '加载失败';
@@ -40,6 +44,11 @@ async function removeRow(id) {
     } catch {
         err.value = '删除失败';
     }
+}
+
+function onPerPageChange(next) {
+    perPage.value = Number(next) || 20;
+    load(1);
 }
 </script>
 
@@ -82,13 +91,15 @@ async function removeRow(id) {
             </table>
             <p v-if="rows.length === 0" class="empty">暂无数据</p>
         </div>
-        <div v-if="meta && meta.last_page > 1" class="pager">
-            <button type="button" :disabled="meta.current_page <= 1" @click="load(meta.current_page - 1)">上一页</button>
-            <span>{{ meta.current_page }} / {{ meta.last_page }}</span>
-            <button type="button" :disabled="meta.current_page >= meta.last_page" @click="load(meta.current_page + 1)">
-                下一页
-            </button>
-        </div>
+        <AdminPagination
+            v-if="meta"
+            :current-page="meta.current_page"
+            :last-page="meta.last_page"
+            :total="total"
+            :per-page="perPage"
+            @update:page="load"
+            @update:per-page="onPerPageChange"
+        />
     </div>
 </template>
 
@@ -158,12 +169,6 @@ async function removeRow(id) {
     padding: 1.25rem;
     color: #64748b;
     margin: 0;
-}
-.pager {
-    margin-top: 1rem;
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
 }
 .btn {
     padding: 0.5rem 1rem;
