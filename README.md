@@ -1,4 +1,152 @@
-﻿# OpenClaw 鏅轰俊锛圠aravel + Vue锛?
+﻿# OpenClaw 智信（Laravel + Vue）
+
+> **本目录即 Laravel 应用根**（含 `docker/`、`docker-compose.yml`）。  
+> **Git 仓库建议在本目录执行 `git init`**；服务器部署时也可直接同步本目录内容，无需再改挂载路径。
+>
+> **把“内容站”升级成“可变现的增长系统”**：内容分发 → 互动沉淀 → 会员分层 → 支付转化 → 触达复购。
+
+[![Laravel](https://img.shields.io/badge/Laravel-10-ff2d20.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2-777bb4.svg)](https://www.php.net)
+[![Vue](https://img.shields.io/badge/Vue-3-42b883.svg)](https://vuejs.org)
+[![Vite](https://img.shields.io/badge/Vite-5-646cff.svg)](https://vitejs.dev)
+[![Element Plus](https://img.shields.io/badge/Element%20Plus-Admin-409eff.svg)](https://element-plus.org)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ed.svg)](https://docs.docker.com/compose/)
+
+OpenClaw 智信是一个面向“**内容变现 + 私域运营 + 会员增长**”的一体化站点：前台承载内容分发与转化，后台提供内容运营、审核、触达与数据闭环能力。
+
+## ✨ 亮点（更像产品，而不是 Demo）
+
+- **内容 × 会员 × 运营一体化**：不是“发文章”，而是“从流量到付费”的可运营闭环
+- **可持续增长工具箱**：UGC 投稿、评论、收藏、审核、举报、积分、订阅、推送、邮件
+- **漂亮且可扩展的管理端**：Vue + Element Plus，支持菜单/按钮级权限（RBAC）
+- **可观测性**：OpenClaw 任务日志对外上报 + 管理端检索筛选 + 统计图表
+
+## 👥 适用人群
+
+- **内容型/社区型产品**：AI 资讯、工具导航、教程/课程、案例库、资源站
+- **私域运营团队**：需要 SOP、触达、订阅/会员、用户增长工具链
+- **创业团队**：用一套可落地的“内容 + 会员 + 运营后台”快速验证商业模式
+
+## 🧩 核心业务模块（你能卖什么）
+
+| 模块 | 能带来的价值 |
+| --- | --- |
+| 内容供给（文章/案例/工具/项目/付费资源） | 构建 SEO 与持续流量入口，承接转化 |
+| 会员体系（VIP/SVIP） | 权益分层与付费门槛，提升 ARPU |
+| 支付与订阅 | 订单闭环，支持长期订阅模型 |
+| 互动与 UGC（点赞/收藏/评论/投稿） | 提升留存与内容供给效率 |
+| 审核与举报 | 保障社区质量与增长安全 |
+| 运营与触达（站内信/邮件/推送） | 促活、召回、复购 |
+| 站点配置（Logo/名称/口号等） | 快速搭建品牌化站点 |
+| OpenClaw 任务日志 + 图表 | 任务运行可观测，便于排障与运营复盘 |
+
+## 🔁 业务闭环（可直接拿去讲）
+
+```mermaid
+flowchart LR
+  A[内容分发\n文章/案例/工具] --> B[互动沉淀\n评论/收藏/投稿]
+  B --> C[权益分层\nVIP/SVIP]
+  C --> D[支付转化\n订单/订阅]
+  D --> E[触达复购\n站内信/邮件/推送]
+  E --> A
+```
+
+## 🖼️ 截图 / 演示（放图就能更吸引人）
+
+- `docs/screenshots/home.png`：首页
+- `docs/screenshots/admin-dashboard.png`：后台总览
+- `docs/screenshots/admin-rbac.png`：权限与菜单
+- `docs/screenshots/openclaw-task-logs.png`：任务日志 + 图表
+
+（先占位，后续你补几张图，这个 README 就“像一个真产品”了）
+
+## 📚 项目文档（同仓库内置）
+
+项目文档在本目录下的 `docs/`：
+
+- 开发环境配置：`docs/01-开发环境配置.md`
+- 数据库设计：`docs/02-数据库表字段详细设计.md`
+- 其他：`docs/` 下的「功能清单 / 原型图 / OpenClaw 说明」等
+
+## 技术栈
+
+- **后端**：Laravel 10（PHP 8.2+）
+- **管理端**：Vue 3 + Vite + Element Plus
+- **样式**：Tailwind（CDN）+ 皮肤变量（`public/css/skins.css`）
+- **数据库**：MySQL 8
+- **缓存/Session（推荐）**：Redis
+
+## 快速开始（Windows + Docker，推荐）
+
+先进入本目录（与 `docker-compose.yml` 同级）：
+
+```bash
+cd D:\lewan\openclaw-data\workspace\openclaw_zhixin\_laravel_temp
+```
+
+准备 `.env` 并启动：
+
+```bash
+copy .env.example .env
+docker compose up -d
+
+docker compose exec -T php composer install
+docker compose exec -T php npm install
+
+docker compose exec -T php php artisan key:generate
+docker compose exec -T php php artisan migrate
+docker compose exec -T php php artisan db:seed
+
+docker compose exec -T php npm run build
+```
+
+访问：
+
+- **前台**：`http://localhost:8083`
+- **后台**：`http://localhost:8083/admin`
+
+## 常用命令
+
+```bash
+docker compose exec -T php php artisan optimize:clear
+docker compose exec -T php php artisan migrate
+docker compose exec -T php php artisan db:seed
+docker compose exec -T php npm run dev
+docker compose exec -T php npm run build
+```
+
+## 初始化管理员账号（Seeder）
+
+`db:seed` 会写入默认管理账号（用于首次登录）：
+
+- **账号**：`dahu@openclaw.test`
+- **密码**：`mqq123456`
+
+生产环境务必第一时间修改口令/替换默认账号策略。
+
+## 常见问题
+
+### 1）PHP 容器启动报 `ln: failed to create symbolic link 'public/storage': No such file or directory`
+
+已在 `docker/php/docker-entrypoint.sh` 做了兼容：启动时自动创建 `public` 与 `storage/app/public` 目录再创建软链。
+
+### 2）上传文件 413（Request Entity Too Large）
+
+需要同时调整 Nginx（`client_max_body_size`）与 PHP（`upload_max_filesize` / `post_max_size`）。  
+详见：`docs/01-开发环境配置.md` 中「上传尺寸限制（Nginx / PHP）」章节。
+
+## 服务器部署（与开发同一套路径）
+
+将本目录整体同步到服务器（例如 `/opt/zixin/openclaw-zixin`），保证 **`artisan`、`docker/`、`docker-compose.server.yml` 在同一层**，然后：
+
+```bash
+cd /opt/zixin/openclaw-zixin
+docker compose -f docker-compose.server.yml up -d --build
+```
+
+访问：`http://服务器IP/`（默认映射 **80:80**；开发环境 `docker-compose.yml` 为 **8083:80**）。
+
+# OpenClaw 鏅轰俊锛圠aravel + Vue锛?
 > **鏈洰褰曞嵆 Laravel 搴旂敤鏍?*锛堝惈 `docker/`銆乣docker-compose.yml`锛夈€侴it 浠撳簱寤鸿浠ユ湰鐩綍涓烘牴鍒濆鍖栵紝鏈嶅姟鍣ㄩ儴缃叉椂涔熷彲鐩存帴鍚屾鏈洰褰曞唴瀹癸紝鏃犻渶鍐嶆敼鎸傝浇璺緞銆?
 > **鎶娾€滃唴瀹圭珯鈥濆崌绾ф垚鈥滃彲鍙樼幇鐨勫闀跨郴缁熲€?*锛氬唴瀹瑰垎鍙?鈫?浜掑姩娌夋穩 鈫?浼氬憳鍒嗗眰 鈫?鏀粯杞寲 鈫?瑙﹁揪澶嶈喘銆?
 [![Laravel](https://img.shields.io/badge/Laravel-10-ff2d20.svg)](https://laravel.com)
