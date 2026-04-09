@@ -3,6 +3,7 @@
 import { onMounted, ref } from 'vue';
 
 import axios from 'axios';
+import AdminPagination from '../components/AdminPagination.vue';
 
 
 
@@ -21,6 +22,7 @@ let filterTimer = null;
 const rows = ref([]);
 
 const meta = ref(null);
+const total = ref(0);
 
 const err = ref('');
 
@@ -209,6 +211,7 @@ async function load(page = 1) {
         const { data } = await axios.get('/api/admin/push-notifications', { params });
 
         rows.value = data.data ?? [];
+        total.value = data.total ?? 0;
 
         meta.value = { current_page: data.current_page, last_page: data.last_page };
 
@@ -498,19 +501,13 @@ onMounted(() => load(1));
 
         </div>
 
-        <div v-if="meta && meta.last_page > 1" class="pager">
-
-            <button type="button" :disabled="meta.current_page <= 1" @click="load(meta.current_page - 1)">上一页</button>
-
-            <span>{{ meta.current_page }} / {{ meta.last_page }}</span>
-
-            <button type="button" :disabled="meta.current_page >= meta.last_page" @click="load(meta.current_page + 1)">
-
-                下一页
-
-            </button>
-
-        </div>
+        <AdminPagination
+            v-if="meta"
+            :current-page="meta.current_page"
+            :last-page="meta.last_page"
+            :total="total"
+            @update:page="load"
+        />
 
         <div v-if="mode" class="modal" @click.self="closeFormModal">
 
@@ -853,18 +850,6 @@ onMounted(() => load(1));
     color: #94a3b8;
 
     margin: 0;
-
-}
-
-.pager {
-
-    margin-top: 0.75rem;
-
-    display: flex;
-
-    gap: 0.65rem;
-
-    align-items: center;
 
 }
 

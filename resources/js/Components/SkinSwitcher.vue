@@ -38,6 +38,15 @@ async function loadSkins() {
                         skin.css_variables = {};
                     }
                 }
+                // 兼容后台可能保存的 "--key" 形式，统一去掉前缀避免重复 "--"
+                if (skin.css_variables && typeof skin.css_variables === 'object') {
+                    const normalized = {};
+                    Object.entries(skin.css_variables).forEach(([k, v]) => {
+                        const nk = String(k).replace(/^--+/, '');
+                        normalized[nk] = v;
+                    });
+                    skin.css_variables = normalized;
+                }
             });
         }
     } catch (error) {
@@ -62,7 +71,12 @@ async function loadCurrentSkin() {
     try {
         const { data } = await axios.get('/api/skins/current');
         if (data.success && data.data?.current_skin) {
-            currentSkin.value = data.data.current_skin;
+            const current = data.data.current_skin;
+            // 私有皮肤在列表接口漏出时，强制合并到列表，确保可见可切换
+            if (current?.code && !skins.value.find((s) => s.code === current.code)) {
+                skins.value.unshift(current);
+            }
+            currentSkin.value = current;
             applySkin(data.data.current_skin.code, { persistLocal });
         } else {
             if (skins.value.length > 0) {

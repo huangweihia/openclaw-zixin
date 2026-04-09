@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
+import AdminPagination from '../components/AdminPagination.vue';
 
 const TOPICS = [
     { v: 'daily', label: '日报' },
@@ -13,6 +14,7 @@ const unsub = ref('');
 const q = ref('');
 const rows = ref([]);
 const meta = ref(null);
+const total = ref(0);
 const err = ref('');
 const banner = ref('');
 const editingId = ref(null);
@@ -91,6 +93,7 @@ async function load(page = 1) {
         }
         const { data } = await axios.get('/api/admin/email-subscriptions', { params });
         rows.value = data.data ?? [];
+        total.value = data.total ?? 0;
         meta.value = {
             current_page: data.current_page,
             last_page: data.last_page,
@@ -281,13 +284,13 @@ const publicUnsubExample = computed(() => {
             <p v-if="rows.length === 0" class="empty">暂无记录</p>
         </div>
 
-        <div v-if="meta && meta.last_page > 1" class="pager">
-            <button type="button" :disabled="meta.current_page <= 1" @click="load(meta.current_page - 1)">上一页</button>
-            <span>{{ meta.current_page }} / {{ meta.last_page }}</span>
-            <button type="button" :disabled="meta.current_page >= meta.last_page" @click="load(meta.current_page + 1)">
-                下一页
-            </button>
-        </div>
+        <AdminPagination
+            v-if="meta"
+            :current-page="meta.current_page"
+            :last-page="meta.last_page"
+            :total="total"
+            @update:page="load"
+        />
 
         <div v-if="addOpen" class="modal-mask" @click.self="closeAddModal">
             <div class="modal" @click.stop>
@@ -466,12 +469,6 @@ const publicUnsubExample = computed(() => {
     color: #64748b;
     padding: 1rem 0;
     text-align: center;
-}
-.pager {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-    margin-top: 1rem;
 }
 .btn {
     padding: 0.45rem 0.85rem;

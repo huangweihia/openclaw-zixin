@@ -1,9 +1,11 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
+import AdminPagination from '../components/AdminPagination.vue';
 
 const rows = ref([]);
 const meta = ref(null);
+const total = ref(0);
 const err = ref('');
 const userId = ref('');
 
@@ -17,6 +19,7 @@ async function load(page = 1) {
             },
         });
         rows.value = data.data ?? [];
+        total.value = data.total ?? 0;
         meta.value = { current_page: data.current_page, last_page: data.last_page };
     } catch {
         err.value = '加载失败';
@@ -67,13 +70,13 @@ onMounted(() => load(1));
             </table>
             <p v-if="rows.length === 0" class="empty">暂无记录</p>
         </div>
-        <div v-if="meta && meta.last_page > 1" class="pager">
-            <button type="button" :disabled="meta.current_page <= 1" @click="load(meta.current_page - 1)">上一页</button>
-            <span>{{ meta.current_page }} / {{ meta.last_page }}</span>
-            <button type="button" :disabled="meta.current_page >= meta.last_page" @click="load(meta.current_page + 1)">
-                下一页
-            </button>
-        </div>
+        <AdminPagination
+            v-if="meta"
+            :current-page="meta.current_page"
+            :last-page="meta.last_page"
+            :total="total"
+            @update:page="load"
+        />
     </div>
 </template>
 
@@ -142,11 +145,5 @@ onMounted(() => load(1));
     padding: 1rem;
     color: #94a3b8;
     margin: 0;
-}
-.pager {
-    margin-top: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
 }
 </style>
