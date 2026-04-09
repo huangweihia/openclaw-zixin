@@ -18,17 +18,16 @@ class AdPresentationService
      */
     public function resolve(string $slotCode): ?array
     {
-        $user = Auth::user();
-        if ($user && $user->isVip()) {
-            return null;
-        }
-
         $slot = AdSlot::query()
             ->where('code', $slotCode)
             ->where('is_active', true)
             ->first();
 
         if (! $slot) {
+            return null;
+        }
+
+        if (! $this->canViewSlot($slot)) {
             return null;
         }
 
@@ -40,8 +39,7 @@ class AdPresentationService
      */
     public function resolveSlot(AdSlot $slot): ?array
     {
-        $user = Auth::user();
-        if ($user && $user->isVip()) {
+        if (! $this->canViewSlot($slot)) {
             return null;
         }
 
@@ -77,11 +75,6 @@ class AdPresentationService
      */
     public function resolveFirstBySlotPosition(string $position): ?array
     {
-        $user = Auth::user();
-        if ($user && $user->isVip()) {
-            return null;
-        }
-
         $slots = AdSlot::query()
             ->where('position', $position)
             ->where('is_active', true)
@@ -106,11 +99,6 @@ class AdPresentationService
      */
     public function resolveFloatSlotPacks(): array
     {
-        $user = Auth::user();
-        if ($user && $user->isVip()) {
-            return [];
-        }
-
         $slots = AdSlot::query()
             ->where('is_active', true)
             ->where('type', 'float')
@@ -128,5 +116,30 @@ class AdPresentationService
         }
 
         return $out;
+    }
+
+    private function canViewSlot(AdSlot $slot): bool
+    {
+        $audience = strtolower(trim((string) ($slot->audience ?? 'all')));
+        if ($audience === '') {
+            $audience = 'all';
+        }
+
+        $user = Auth::user();
+        $role = strtolower((string) ($user->role ?? ''));
+        $isGuest = $user === null;
+        $isMember = in_array($role, ['vip', 'svip', 'admin'], true);
+
+        return match ($audience) {
+            'all' => true,
+            'guest' => $isGuest,
+            'user' => ! $isGuest,
+            'vip' => $role === 'vip' || $role === 'admin',
+            'svip' => $role === 'svip' || $role === 'admin',
+            'admin' => $role === 'admin',
+            'member' => $isMember,
+            'non_member' => ! $isMember,
+            default => true,
+        };
     }
 }

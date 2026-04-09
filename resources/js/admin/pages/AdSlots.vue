@@ -1,9 +1,10 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
-import { enumOptions } from '../constants/labels';
+import { enumLabel, enumOptions } from '../constants/labels';
 
 const adSlotTypeOpts = enumOptions('adSlotType');
+const adAudienceOpts = enumOptions('adAudience');
 const positionOpts = [
     { value: 'top', label: '顶部' },
     { value: 'bottom', label: '底部' },
@@ -35,6 +36,7 @@ const emptyForm = () => ({
     default_link_url: '',
     default_content: '',
     show_default_when_empty: true,
+    audience: 'all',
 });
 
 const form = ref(emptyForm());
@@ -70,6 +72,7 @@ function openEdit(s) {
         width: s.width,
         height: s.height,
         sort: s.sort ?? 0,
+        audience: s.audience || 'all',
         default_title: s.default_title || '',
         default_image_url: s.default_image_url || '',
         default_link_url: s.default_link_url || '',
@@ -185,6 +188,7 @@ async function saveEdit() {
                         <th>名称</th>
                         <th>兜底图</th>
                         <th>位置</th>
+                        <th>可见人群</th>
                         <th>状态</th>
                         <th />
                     </tr>
@@ -195,6 +199,7 @@ async function saveEdit() {
                         <td>{{ s.name }}</td>
                         <td class="muted">{{ s.default_image_url ? '已设' : '—' }}</td>
                         <td>{{ positionOpts.find((p) => p.value === s.position)?.label || s.position }}</td>
+                        <td>{{ enumLabel('adAudience', s.audience || 'all') }}</td>
                         <td>{{ s.is_active ? '启用' : '禁用' }}</td>
                         <td class="acts">
                             <button type="button" class="link" @click="openEdit(s)">编辑</button>
@@ -241,6 +246,13 @@ async function saveEdit() {
                     <select v-model="form.type">
                         <option v-for="o in adSlotTypeOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
                     </select>
+                </label>
+                <label class="field">
+                    <span>可见人群</span>
+                    <select v-model="form.audience">
+                        <option v-for="o in adAudienceOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
+                    </select>
+                    <span class="field-tip">用于前台权限控制；例如可设置仅游客、仅会员、仅登录用户可见。</span>
                 </label>
                 <div class="row2">
                     <label class="field">

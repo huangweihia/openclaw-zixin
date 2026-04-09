@@ -20,6 +20,7 @@ class AdSlot extends Model
         'default_link_url',
         'default_content',
         'show_default_when_empty',
+        'audience',
     ];
 
     protected $casts = [

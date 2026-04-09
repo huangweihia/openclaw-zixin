@@ -27,12 +27,10 @@
     @include('partials.announcement-marquee', ['placement' => 'top'])
     @include('partials.flash')
 
-    <div class="max-w-7xl mx-auto px-4 py-8 flex gap-6 items-start flex-1 w-full">
-        @include('partials.ad-rail', ['railPosition' => 'left'])
-        <main class="flex-1 min-w-0">
+    <div class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full">
+        <main class="min-w-0">
             @yield('content')
         </main>
-        @include('partials.ad-rail', ['railPosition' => 'right'])
     </div>
 
     @include('partials.announcement-marquee', ['placement' => 'bottom'])

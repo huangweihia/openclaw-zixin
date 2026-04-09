@@ -44,6 +44,7 @@ use App\Http\Controllers\UserMessageController;
 */
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::redirect('/home', '/');
 
 Route::get('/cases', [SideHustleCaseWebController::class, 'index'])->name('cases.index');
 Route::get('/cases/{sideHustleCase}', [SideHustleCaseWebController::class, 'show'])->name('cases.show');

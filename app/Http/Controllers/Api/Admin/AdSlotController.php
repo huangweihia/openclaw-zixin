@@ -27,6 +27,7 @@ class AdSlotController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'position' => ['required', Rule::in(['top', 'bottom', 'left', 'right'])],
             'type' => ['required', 'string', 'max:40'],
+            'audience' => ['sometimes', Rule::in(['all', 'guest', 'user', 'vip', 'svip', 'admin', 'member', 'non_member'])],
             'width' => ['nullable', 'integer', 'min:0'],
             'height' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
@@ -40,6 +41,7 @@ class AdSlotController extends Controller
         if (($data['is_active'] ?? false) === true) {
             AdSlot::query()->where('is_active', true)->update(['is_active' => false]);
         }
+        $data['audience'] = $data['audience'] ?? 'all';
         $data['code'] = AdminUniqueCode::code($data['name'], AdSlot::class, 'code');
         $slot = AdSlot::query()->create($data);
 
@@ -56,6 +58,7 @@ class AdSlotController extends Controller
             'name' => ['sometimes', 'string', 'max:255'],
             'position' => ['sometimes', Rule::in(['top', 'bottom', 'left', 'right'])],
             'type' => ['sometimes', 'string', 'max:40'],
+            'audience' => ['sometimes', Rule::in(['all', 'guest', 'user', 'vip', 'svip', 'admin', 'member', 'non_member'])],
             'width' => ['nullable', 'integer', 'min:0'],
             'height' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],

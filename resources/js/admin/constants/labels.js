@@ -49,6 +49,17 @@ export const ENUM_LABELS = {
         popup: '弹窗',
         float: '浮动角标',
     },
+    /** ad_slots.audience */
+    adAudience: {
+        all: '所有人',
+        guest: '仅游客',
+        user: '仅登录用户',
+        vip: 'VIP（含管理员）',
+        svip: 'SVIP（含管理员）',
+        admin: '仅管理员',
+        member: '会员（VIP/SVIP/管理员）',
+        non_member: '非会员（游客/普通用户）',
+    },
     /** openclaw_task_logs.task_type */
     openclawTaskType: {
         ai_content: 'AI 内容采集',

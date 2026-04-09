@@ -388,6 +388,7 @@ async function logout() {
 .admin-main .btn {
     border: 1px solid #d1d5db !important;
     background: #fff !important;
+    color: #0f172a !important;
     border-radius: 10px !important;
     padding: 0.5rem 1rem !important;
     transition:
