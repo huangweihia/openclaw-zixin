@@ -67,6 +67,37 @@
         </form>
     </div>
 
+    <div class="oc-surface p-6 mb-8 max-w-2xl">
+        <h2 class="text-lg font-bold oc-heading mb-4">SVIP 皮肤定制（每月 1 套）</h2>
+        <p class="text-xs oc-muted mb-4">仅 SVIP 有效期内可定制，每个自然月最多 1 套；定制皮肤仅创建者本人可见并可使用。</p>
+        <form method="post" action="{{ route('svip-subscriptions.custom-skin') }}" class="space-y-4">
+            @csrf
+            <div class="oc-field">
+                <label class="oc-label" for="skin_name">皮肤名称</label>
+                <input type="text" name="skin_name" id="skin_name" value="{{ old('skin_name') }}" required maxlength="60" class="oc-input" placeholder="例如：我的夜间霓虹风" />
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+                <label class="oc-field">
+                    <span class="oc-label">主色</span>
+                    <input type="color" name="skin_primary" value="{{ old('skin_primary', '#2563eb') }}" class="oc-input" />
+                </label>
+                <label class="oc-field">
+                    <span class="oc-label">辅色</span>
+                    <input type="color" name="skin_secondary" value="{{ old('skin_secondary', '#7c3aed') }}" class="oc-input" />
+                </label>
+                <label class="oc-field">
+                    <span class="oc-label">强调色</span>
+                    <input type="color" name="skin_accent" value="{{ old('skin_accent', '#14b8a6') }}" class="oc-input" />
+                </label>
+                <label class="oc-field">
+                    <span class="oc-label">背景色</span>
+                    <input type="color" name="skin_bg" value="{{ old('skin_bg', '#0f172a') }}" class="oc-input" />
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary text-sm">创建并启用我的定制皮肤</button>
+        </form>
+    </div>
+
     <div class="oc-surface p-6 max-w-4xl">
         <h2 class="text-lg font-bold oc-heading mb-4">我的记录</h2>
         @if ($items->isEmpty())

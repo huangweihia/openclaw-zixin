@@ -2,6 +2,9 @@
 import { computed, onMounted, ref } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
+import AdminPagination from '../components/AdminPagination.vue';
 
 const rows = ref([]);
 const meta = ref(null);
@@ -11,6 +14,8 @@ const filterQuery = ref('');
 const filterSuggestions = ref([]);
 let filterTimer = null;
 const status = ref('');
+const perPage = ref(20);
+const total = ref(0);
 
 const statusOptions = computed(() => [{ value: '', label: '全部状态' }, ...enumOptions('svipCustomSubscriptionStatus')]);
 
@@ -55,11 +60,14 @@ async function load(page = 1) {
         const { data } = await axios.get('/api/admin/svip-custom-subscriptions', {
             params: {
                 page,
+                per_page: perPage.value,
+                q: filterQuery.value.trim() || undefined,
                 user_id: filterUserId.value.trim() || undefined,
                 status: status.value || undefined,
             },
         });
         rows.value = data.data ?? [];
+        total.value = data.total ?? 0;
         meta.value = { current_page: data.current_page, last_page: data.last_page };
     } catch {
         err.value = '加载失败';
@@ -67,13 +75,16 @@ async function load(page = 1) {
 }
 
 onMounted(() => load(1));
+
+function onPerPageChange(next) {
+    perPage.value = Number(next) || 20;
+    load(1);
+}
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">SVIP 定制订阅</h1>
-        <p class="lead">对齐功能清单 24：只读列表，数据表 svip_custom_subscriptions（与前台个人中心扩展同源）。</p>
-        <div class="toolbar">
+    <AdminPageShell title="SVIP 定制订阅" lead="对齐功能清单 24：只读列表，数据表 svip_custom_subscriptions。">
+        <template #toolbar>
             <div class="user-sel">
                 <input
                     v-model="filterQuery"
@@ -96,9 +107,9 @@ onMounted(() => load(1));
                 </option>
             </select>
             <button type="button" class="btn" @click="load(1)">筛选</button>
-        </div>
+        </template>
         <p v-if="err" class="err">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -129,34 +140,20 @@ onMounted(() => load(1));
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无记录（表可为空）</p>
-        </div>
-        <div v-if="meta && meta.last_page > 1" class="pager">
-            <button type="button" :disabled="meta.current_page <= 1" @click="load(meta.current_page - 1)">上一页</button>
-            <span>{{ meta.current_page }} / {{ meta.last_page }}</span>
-            <button type="button" :disabled="meta.current_page >= meta.last_page" @click="load(meta.current_page + 1)">
-                下一页
-            </button>
-        </div>
-    </div>
+        </AdminCard>
+        <AdminPagination
+            v-if="meta"
+            :current-page="meta.current_page"
+            :last-page="meta.last_page"
+            :total="total"
+            :per-page="perPage"
+            @update:page="load"
+            @update:per-page="onPerPageChange"
+        />
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.page-title {
-    margin: 0 0 0.35rem;
-    font-size: 1.5rem;
-}
-.lead {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
-    color: #64748b;
-}
-.toolbar {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
-    align-items: flex-start;
-}
 .search {
     padding: 0.45rem 0.55rem;
     border: 1px solid #cbd5e1;

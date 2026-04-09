@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { enumLabel } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const router = useRouter();
 const q = ref('');
@@ -13,13 +15,21 @@ const total = ref(0);
 const perPage = ref(20);
 const loadErr = ref('');
 const loading = ref(false);
+const role = ref('');
+const isBanned = ref('');
 
 async function load(page = 1) {
     loading.value = true;
     loadErr.value = '';
     try {
         const { data } = await axios.get('/api/admin/users', {
-            params: { page, per_page: perPage.value, q: q.value || undefined },
+            params: {
+                page,
+                per_page: perPage.value,
+                q: q.value || undefined,
+                role: role.value || undefined,
+                is_banned: isBanned.value === '' ? undefined : isBanned.value,
+            },
         });
         users.value = data.data ?? [];
         total.value = data.total ?? 0;
@@ -53,9 +63,8 @@ function onPerPageChange(next) {
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">用户管理</h1>
-        <div class="toolbar">
+    <AdminPageShell title="用户管理" lead="支持按角色/状态筛选，点击编辑进入详细配置页。">
+        <template #toolbar>
             <input
                 v-model="q"
                 type="search"
@@ -64,9 +73,21 @@ function onPerPageChange(next) {
                 autocomplete="off"
                 @input="onSearchInput"
             />
-        </div>
+            <select v-model="role" class="search" @change="load(1)">
+                <option value="">全部角色</option>
+                <option value="user">普通用户</option>
+                <option value="vip">VIP</option>
+                <option value="svip">SVIP</option>
+                <option value="admin">管理员</option>
+            </select>
+            <select v-model="isBanned" class="search" @change="load(1)">
+                <option value="">全部状态</option>
+                <option :value="'0'">正常</option>
+                <option :value="'1'">已禁用</option>
+            </select>
+        </template>
         <p v-if="loadErr" class="msg-err">{{ loadErr }}</p>
-        <div class="table-wrap">
+        <AdminCard class="table-wrap">
             <table class="table">
                 <thead>
                     <tr>
@@ -74,6 +95,8 @@ function onPerPageChange(next) {
                         <th>昵称</th>
                         <th>邮箱</th>
                         <th>角色</th>
+                        <th>积分</th>
+                        <th>会员到期</th>
                         <th>企微</th>
                         <th>状态</th>
                         <th />
@@ -85,6 +108,8 @@ function onPerPageChange(next) {
                         <td>{{ u.name }}</td>
                         <td>{{ u.email }}</td>
                         <td>{{ enumLabel('userRole', u.role) }}</td>
+                        <td>{{ Number(u.points_balance || 0) }}</td>
+                        <td>{{ u.subscription_ends_at ? u.subscription_ends_at.slice(0, 10) : '—' }}</td>
                         <td>
                             <span v-if="u.enterprise_wechat_id" class="tag tag--ok">已授权</span>
                             <span v-else class="tag tag--muted">未授权</span>
@@ -100,7 +125,7 @@ function onPerPageChange(next) {
                 </tbody>
             </table>
             <p v-if="!loading && users.length === 0" class="empty">暂无用户</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -111,20 +136,12 @@ function onPerPageChange(next) {
             @update:page="load"
             @update:per-page="onPerPageChange"
         />
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.page-title {
-    margin: 0 0 1.25rem;
-    font-size: 1.5rem;
-}
-.toolbar {
-    margin-bottom: 1rem;
-}
 .search {
-    width: 100%;
-    max-width: 320px;
+    min-width: 160px;
     padding: 0.5rem 0.65rem;
     border: 1px solid #cbd5e1;
     border-radius: 8px;

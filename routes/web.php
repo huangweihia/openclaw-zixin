@@ -101,6 +101,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard/svip-subscriptions', [SvipCustomSubscriptionWebController::class, 'index'])->name('svip-subscriptions.index');
     Route::post('/dashboard/svip-subscriptions', [SvipCustomSubscriptionWebController::class, 'store'])->name('svip-subscriptions.store');
+    Route::post('/dashboard/svip-subscriptions/custom-skin', [SvipCustomSubscriptionWebController::class, 'customizeSkin'])->name('svip-subscriptions.custom-skin');
     Route::delete('/dashboard/svip-subscriptions/{svipCustomSubscription}', [SvipCustomSubscriptionWebController::class, 'destroy'])->name('svip-subscriptions.destroy');
 
     Route::post('/payments/orders', [PaymentController::class, 'store'])->name('payments.orders.store');

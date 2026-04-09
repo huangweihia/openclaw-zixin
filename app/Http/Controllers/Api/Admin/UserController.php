@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminRole;
+use App\Models\AdminUser;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
@@ -15,6 +18,8 @@ class UserController extends Controller
     public function index(Request $request): JsonResponse
     {
         $q = trim((string) $request->query('q', ''));
+        $role = trim((string) $request->query('role', ''));
+        $isBanned = $request->query('is_banned');
         $perPage = (int) $request->query('per_page', 20);
         $perPage = max(10, min($perPage, 100));
 
@@ -25,6 +30,8 @@ class UserController extends Controller
                         ->orWhere('name', 'like', '%'.$q.'%');
                 });
             })
+            ->when($role !== '', fn ($query) => $query->where('role', $role))
+            ->when($isBanned !== null && $isBanned !== '', fn ($query) => $query->where('is_banned', (bool) $isBanned))
             ->orderByDesc('id')
             ->paginate($perPage)
             ->withQueryString();
@@ -34,8 +41,10 @@ class UserController extends Controller
 
     public function show(User $user): JsonResponse
     {
+        $roles = AdminRole::query()->orderBy('id')->get(['id', 'name', 'key']);
         return response()->json([
             'user' => $this->serializeUser($user),
+            'available_admin_roles' => $roles,
         ]);
     }
 
@@ -167,6 +176,56 @@ class UserController extends Controller
         ]);
     }
 
+    public function updateAdminProfile(Request $request, User $user): JsonResponse
+    {
+        if ($user->role !== 'admin') {
+            return response()->json(['message' => '仅 admin 角色可配置后台账号档案。'], 422);
+        }
+        $data = $request->validate([
+            'display_name' => ['nullable', 'string', 'max:255'],
+            'is_active' => ['required', 'boolean'],
+            'is_super' => ['required', 'boolean'],
+            'role_ids' => ['nullable', 'array'],
+            'role_ids.*' => ['integer', 'exists:admin_roles,id'],
+        ]);
+
+        if ((int) $user->id === (int) $request->user()->id && ! $data['is_active']) {
+            return response()->json(['message' => '不能禁用当前登录管理员账号。'], 422);
+        }
+
+        $profile = AdminUser::query()->firstOrCreate(
+            ['user_id' => $user->id],
+            ['display_name' => $user->name, 'is_active' => true, 'is_super' => false]
+        );
+        $profile->forceFill([
+            'display_name' => $data['display_name'] ?: $user->name,
+            'is_active' => (bool) $data['is_active'],
+            'is_super' => (bool) $data['is_super'],
+        ])->save();
+
+        $user->adminRoles()->sync(array_values(array_unique(array_map('intval', $data['role_ids'] ?? []))));
+
+        return response()->json([
+            'message' => '后台账号档案与角色已更新。',
+            'user' => $this->serializeUser($user->fresh()),
+        ]);
+    }
+
+    public function resetPassword(Request $request, User $user): JsonResponse
+    {
+        $data = $request->validate([
+            'password' => ['required', 'string', 'min:8', 'max:64'],
+        ]);
+        $user->forceFill([
+            'password' => Hash::make($data['password']),
+        ])->save();
+
+        return response()->json([
+            'message' => '密码已重置，请通知用户使用新密码登录。',
+            'user' => $this->serializeUser($user->fresh()),
+        ]);
+    }
+
     private function serializeUser(User $user): array
     {
         $wecom = null;
@@ -178,6 +237,9 @@ class UserController extends Controller
             ];
         }
 
+        $adminProfile = $user->adminUser()->first();
+        $adminRoles = $user->adminRoles()->get(['admin_roles.id', 'admin_roles.name', 'admin_roles.key']);
+
         return [
             'id' => $user->id,
             'name' => $user->name,
@@ -188,6 +250,20 @@ class UserController extends Controller
             'subscription_ends_at' => $user->subscription_ends_at?->toIso8601String(),
             'last_login_at' => $user->last_login_at?->toIso8601String(),
             'created_at' => $user->created_at?->toIso8601String(),
+            'points_balance' => (int) ($user->points_balance ?? 0),
+            'admin_profile' => $adminProfile ? [
+                'display_name' => $adminProfile->display_name,
+                'is_active' => (bool) $adminProfile->is_active,
+                'is_super' => (bool) $adminProfile->is_super,
+                'last_login_at' => $adminProfile->last_login_at?->toIso8601String(),
+                'last_login_ip' => $adminProfile->last_login_ip,
+            ] : null,
+            'admin_role_ids' => $adminRoles->pluck('id')->map(fn ($i) => (int) $i)->values()->all(),
+            'admin_roles' => $adminRoles->map(fn ($role) => [
+                'id' => (int) $role->id,
+                'name' => (string) $role->name,
+                'key' => (string) $role->key,
+            ])->values()->all(),
         ];
     }
 }

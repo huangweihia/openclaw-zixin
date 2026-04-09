@@ -90,8 +90,26 @@
             flex: 0 0 auto;
         }
         .oc-feature-card {
-            width: min(340px, calc(100vw - 2.5rem));
+            width: min(380px, calc(100vw - 2.5rem));
             flex: 0 0 auto;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow: 0 10px 32px rgba(15, 23, 42, 0.08);
+        }
+        .oc-feature-card .kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            color: #475569;
+            background: #e2e8f0;
+            border-radius: 999px;
+            padding: 0.25rem 0.55rem;
+        }
+        .oc-feature-card .meta {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-top: 0.7rem;
         }
     </style>
 </head>
@@ -146,9 +164,10 @@
                     <div class="oc-testimonial-slider"><div class="oc-testimonial-track">
                         @foreach ([$featuredArticles, $featuredArticles] as $grp)
                             @foreach ($grp as $a)
-                                <a href="{{ route('articles.show', $a) }}" class="oc-feature-card bg-gray-50 rounded-xl p-5 block" style="text-decoration:none;color:inherit;">
-                                    <div class="font-semibold line-clamp-2">{{ $a->title }}</div>
-                                    <div class="text-xs text-gray-500 mt-2">👍 {{ number_format((int) $a->like_count) }} · 👁 {{ number_format((int) $a->view_count) }}</div>
+                                <a href="{{ route('articles.show', $a) }}" class="oc-feature-card rounded-xl p-6 block relative overflow-hidden" style="text-decoration:none;color:inherit;">
+                                    <div class="kicker mb-3">📝 精品文章</div>
+                                    <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $a->title }}</div>
+                                    <div class="meta">点赞 {{ number_format((int) $a->like_count) }} · 浏览 {{ number_format((int) $a->view_count) }}</div>
                                 </a>
                             @endforeach
                         @endforeach
@@ -159,9 +178,10 @@
                     <div class="oc-testimonial-slider"><div class="oc-testimonial-track">
                         @foreach ([$featuredProjects, $featuredProjects] as $grp)
                             @foreach ($grp as $p)
-                                <a href="{{ route('projects.show', $p) }}" class="oc-feature-card bg-gray-50 rounded-xl p-5 block" style="text-decoration:none;color:inherit;">
-                                    <div class="font-semibold line-clamp-2">{{ $p->name }}</div>
-                                    <div class="text-xs text-gray-500 mt-2">⭐ {{ number_format((int) $p->stars) }} · ⑂ {{ number_format((int) $p->forks) }}</div>
+                                <a href="{{ route('projects.show', $p) }}" class="oc-feature-card rounded-xl p-6 block relative overflow-hidden" style="text-decoration:none;color:inherit;">
+                                    <div class="kicker mb-3">📦 精品项目</div>
+                                    <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $p->name }}</div>
+                                    <div class="meta">Star {{ number_format((int) $p->stars) }} · Fork {{ number_format((int) $p->forks) }}</div>
                                 </a>
                             @endforeach
                         @endforeach
@@ -172,10 +192,21 @@
                     <div class="oc-testimonial-slider"><div class="oc-testimonial-track">
                         @foreach ([$featuredCases, $featuredCases] as $grp)
                             @foreach ($grp as $c)
-                                <a href="{{ route('cases.show', $c) }}" class="oc-feature-card bg-gray-50 rounded-xl p-5 block" style="text-decoration:none;color:inherit;">
-                                    <div class="font-semibold line-clamp-2">{{ $c->title }}</div>
-                                    <div class="text-xs text-gray-500 mt-2">👍 {{ number_format((int) $c->like_count) }} · 👁 {{ number_format((int) $c->view_count) }}</div>
-                                </a>
+                                <div class="oc-feature-card rounded-xl p-6 block relative overflow-hidden">
+                                    <a href="{{ route('cases.show', $c) }}" style="text-decoration:none;color:inherit;">
+                                        <div class="kicker mb-3">💼 精品案例</div>
+                                        <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $c->title }}</div>
+                                        <div class="meta">点赞 {{ number_format((int) $c->like_count) }} · 浏览 {{ number_format((int) $c->view_count) }}</div>
+                                    </a>
+                                    @if (($c->visibility ?? 'public') === 'vip' && ! $canVip)
+                                        @include('partials.vip-mask', [
+                                            'title' => 'VIP 案例',
+                                            'desc' => '开通 VIP 后可查看完整案例。',
+                                            'cta' => '开通 VIP',
+                                            'href' => route('pricing'),
+                                        ])
+                                    @endif
+                                </div>
                             @endforeach
                         @endforeach
                     </div></div>

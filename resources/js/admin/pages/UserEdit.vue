@@ -11,6 +11,7 @@ const route = useRoute();
 const router = useRouter();
 
 const user = ref(null);
+const availableAdminRoles = ref([]);
 const currentUserId = ref(null);
 const loadErr = ref('');
 const flash = ref('');
@@ -20,6 +21,11 @@ const saving = ref(false);
 const name = ref('');
 const email = ref('');
 const role = ref('user');
+const adminDisplayName = ref('');
+const adminIsActive = ref(true);
+const adminIsSuper = ref(false);
+const adminRoleIds = ref([]);
+const resetPasswordValue = ref('');
 
 const vipPlan = ref('monthly');
 const vipDays = ref(30);
@@ -38,10 +44,15 @@ async function load() {
             axios.get('/api/admin/me'),
         ]);
         user.value = uRes.data.user;
+        availableAdminRoles.value = uRes.data.available_admin_roles ?? [];
         currentUserId.value = meRes.data.user.id;
         name.value = user.value.name;
         email.value = user.value.email;
         role.value = user.value.role;
+        adminDisplayName.value = user.value.admin_profile?.display_name || user.value.name;
+        adminIsActive.value = user.value.admin_profile?.is_active ?? true;
+        adminIsSuper.value = user.value.admin_profile?.is_super ?? false;
+        adminRoleIds.value = Array.isArray(user.value.admin_role_ids) ? [...user.value.admin_role_ids] : [];
     } catch {
         loadErr.value = '无法加载用户';
     }
@@ -138,6 +149,45 @@ async function doMembership() {
         flashErr.value = apiErr(e);
     }
 }
+
+async function saveAdminProfile() {
+    flash.value = '';
+    flashErr.value = '';
+    try {
+        const { data } = await axios.post(`/api/admin/users/${route.params.id}/admin-profile`, {
+            display_name: adminDisplayName.value,
+            is_active: Boolean(adminIsActive.value),
+            is_super: Boolean(adminIsSuper.value),
+            role_ids: adminRoleIds.value,
+        });
+        user.value = data.user;
+        flash.value = data.message;
+    } catch (e) {
+        flashErr.value = apiErr(e);
+    }
+}
+
+async function resetPassword() {
+    if (!resetPasswordValue.value || resetPasswordValue.value.length < 8) {
+        flashErr.value = '请输入至少 8 位的新密码';
+        return;
+    }
+    if (!confirm('确定重置该用户密码？')) {
+        return;
+    }
+    flash.value = '';
+    flashErr.value = '';
+    try {
+        const { data } = await axios.post(`/api/admin/users/${route.params.id}/reset-password`, {
+            password: resetPasswordValue.value,
+        });
+        user.value = data.user;
+        resetPasswordValue.value = '';
+        flash.value = data.message;
+    } catch (e) {
+        flashErr.value = apiErr(e);
+    }
+}
 </script>
 
 <template>
@@ -228,6 +278,41 @@ async function doMembership() {
                     </button>
                 </div>
                 <p v-if="user.role === 'admin'" class="hint">管理员需先改角色为非 admin 才可禁用。</p>
+            </section>
+
+            <section class="card">
+                <h2 class="card__title">安全与登录</h2>
+                <p class="hint">最后登录：{{ user.last_login_at || '—' }}</p>
+                <label class="field">
+                    <span>重置密码</span>
+                    <input v-model="resetPasswordValue" type="text" placeholder="输入新密码（至少 8 位）" />
+                </label>
+                <button type="button" class="btn danger" @click="resetPassword">重置密码</button>
+            </section>
+
+            <section v-if="user.role === 'admin'" class="card">
+                <h2 class="card__title">后台账号档案（admin_users）</h2>
+                <label class="field">
+                    <span>显示名</span>
+                    <input v-model="adminDisplayName" type="text" />
+                </label>
+                <label class="field inline">
+                    <span>是否启用</span>
+                    <input v-model="adminIsActive" type="checkbox" />
+                </label>
+                <label class="field inline">
+                    <span>超级管理员</span>
+                    <input v-model="adminIsSuper" type="checkbox" />
+                </label>
+                <label class="field">
+                    <span>角色组</span>
+                    <select v-model="adminRoleIds" multiple>
+                        <option v-for="r in availableAdminRoles" :key="`ar-${r.id}`" :value="r.id">
+                            {{ r.name }} ({{ r.key }})
+                        </option>
+                    </select>
+                </label>
+                <button type="button" class="btn primary" @click="saveAdminProfile">保存后台档案</button>
             </section>
         </template>
     </div>

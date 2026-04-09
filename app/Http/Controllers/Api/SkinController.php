@@ -16,9 +16,18 @@ class SkinController extends Controller
      */
     public function index(): JsonResponse
     {
-        $skins = SkinConfig::where('is_active', true)
+        $userId = Auth::id();
+        $skins = SkinConfig::query()
+            ->where('is_active', true)
+            ->where(function ($q) use ($userId) {
+                $q->where('is_private', false)
+                    ->orWhere(function ($inner) use ($userId) {
+                        $inner->where('is_private', true)
+                            ->where('owner_user_id', $userId ?: 0);
+                    });
+            })
             ->orderBy('sort')
-            ->get(['id', 'name', 'code', 'description', 'css_variables', 'type']);
+            ->get(['id', 'name', 'code', 'description', 'css_variables', 'type', 'is_private']);
 
         return response()->json([
             'success' => true,
@@ -37,7 +46,8 @@ class SkinController extends Controller
             // 未登录用户返回默认皮肤
             $defaultSkin = SkinConfig::where('is_active', true)
                 ->where('type', 'free')
-                ->orderByDesc('sort')
+                ->where('is_private', false)
+                ->orderBy('sort')
                 ->first(['id', 'name', 'code', 'css_variables']);
 
             return response()->json([
@@ -56,7 +66,8 @@ class SkinController extends Controller
         if (!$userSkin || !$userSkin->skinConfig) {
             $defaultSkin = SkinConfig::where('is_active', true)
                 ->where('type', 'free')
-                ->orderByDesc('sort')
+                ->where('is_private', false)
+                ->orderBy('sort')
                 ->first(['id', 'name', 'code', 'css_variables']);
 
             return response()->json([
@@ -105,6 +116,12 @@ class SkinController extends Controller
                 'success' => false,
                 'message' => '皮肤不存在或未启用',
             ], 404);
+        }
+        if ((bool) $skinConfig->is_private && (int) $skinConfig->owner_user_id !== (int) $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => '该定制皮肤仅创建者本人可使用',
+            ], 403);
         }
 
         $role = strtolower((string) ($user->role ?? 'user'));

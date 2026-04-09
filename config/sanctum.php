@@ -15,11 +15,29 @@ return [
     |
     */
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
-        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
-        Sanctum::currentApplicationUrlWithPort()
-    ))),
+    'stateful' => (function (): array {
+        $defaults = explode(',', sprintf(
+            '%s%s',
+            'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
+            Sanctum::currentApplicationUrlWithPort()
+        ));
+        $raw = env('SANCTUM_STATEFUL_DOMAINS');
+        $items = $raw ? explode(',', $raw) : $defaults;
+
+        $front = trim((string) env('APP_FRONT_DOMAIN', ''));
+        $admin = trim((string) env('ADMIN_DOMAIN', ''));
+        if ($front !== '') {
+            $items[] = $front;
+        }
+        if ($admin !== '') {
+            $items[] = $admin;
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            static fn ($v) => trim((string) $v),
+            $items
+        ))));
+    })(),
 
     /*
     |--------------------------------------------------------------------------

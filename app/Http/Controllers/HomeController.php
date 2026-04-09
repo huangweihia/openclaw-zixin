@@ -25,6 +25,9 @@ class HomeController extends Controller
         $homeStats = $this->homeStats();
 
         $user = $request->user();
+        $userRole = strtolower((string) ($user->role ?? 'guest'));
+        $canVip = in_array($userRole, ['vip', 'svip', 'admin'], true);
+        $canSvip = in_array($userRole, ['svip', 'admin'], true);
         $unlockedPreview = $user && in_array($user->role, ['vip', 'svip', 'admin'], true);
         $vipPreviews = $this->buildVipPreviews($unlockedPreview);
 
@@ -42,7 +45,9 @@ class HomeController extends Controller
             'testimonials',
             'featuredArticles',
             'featuredProjects',
-            'featuredCases'
+            'featuredCases',
+            'canVip',
+            'canSvip'
         ));
     }
 
@@ -424,9 +429,10 @@ class HomeController extends Controller
     {
         return SideHustleCase::query()
             ->where('status', 'approved')
+            ->whereIn('visibility', ['public', 'vip'])
             ->orderByDesc('like_count')
             ->orderByDesc('view_count')
             ->limit(8)
-            ->get(['id', 'title', 'slug', 'like_count', 'view_count']);
+            ->get(['id', 'title', 'slug', 'like_count', 'view_count', 'visibility']);
     }
 }

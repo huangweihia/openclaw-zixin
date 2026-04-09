@@ -60,6 +60,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::post('users/{user}/enable', [UserController::class, 'enable']);
         Route::post('users/{user}/clear-enterprise-wechat', [UserController::class, 'clearEnterpriseWechat']);
         Route::post('users/{user}/membership', [UserController::class, 'updateMembership']);
+        Route::post('users/{user}/admin-profile', [UserController::class, 'updateAdminProfile']);
+        Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword']);
     });
 
     Route::get('points-ledger', [PointLedgerController::class, 'index'])->middleware('perm:admin:points-ledger:read');

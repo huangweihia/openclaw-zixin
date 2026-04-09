@@ -155,7 +155,20 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    'domain' => env('SESSION_DOMAIN') ?: (function () {
+        $front = trim((string) env('APP_FRONT_DOMAIN', ''));
+        $admin = trim((string) env('ADMIN_DOMAIN', ''));
+        if ($front === '' && $admin === '') {
+            return null;
+        }
+        $pick = $front !== '' ? $front : $admin;
+        $pick = preg_replace('/:\d+$/', '', $pick ?? '') ?: '';
+        if ($pick === '' || $pick === 'localhost' || filter_var($pick, FILTER_VALIDATE_IP)) {
+            return null;
+        }
+
+        return '.'.$pick;
+    })(),
 
     /*
     |--------------------------------------------------------------------------
@@ -196,7 +209,7 @@ return [
     |
     */
 
-    'same_site' => 'lax',
+    'same_site' => env('SESSION_SAME_SITE', 'lax'),
 
     /*
     |--------------------------------------------------------------------------
