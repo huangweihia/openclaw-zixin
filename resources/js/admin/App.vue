@@ -407,6 +407,13 @@ async function logout() {
     color: #fff !important;
 }
 
+/* 兼容各业务页沿用的 btn--pri 命名（避免白底白字导致“按钮看不见”） */
+.admin-main .btn--pri {
+    background: #1677ff !important;
+    border-color: #1677ff !important;
+    color: #fff !important;
+}
+
 .admin-main .link {
     color: #1677ff !important;
 }
