@@ -25,16 +25,8 @@
 
     var apiBase = @json(url('/api/personality-quiz'));
     var registerUrl = @json(route('register'));
-    /** 无 image_url 时的搞怪氛围图兜底（Unsplash，可后台覆盖） */
-    var ocPqFunFallbackImgs = @json([
-        'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=1200&h=630&q=80',
-        'https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=1200&h=630&q=80',
-        'https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=1200&h=630&q=80',
-        'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1200&h=630&q=80',
-        'https://images.unsplash.com/photo-1494256997604-768d1f608cac?auto=format&fit=crop&w=1200&h=630&q=80',
-        'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?auto=format&fit=crop&w=1200&h=630&q=80',
-        'https://images.unsplash.com/photo-1560807707-8cc77767d783?auto=format&fit=crop&w=1200&h=630&q=80',
-    ]);
+    /** 无 image_url 时用站内 SBTI 搞怪卡片图（public/images/sbti-results/*.svg，可后台覆盖或替换同路径 PNG） */
+    var ocPqSbtiArtBase = @json(rtrim(asset('images/sbti-results'), '/'));
     var csrfToken = (function () {
         var m = document.querySelector('meta[name="csrf-token"]');
         return m ? m.getAttribute('content') : '';
@@ -88,15 +80,19 @@
     function ocPqPickResultImageUrl(fin) {
         var u = fin && fin.image_url ? String(fin.image_url).trim() : '';
         if (u) return u;
-        var pool = ocPqFunFallbackImgs || [];
-        if (!pool.length) return '';
-        var c = fin && fin.code ? String(fin.code) : 'SBTI';
+        var base = ocPqSbtiArtBase || '';
+        var code = fin && fin.code ? String(fin.code).toUpperCase() : '';
+        var slugByCode = { PLANNER: 'planner', EXPLORER: 'explorer', BALANCE: 'balance', WAVE: 'wave', GUARD: 'guard', RUSH: 'rush', MIXED: 'mixed' };
+        var slug = slugByCode[code];
+        if (base && slug) return base + '/' + slug + '.svg';
+        var pool = ['planner', 'explorer', 'balance', 'wave', 'guard', 'rush', 'mixed'];
         var h = 0;
+        var c = code || 'SBTI';
         for (var i = 0; i < c.length; i++) {
             h = ((h << 5) - h) + c.charCodeAt(i);
             h |= 0;
         }
-        return pool[Math.abs(h) % pool.length];
+        return base ? base + '/' + pool[Math.abs(h) % pool.length] + '.svg' : '';
     }
 
     function setOpen(on) {

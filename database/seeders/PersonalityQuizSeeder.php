@@ -135,15 +135,15 @@ class PersonalityQuizSeeder extends Seeder
                 }
             }
 
-            // 搞怪氛围图：Unsplash 萌宠/趣味向（可后台 image_url 覆盖）
+            // 搞怪结果卡：与 16 型梗图同构的扁平几何风（public/images/sbti-results/*.svg），可换同名 PNG/WebP
             $funImg = [
-                'planner' => 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=1200&h=630&q=80',
-                'explorer' => 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=1200&h=630&q=80',
-                'balance' => 'https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=1200&h=630&q=80',
-                'wave' => 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1200&h=630&q=80',
-                'guard' => 'https://images.unsplash.com/photo-1494256997604-768d1f608cac?auto=format&fit=crop&w=1200&h=630&q=80',
-                'rush' => 'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?auto=format&fit=crop&w=1200&h=630&q=80',
-                'mixed' => 'https://images.unsplash.com/photo-1560807707-8cc77767d783?auto=format&fit=crop&w=1200&h=630&q=80',
+                'planner' => asset('images/sbti-results/planner.svg'),
+                'explorer' => asset('images/sbti-results/explorer.svg'),
+                'balance' => asset('images/sbti-results/balance.svg'),
+                'wave' => asset('images/sbti-results/wave.svg'),
+                'guard' => asset('images/sbti-results/guard.svg'),
+                'rush' => asset('images/sbti-results/rush.svg'),
+                'mixed' => asset('images/sbti-results/mixed.svg'),
             ];
 
             $types = [

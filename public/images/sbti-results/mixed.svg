@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="SBTI ½a÷">
+  <rect width="800" height="500" fill="#f6f7f4"/>
+  <text x="400" y="56" text-anchor="middle" fill="#64748b" font-family="system-ui,sans-serif" font-size="22">`„º<{‹/</text>
+  <text x="400" y="118" text-anchor="middle" fill="#16a34a" font-family="system-ui,sans-serif" font-size="48" font-weight="700">½a÷</text>
+  <text x="400" y="162" text-anchor="middle" fill="#16a34a" font-family="system-ui,sans-serif" font-size="28" font-weight="600" letter-spacing="0.2em">MIXED</text>
+  <g transform="translate(400 310)">
+    <rect x="-95" y="-120" width="95" height="210" rx="28" fill="#e8d4c4"/>
+    <rect x="0" y="-120" width="95" height="210" rx="28" fill="#d4c4b8"/>
+    <circle cx="-48" cy="-42" r="9" fill="#1e293b"/>
+    <circle cx="48" cy="-42" r="9" fill="#1e293b"/>
+    <path d="M-70 28 Q0 48 70 20" fill="none" stroke="#1e293b" stroke-width="5" stroke-linecap="round"/>
+    <text x="0" y="-155" text-anchor="middle" fill="#16a34a" font-family="system-ui,sans-serif" font-size="72" font-weight="800">?</text>
+  </g>
+</svg>
