@@ -79,68 +79,70 @@ class PersonalityQuizSeeder extends Seeder
                     ])->save();
 
                     $questionBodies = [
-                        '周末安排你会优先考虑这件事：'.$dim->name.'相关的选择。',
-                        '当你和朋友讨论计划时，你在「'.$dim->name.'」上通常更接近：',
-                        '如果今天状态一般，你在「'.$dim->name.'」上更可能表现为：',
-                        '最近一次做决定时，你在「'.$dim->name.'」上的第一反应是：',
+                        '凌晨两点你突然复盘人生，在「'.$dim->name.'」上你更像哪种选手？',
+                        '朋友群里开始“高强度发疯”，你在「'.$dim->name.'」上的默认姿势是：',
+                        '项目开会进入“谁都不说重点”模式时，你在「'.$dim->name.'」上的反应更接近：',
+                        '周一早上闹钟响第三遍，你在「'.$dim->name.'」上的内心 OS 更像：',
                     ];
                     $optionSets = [
                         [
-                            ['几乎不会这样', 1],
-                            ['看情况会这样', 2],
-                            ['基本就是我', 3],
+                            ['我主打一个反着来', 1],
+                            ['看心情随机触发', 2],
+                            ['这就是我的出厂设置', 3],
                         ],
                         [
-                            ['我通常不这么做', 1],
-                            ['偶尔会这样', 2],
-                            ['我很常这样', 3],
+                            ['先观望，能苟就苟', 1],
+                            ['先试探，再决定', 2],
+                            ['直接上，别拦我', 3],
                         ],
                         [
-                            ['不太符合我', 1],
-                            ['一半一半', 2],
-                            ['非常符合我', 3],
+                            ['像在说隔壁工位', 1],
+                            ['像昨天的我', 2],
+                            ['像每天都在直播我', 3],
                         ],
                         [
-                            ['更偏向左侧描述', 1],
-                            ['中间状态', 2],
-                            ['更偏向右侧描述', 3],
+                            ['理智告诉我别这样', 1],
+                            ['理智和本能打平手', 2],
+                            ['本能已经接管全场', 3],
                         ],
                     ];
 
-                    $existingCount = PersonalityQuestion::query()
-                        ->where('personality_dimension_id', $dim->id)
-                        ->count();
                     foreach ($questionBodies as $qi => $body) {
-                        if ($qi < $existingCount) {
-                            continue;
-                        }
-                        $q = PersonalityQuestion::query()->create([
-                            'personality_dimension_id' => $dim->id,
-                            'body' => $body,
-                            'sort_order' => $qi + 1,
-                            'is_active' => true,
-                        ]);
+                        $q = PersonalityQuestion::query()->updateOrCreate(
+                            [
+                                'personality_dimension_id' => $dim->id,
+                                'sort_order' => $qi + 1,
+                            ],
+                            [
+                                'body' => $body,
+                                'is_active' => true,
+                            ]
+                        );
                         $opts = $optionSets[$qi] ?? $optionSets[0];
                         foreach ($opts as $os => $pair) {
-                            PersonalityQuestionOption::query()->create([
-                                'personality_question_id' => $q->id,
-                                'label' => $pair[0],
-                                'value' => $pair[1],
-                                'sort_order' => $os + 1,
-                            ]);
+                            PersonalityQuestionOption::query()->updateOrCreate(
+                                [
+                                    'personality_question_id' => $q->id,
+                                    'sort_order' => $os + 1,
+                                ],
+                                [
+                                    'label' => $pair[0],
+                                    'value' => $pair[1],
+                                ]
+                            );
                         }
                     }
                 }
             }
 
             $types = [
-                ['code' => 'PLANNER', 'cn_name' => '规划型', 'intro' => '先把路线画清楚，再出发。', 'pattern' => 'HHHHHHHHHHHHHHH', 'sort' => 10, 'img' => 'https://picsum.photos/seed/oc-planner/1200/630'],
-                ['code' => 'EXPLORER', 'cn_name' => '探索型', 'intro' => '世界很大，先走走看。', 'pattern' => 'LLLLLLLLLLLLLLL', 'sort' => 20, 'img' => 'https://picsum.photos/seed/oc-explorer/1200/630'],
-                ['code' => 'BALANCE', 'cn_name' => '平衡型', 'intro' => '不高不低，刚刚好。', 'pattern' => 'MMMMMMMMMMMMMMM', 'sort' => 30, 'img' => 'https://picsum.photos/seed/oc-balance/1200/630'],
-                ['code' => 'WAVE', 'cn_name' => '起伏型', 'intro' => '高低搭配，像心电图。', 'pattern' => 'HHLHHLHHLHHLHHL', 'sort' => 40, 'img' => 'https://picsum.photos/seed/oc-wave/1200/630'],
-                ['code' => 'GUARD', 'cn_name' => '守势型', 'intro' => '先站稳，再谈别的。', 'pattern' => 'LLHHMMHHLLMMHHH', 'sort' => 50, 'img' => 'https://picsum.photos/seed/oc-guard/1200/630'],
-                ['code' => 'RUSH', 'cn_name' => '推进型', 'intro' => '动起来，问题会变小。', 'pattern' => 'HHMMLLHHMMLLHHM', 'sort' => 60, 'img' => 'https://picsum.photos/seed/oc-rush/1200/630'],
-                ['code' => 'MIXED', 'cn_name' => '混合态', 'intro' => '标准答案配不上你。', 'pattern' => null, 'sort' => 90, 'fallback' => true, 'img' => 'https://picsum.photos/seed/oc-mixed/1200/630'],
+                ['code' => 'PLANNER', 'cn_name' => '战术参谋型', 'intro' => '还没开始做，脑内已经彩排三轮。', 'pattern' => 'HHHHHHHHHHHHHHH', 'sort' => 10, 'img' => 'https://picsum.photos/seed/oc-planner/1200/630'],
+                ['code' => 'EXPLORER', 'cn_name' => '野路子探索型', 'intro' => '先冲再说，路是走着走着歪出来的。', 'pattern' => 'LLLLLLLLLLLLLLL', 'sort' => 20, 'img' => 'https://picsum.photos/seed/oc-explorer/1200/630'],
+                ['code' => 'BALANCE', 'cn_name' => '端水大师型', 'intro' => '情绪、效率、社交，主打一个不翻车。', 'pattern' => 'MMMMMMMMMMMMMMM', 'sort' => 30, 'img' => 'https://picsum.photos/seed/oc-balance/1200/630'],
+                ['code' => 'WAVE', 'cn_name' => '间歇性开挂型', 'intro' => '状态好的时候像开挂，状态差的时候像在加载。', 'pattern' => 'HHLHHLHHLHHLHHL', 'sort' => 40, 'img' => 'https://picsum.photos/seed/oc-wave/1200/630'],
+                ['code' => 'GUARD', 'cn_name' => '谨慎防守型', 'intro' => '先把风险打包，再谈梦想发货。', 'pattern' => 'LLHHMMHHLLMMHHH', 'sort' => 50, 'img' => 'https://picsum.photos/seed/oc-guard/1200/630'],
+                ['code' => 'RUSH', 'cn_name' => '火力推进型', 'intro' => '想到就干，先把进度条拽到 80%。', 'pattern' => 'HHMMLLHHMMLLHHM', 'sort' => 60, 'img' => 'https://picsum.photos/seed/oc-rush/1200/630'],
+                ['code' => 'MIXED', 'cn_name' => '抽象混合态', 'intro' => '你不是矛盾，你是复杂且有点好笑。', 'pattern' => null, 'sort' => 90, 'fallback' => true, 'img' => 'https://picsum.photos/seed/oc-mixed/1200/630'],
             ];
 
             foreach ($types as $t) {
@@ -149,7 +151,7 @@ class PersonalityQuizSeeder extends Seeder
                     [
                         'cn_name' => $t['cn_name'],
                         'intro' => $t['intro'],
-                        'description' => '这是站点内置的示例解读，可在后台改成自己的文案。维度得分仅用于娱乐向展示。',
+                        'description' => '这是搞怪风格示例解读：你在不同场景下可能像“冷静策士”也可能像“热血莽夫”。别焦虑，这只是娱乐测试，笑完继续搬砖。',
                         'image_url' => $t['img'] ?? null,
                         'pattern' => $t['pattern'],
                         'is_fallback' => ! empty($t['fallback']),
