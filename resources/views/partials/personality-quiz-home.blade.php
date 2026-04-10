@@ -327,14 +327,36 @@
             });
     }
 
-    openBtn.addEventListener('click', function () {
+    function openModalAndStart() {
         setOpen(true);
         resetFlow();
+    }
+
+    openBtn.addEventListener('click', function () {
+        openModalAndStart();
     });
     btnClose.addEventListener('click', function () { setOpen(false); });
     root.addEventListener('click', function (e) {
         if (e.target === root) setOpen(false);
     });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && root && !root.classList.contains('hidden')) {
+            setOpen(false);
+        }
+    });
+
+    // 进入首页且本块已渲染时自动打开弹窗（可点 ×、遮罩或 Esc 关闭）；按钮仍可再次打开
+    function scheduleAutoOpen() {
+        requestAnimationFrame(function () {
+            requestAnimationFrame(openModalAndStart);
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', scheduleAutoOpen);
+    } else {
+        scheduleAutoOpen();
+    }
 
     btnNext.addEventListener('click', function () {
         if (state.step === 'intro') {
