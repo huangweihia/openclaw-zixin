@@ -51,12 +51,12 @@ Route::post('/openclaw/data', [OpenClawDataController::class, 'store']);
 // OpenClaw Task Logs - 接收定时任务执行日志
 Route::post('/openclaw/task-log', [OpenClawTaskLogController::class, 'store']);
 
-// 趣味人格测试（公开）
+// SBTI（公开）
 Route::get('/personality-quiz', [PersonalityQuizController::class, 'show']);
 Route::post('/personality-quiz/submit', [PersonalityQuizController::class, 'submit'])
     ->middleware('throttle:40,1');
 
-// 趣味人格测试管理（无登录，凭 PERSONALITY_QUIZ_ADMIN_TOKEN）
+// SBTI 管理（无登录，凭 PERSONALITY_QUIZ_ADMIN_TOKEN）
 Route::prefix('personality-quiz/admin')->middleware('personality.quiz.admin')->group(function () {
     Route::get('/bootstrap', [PersonalityQuizAdminController::class, 'bootstrap']);
     Route::post('/dimensions', [PersonalityQuizAdminController::class, 'storeDimension']);

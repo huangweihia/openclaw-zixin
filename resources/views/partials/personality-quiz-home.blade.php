@@ -1,13 +1,13 @@
-<div id="oc-pq-root" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" aria-hidden="true">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[92vh] overflow-hidden flex flex-col border border-slate-200">
-        <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50">
-            <div class="font-semibold text-slate-900">SBTI 测试</div>
-            <button type="button" id="oc-pq-close" class="text-slate-500 hover:text-slate-800 text-2xl leading-none px-2" aria-label="关闭">&times;</button>
+<div id="oc-pq-root" class="hidden fixed inset-0 z-[80] flex items-end justify-center sm:items-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-sm" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="oc-pq-title">
+    <div class="bg-white shadow-2xl w-full max-w-full md:w-1/2 md:max-w-[min(50vw,48rem)] rounded-t-2xl md:rounded-2xl min-w-0 min-h-0 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200">
+        <div class="flex shrink-0 items-center justify-between gap-2 px-4 py-3 sm:px-5 border-b border-slate-100 bg-slate-50">
+            <div id="oc-pq-title" class="font-semibold text-slate-900 text-base sm:text-lg truncate pr-2">SBTI</div>
+            <button type="button" id="oc-pq-close" class="shrink-0 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-slate-500 hover:text-slate-800 text-2xl leading-none rounded-lg active:bg-slate-100 touch-manipulation" aria-label="关闭">&times;</button>
         </div>
-        <div id="oc-pq-body" class="p-5 overflow-y-auto text-sm text-slate-700 space-y-4"></div>
-        <div class="px-5 py-3 border-t border-slate-100 flex justify-end gap-2 bg-white">
-            <button type="button" id="oc-pq-back" class="hidden px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm">上一步</button>
-            <button type="button" id="oc-pq-next" class="px-4 py-2 rounded-lg bg-teal-600 text-white text-sm disabled:opacity-40" disabled>开始</button>
+        <div id="oc-pq-body" class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 sm:p-5 text-sm text-slate-700 space-y-4 [overflow-anchor:none]"></div>
+        <div class="shrink-0 px-4 py-3 sm:px-5 border-t border-slate-100 flex flex-wrap justify-end gap-2 bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <button type="button" id="oc-pq-back" class="hidden min-h-[44px] px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm touch-manipulation active:bg-slate-50">上一步</button>
+            <button type="button" id="oc-pq-next" class="min-h-[44px] px-4 py-2 rounded-lg bg-teal-600 text-white text-sm disabled:opacity-40 touch-manipulation active:bg-teal-700" disabled>开始</button>
         </div>
     </div>
 </div>
@@ -97,25 +97,14 @@
         if (state.step === 'intro') {
             var disc = state.payload && state.payload.disclaimer ? esc(state.payload.disclaimer) : '';
             var gp = state.payload && state.payload.guest_play ? state.payload.guest_play : {};
-            var can = !!gp.can_play;
             var reg = esc(gp.register_url || registerUrl);
-            var introMain = '<div class="space-y-2">' +
-                '<p class="text-base text-slate-900 font-semibold">共 ' + (state.payload.questions || []).length + ' 题，按直觉选最像你的即可。</p>' +
-                '<ul class="text-sm text-slate-600 list-disc pl-5 space-y-1">' +
-                '<li>无需登录即可首次体验</li>' +
-                '<li>每题 3 个选项，选最像你的一项</li>' +
-                '<li>结果仅供娱乐参考</li>' +
-                '</ul>' +
-                '</div>';
-            if (!can) {
-                var msg = gp.message ? esc(gp.message) : '每位游客仅可完整体验一次，注册账号后可再次参与。';
-                introMain = '<p class="text-base text-amber-800 font-medium">' + msg + '</p>' +
-                    '<p class="text-sm text-slate-600 mt-3">网站<strong>无需登录</strong>即可首次体验；再次参与请先注册并登录。</p>' +
-                    '<a href="' + reg + '" class="mt-4 inline-flex px-4 py-2 rounded-lg bg-teal-600 text-white text-sm no-underline">去注册</a>';
-            }
+            var msg = gp.message ? esc(gp.message) : '每位游客仅可完整体验一次，注册账号后可再次参与。';
+            var introMain = '<p class="text-base text-amber-800 font-medium">' + msg + '</p>' +
+                '<p class="text-sm text-slate-600 mt-3">网站<strong>无需登录</strong>即可首次体验；再次参与请先注册并登录。</p>' +
+                '<a href="' + reg + '" class="mt-4 inline-flex px-4 py-2 rounded-lg bg-teal-600 text-white text-sm no-underline">去注册</a>';
             bodyEl.innerHTML = introMain + (disc ? '<p class="text-xs text-slate-500 mt-2">' + disc + '</p>' : '');
-            btnNext.disabled = !can;
-            btnNext.textContent = can ? '开始答题' : '关闭';
+            btnNext.disabled = false;
+            btnNext.textContent = '关闭';
             return;
         }
 
@@ -130,12 +119,18 @@
             btnBack.classList.remove('hidden');
             var opts = (q.options || []).map(function (o) {
                 var checked = String(state.answers[q.id]) === String(o.value) ? ' checked' : '';
-                return '<label class="flex gap-3 items-start p-3 rounded-xl border border-slate-200 hover:border-teal-400 cursor-pointer">' +
-                    '<input type="radio" name="oc_pq_opt" class="mt-1" data-value="' + esc(o.value) + '"' + checked + ' />' +
-                    '<span>' + esc(o.label) + '</span></label>';
+                return '<label class="flex gap-3 items-start p-3 rounded-xl border border-slate-200 hover:border-teal-400 cursor-pointer touch-manipulation active:bg-slate-50">' +
+                    '<input type="radio" name="oc_pq_opt" class="mt-1 shrink-0" data-value="' + esc(o.value) + '"' + checked + ' />' +
+                    '<span class="break-words text-sm leading-relaxed sm:text-base">' + esc(o.label) + '</span></label>';
             }).join('');
-            bodyEl.innerHTML = '<div class="text-xs text-slate-500 mb-1">第 ' + (state.index + 1) + ' / ' + qs.length + ' 题</div>' +
-                '<div class="text-base font-medium text-slate-900 mb-3">' + esc(q.body) + '</div>' +
+            var disc0 = (state.index === 0 && state.payload && state.payload.disclaimer) ? esc(state.payload.disclaimer) : '';
+            var hint = state.index === 0
+                ? '<p class="text-xs text-slate-500 mb-2">共 ' + qs.length + ' 题，按直觉选最像你的即可（关闭后再次打开会重新抽题）。</p>' +
+                    (disc0 ? '<p class="text-[11px] text-slate-400 mb-2">' + disc0 + '</p>' : '')
+                : '';
+            bodyEl.innerHTML = hint +
+                '<div class="text-xs text-slate-500 mb-1">第 ' + (state.index + 1) + ' / ' + qs.length + ' 题</div>' +
+                '<div class="text-base sm:text-lg font-medium text-slate-900 mb-3 break-words leading-snug">' + esc(q.body) + '</div>' +
                 '<div class="space-y-2">' + opts + '</div>';
             btnNext.disabled = !state.answers[q.id];
             btnNext.textContent = state.index >= qs.length - 1 ? '查看结果' : '下一题';
@@ -237,7 +232,7 @@
 
             if (fin.image_url) {
                 lines.push('<div class="rounded-xl border border-slate-200 overflow-hidden bg-white">');
-                lines.push('<img alt="" src="' + esc(fin.image_url) + '" class="w-full h-[220px] object-cover" loading="lazy" />');
+                lines.push('<img alt="" src="' + esc(fin.image_url) + '" class="w-full h-[min(40vw,220px)] min-h-[160px] object-cover" loading="lazy" />');
                 lines.push('<div class="p-3 text-xs text-slate-500">结果配图可在后台配置（image_url）。</div>');
                 lines.push('</div>');
             } else {
@@ -298,7 +293,14 @@
             .then(function (data) {
                 state.payload = data;
                 state.quizToken = data && data.quiz_token ? String(data.quiz_token) : null;
-                state.step = 'intro';
+                var gp = data && data.guest_play ? data.guest_play : {};
+                var can = !!gp.can_play;
+                if (can) {
+                    state.step = 'question';
+                    state.index = 0;
+                } else {
+                    state.step = 'intro';
+                }
                 render();
             }).catch(function () {
                 state.step = 'error';
@@ -312,17 +314,13 @@
         resetFlow();
     });
     btnClose.addEventListener('click', function () { setOpen(false); });
+    root.addEventListener('click', function (e) {
+        if (e.target === root) setOpen(false);
+    });
 
     btnNext.addEventListener('click', function () {
         if (state.step === 'intro') {
-            var gp = state.payload && state.payload.guest_play ? state.payload.guest_play : {};
-            if (!gp.can_play) {
-                setOpen(false);
-                return;
-            }
-            state.step = 'question';
-            state.index = 0;
-            render();
+            setOpen(false);
             return;
         }
         if (state.step === 'question') {

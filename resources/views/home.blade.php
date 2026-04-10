@@ -153,7 +153,7 @@
                 </button>
                 @if (! empty($personalityQuizAvailable))
                     <button type="button" id="oc-pq-open" class="oc-hero-cta-outline">
-                        SBTI 测试
+                        SBTI
                     </button>
                 @endif
             </div>

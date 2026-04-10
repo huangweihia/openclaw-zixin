@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="personality-quiz-admin-token" content="{{ $adminToken }}">
-    <title>SBTI 测试 · 管理</title>
+    <title>SBTI · 管理</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen">
 <div class="max-w-6xl mx-auto px-4 py-8 space-y-10">
     <header class="space-y-2">
-        <h1 class="text-2xl font-bold">SBTI 测试 · 无登录管理</h1>
+        <h1 class="text-2xl font-bold">SBTI · 无登录管理</h1>
         <p class="text-sm text-slate-600">请妥善保管带 token 的完整 URL，勿提交到公开仓库。所有写操作会立刻影响前台题库与计分。</p>
         <button type="button" id="btn-reload" class="text-sm px-3 py-1.5 rounded-lg bg-slate-900 text-white">重新加载数据</button>
         <p id="status" class="text-sm text-emerald-700 min-h-[1.25rem]"></p>
