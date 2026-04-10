@@ -135,14 +135,25 @@ class PersonalityQuizSeeder extends Seeder
                 }
             }
 
+            // 搞怪氛围图：Unsplash 萌宠/趣味向（可后台 image_url 覆盖）
+            $funImg = [
+                'planner' => 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=1200&h=630&q=80',
+                'explorer' => 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=1200&h=630&q=80',
+                'balance' => 'https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=1200&h=630&q=80',
+                'wave' => 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1200&h=630&q=80',
+                'guard' => 'https://images.unsplash.com/photo-1494256997604-768d1f608cac?auto=format&fit=crop&w=1200&h=630&q=80',
+                'rush' => 'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?auto=format&fit=crop&w=1200&h=630&q=80',
+                'mixed' => 'https://images.unsplash.com/photo-1560807707-8cc77767d783?auto=format&fit=crop&w=1200&h=630&q=80',
+            ];
+
             $types = [
-                ['code' => 'PLANNER', 'cn_name' => '战术参谋型', 'intro' => '还没开始做，脑内已经彩排三轮。', 'pattern' => 'HHHHHHHHHHHHHHH', 'sort' => 10, 'img' => 'https://picsum.photos/seed/oc-planner/1200/630'],
-                ['code' => 'EXPLORER', 'cn_name' => '野路子探索型', 'intro' => '先冲再说，路是走着走着歪出来的。', 'pattern' => 'LLLLLLLLLLLLLLL', 'sort' => 20, 'img' => 'https://picsum.photos/seed/oc-explorer/1200/630'],
-                ['code' => 'BALANCE', 'cn_name' => '端水大师型', 'intro' => '情绪、效率、社交，主打一个不翻车。', 'pattern' => 'MMMMMMMMMMMMMMM', 'sort' => 30, 'img' => 'https://picsum.photos/seed/oc-balance/1200/630'],
-                ['code' => 'WAVE', 'cn_name' => '间歇性开挂型', 'intro' => '状态好的时候像开挂，状态差的时候像在加载。', 'pattern' => 'HHLHHLHHLHHLHHL', 'sort' => 40, 'img' => 'https://picsum.photos/seed/oc-wave/1200/630'],
-                ['code' => 'GUARD', 'cn_name' => '谨慎防守型', 'intro' => '先把风险打包，再谈梦想发货。', 'pattern' => 'LLHHMMHHLLMMHHH', 'sort' => 50, 'img' => 'https://picsum.photos/seed/oc-guard/1200/630'],
-                ['code' => 'RUSH', 'cn_name' => '火力推进型', 'intro' => '想到就干，先把进度条拽到 80%。', 'pattern' => 'HHMMLLHHMMLLHHM', 'sort' => 60, 'img' => 'https://picsum.photos/seed/oc-rush/1200/630'],
-                ['code' => 'MIXED', 'cn_name' => '抽象混合态', 'intro' => '你不是矛盾，你是复杂且有点好笑。', 'pattern' => null, 'sort' => 90, 'fallback' => true, 'img' => 'https://picsum.photos/seed/oc-mixed/1200/630'],
+                ['code' => 'PLANNER', 'cn_name' => '战术参谋型', 'intro' => '还没开始做，脑内已经彩排三轮。', 'pattern' => 'HHHHHHHHHHHHHHH', 'sort' => 10, 'img' => $funImg['planner']],
+                ['code' => 'EXPLORER', 'cn_name' => '野路子探索型', 'intro' => '先冲再说，路是走着走着歪出来的。', 'pattern' => 'LLLLLLLLLLLLLLL', 'sort' => 20, 'img' => $funImg['explorer']],
+                ['code' => 'BALANCE', 'cn_name' => '端水大师型', 'intro' => '情绪、效率、社交，主打一个不翻车。', 'pattern' => 'MMMMMMMMMMMMMMM', 'sort' => 30, 'img' => $funImg['balance']],
+                ['code' => 'WAVE', 'cn_name' => '间歇性开挂型', 'intro' => '状态好的时候像开挂，状态差的时候像在加载。', 'pattern' => 'HHLHHLHHLHHLHHL', 'sort' => 40, 'img' => $funImg['wave']],
+                ['code' => 'GUARD', 'cn_name' => '谨慎防守型', 'intro' => '先把风险打包，再谈梦想发货。', 'pattern' => 'LLHHMMHHLLMMHHH', 'sort' => 50, 'img' => $funImg['guard']],
+                ['code' => 'RUSH', 'cn_name' => '火力推进型', 'intro' => '想到就干，先把进度条拽到 80%。', 'pattern' => 'HHMMLLHHMMLLHHM', 'sort' => 60, 'img' => $funImg['rush']],
+                ['code' => 'MIXED', 'cn_name' => '抽象混合态', 'intro' => '你不是矛盾，你是复杂且有点好笑。', 'pattern' => null, 'sort' => 90, 'fallback' => true, 'img' => $funImg['mixed']],
             ];
 
             foreach ($types as $t) {

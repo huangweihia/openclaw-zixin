@@ -25,6 +25,16 @@
 
     var apiBase = @json(url('/api/personality-quiz'));
     var registerUrl = @json(route('register'));
+    /** 无 image_url 时的搞怪氛围图兜底（Unsplash，可后台覆盖） */
+    var ocPqFunFallbackImgs = @json([
+        'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=1200&h=630&q=80',
+        'https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=1200&h=630&q=80',
+        'https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=1200&h=630&q=80',
+        'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1200&h=630&q=80',
+        'https://images.unsplash.com/photo-1494256997604-768d1f608cac?auto=format&fit=crop&w=1200&h=630&q=80',
+        'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?auto=format&fit=crop&w=1200&h=630&q=80',
+        'https://images.unsplash.com/photo-1560807707-8cc77767d783?auto=format&fit=crop&w=1200&h=630&q=80',
+    ]);
     var csrfToken = (function () {
         var m = document.querySelector('meta[name="csrf-token"]');
         return m ? m.getAttribute('content') : '';
@@ -73,6 +83,20 @@
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;');
+    }
+
+    function ocPqPickResultImageUrl(fin) {
+        var u = fin && fin.image_url ? String(fin.image_url).trim() : '';
+        if (u) return u;
+        var pool = ocPqFunFallbackImgs || [];
+        if (!pool.length) return '';
+        var c = fin && fin.code ? String(fin.code) : 'SBTI';
+        var h = 0;
+        for (var i = 0; i < c.length; i++) {
+            h = ((h << 5) - h) + c.charCodeAt(i);
+            h |= 0;
+        }
+        return pool[Math.abs(h) % pool.length];
     }
 
     function setOpen(on) {
@@ -230,13 +254,11 @@
             }
             lines.push('</div>'); // left card
 
-            if (fin.image_url) {
+            var resultImg = ocPqPickResultImageUrl(fin);
+            if (resultImg) {
                 lines.push('<div class="rounded-xl border border-slate-200 overflow-hidden bg-white">');
-                lines.push('<img alt="" src="' + esc(fin.image_url) + '" class="w-full h-[min(40vw,220px)] min-h-[160px] object-cover" loading="lazy" />');
-                lines.push('<div class="p-3 text-xs text-slate-500">结果配图可在后台配置（image_url）。</div>');
+                lines.push('<img alt="SBTI 结果氛围图" src="' + esc(resultImg) + '" class="w-full h-[min(40vw,220px)] min-h-[160px] object-cover" loading="lazy" />');
                 lines.push('</div>');
-            } else {
-                lines.push('<div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">暂无结果图，可在后台为该类型填写 image_url。</div>');
             }
             lines.push('</div>'); // grid
 
