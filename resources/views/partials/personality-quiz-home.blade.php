@@ -1,7 +1,7 @@
 <div id="oc-pq-root" class="hidden fixed inset-0 z-[80] flex items-end justify-center sm:items-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-sm" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="oc-pq-title">
     <div class="bg-white shadow-2xl w-full max-w-full md:w-1/2 md:max-w-[min(50vw,48rem)] rounded-t-2xl md:rounded-2xl min-w-0 min-h-0 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200">
         <div class="flex shrink-0 items-center justify-between gap-2 px-4 py-3 sm:px-5 border-b border-slate-100 bg-slate-50">
-            <div id="oc-pq-title" class="font-semibold text-slate-900 text-base sm:text-lg truncate pr-2">SBTI</div>
+            <div id="oc-pq-title" class="font-semibold text-slate-900 text-sm sm:text-base truncate pr-2">SBTI性格展示</div>
             <button type="button" id="oc-pq-close" class="shrink-0 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-slate-500 hover:text-slate-800 text-2xl leading-none rounded-lg active:bg-slate-100 touch-manipulation" aria-label="关闭">&times;</button>
         </div>
         <div id="oc-pq-body" class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 sm:p-5 text-sm text-slate-700 space-y-4 [overflow-anchor:none]"></div>
@@ -77,9 +77,19 @@
             .replace(/"/g, '&quot;');
     }
 
+    function ocPqIsLegacyStockImageUrl(u) {
+        if (!u) return true;
+        var lower = String(u).toLowerCase();
+        if (lower.indexOf('unsplash.com') >= 0) return true;
+        if (lower.indexOf('picsum.photos') >= 0) return true;
+        if (lower.indexOf('pexels.com') >= 0) return true;
+        return false;
+    }
+
     function ocPqPickResultImageUrl(fin) {
         var u = fin && fin.image_url ? String(fin.image_url).trim() : '';
-        if (u) return u;
+        // 库里若仍是旧版 Unsplash/picsum 占位图，强制改用站内搞怪 SVG，避免展示风景照
+        if (u && !ocPqIsLegacyStockImageUrl(u)) return u;
         var base = ocPqSbtiArtBase || '';
         var code = fin && fin.code ? String(fin.code).toUpperCase() : '';
         var slugByCode = { PLANNER: 'planner', EXPLORER: 'explorer', BALANCE: 'balance', WAVE: 'wave', GUARD: 'guard', RUSH: 'rush', MIXED: 'mixed' };
@@ -253,7 +263,7 @@
             var resultImg = ocPqPickResultImageUrl(fin);
             if (resultImg) {
                 lines.push('<div class="rounded-xl border border-slate-200 overflow-hidden bg-white">');
-                lines.push('<img alt="SBTI 结果氛围图" src="' + esc(resultImg) + '" class="w-full h-[min(40vw,220px)] min-h-[160px] object-cover" loading="lazy" />');
+                lines.push('<img alt="SBTI性格展示" src="' + esc(resultImg) + '" class="w-full h-[min(40vw,220px)] min-h-[160px] object-cover" loading="lazy" />');
                 lines.push('</div>');
             }
             lines.push('</div>'); // grid
