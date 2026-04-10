@@ -8,20 +8,9 @@
     @endphp
 
     <h1 class="text-3xl font-bold text-center mb-8 oc-heading">👤 个人中心</h1>
-    <div class="grid lg:grid-cols-12 gap-6 items-start">
-        <aside class="lg:col-span-3 oc-surface p-4">
-            <h3 class="text-sm font-bold oc-heading mb-3">菜单</h3>
-            <nav class="space-y-2">
-                <a href="#dash-profile" class="block text-sm oc-link">个人资料</a>
-                <a href="#dash-subscription" class="block text-sm oc-link">会员与订阅</a>
-                <a href="#dash-quick" class="block text-sm oc-link">快捷入口</a>
-                <a href="#dash-timeline" class="block text-sm oc-link">最近动态</a>
-            </nav>
-        </aside>
-        <div class="lg:col-span-9 space-y-8">
 
-    {{-- 原型：用户信息卡片 + 编辑入口 + 统计 --}}
-    <div id="dash-profile" class="oc-surface p-6 md:p-8">
+    {{-- 顶部主卡片（占据个人中心页顶部部分） --}}
+    <div class="oc-surface p-6 md:p-8 mb-6">
         <div class="flex flex-col sm:flex-row sm:items-start gap-6">
             <div class="shrink-0 mx-auto sm:mx-0 text-center sm:text-left">
                 @if ($u->avatar)
@@ -90,14 +79,81 @@
         </div>
     </div>
 
-    @if (! $u->isAdmin())
-        <div class="max-w-4xl mx-auto mb-8">
-            @include('partials.membership-compare')
+    <div
+        id="oc-dashboard-shell"
+        class="flex flex-col lg:flex-row gap-6 items-start"
+        style="--ocDashLeft: 320px;"
+    >
+        {{-- 左侧：快捷菜单（宽度可调节） --}}
+        <aside
+            id="oc-dash-left"
+            class="w-full lg:sticky lg:top-20 oc-surface p-4"
+            style="width: var(--ocDashLeft); max-width: 520px;"
+        >
+            <h3 class="text-sm font-bold oc-heading mb-3">快捷菜单</h3>
+            <nav class="space-y-1" aria-label="个人中心菜单">
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm font-semibold oc-heading" data-tab="subscription" style="background: rgba(148,163,184,.12);">
+                    会员与订阅
+                </button>
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="timeline">
+                    最近动态
+                </button>
+            </nav>
+
+            <div class="mt-5 pt-4 border-t oc-border">
+                <h4 class="text-xs font-bold oc-heading mb-3">快捷入口</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <a href="{{ route('user-posts.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
+                        <span class="text-xl" aria-hidden="true">📝</span>
+                        <span class="text-sm font-semibold oc-heading">我的发布</span>
+                    </a>
+                    <a href="{{ route('favorites.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
+                        <span class="text-xl" aria-hidden="true">⭐</span>
+                        <span class="text-sm font-semibold oc-heading">我的收藏</span>
+                    </a>
+                    <a href="{{ route('history.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
+                        <span class="text-xl" aria-hidden="true">👣</span>
+                        <span class="text-sm font-semibold oc-heading">浏览历史</span>
+                    </a>
+                    <a href="{{ route('dashboard.comments') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
+                        <span class="text-xl" aria-hidden="true">💬</span>
+                        <span class="text-sm font-semibold oc-heading">我的评论</span>
+                    </a>
+                    <a href="{{ route('dashboard.orders') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
+                        <span class="text-xl" aria-hidden="true">💳</span>
+                        <span class="text-sm font-semibold oc-heading">我的订单</span>
+                    </a>
+                    @if ($u->role === 'svip' || $u->isAdmin())
+                        <a href="{{ route('svip-subscriptions.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
+                            <span class="text-xl" aria-hidden="true">✨</span>
+                            <span class="text-sm font-semibold oc-heading">SVIP 定制</span>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </aside>
+
+        {{-- 左侧宽度拖拽条（仅桌面端） --}}
+        <div
+            id="oc-dash-resizer"
+            class="hidden lg:block self-stretch"
+            style="width: 10px; margin-left: -6px; cursor: col-resize;"
+            aria-hidden="true"
+            title="拖拽调整左侧宽度"
+        >
+            <div class="h-full w-[2px] mx-auto" style="background: rgba(148,163,184,.35); border-radius: 999px;"></div>
         </div>
-    @endif
+
+        {{-- 右侧：内容区（宽度可调节，随左侧变化自适应） --}}
+        <section id="oc-dash-right" class="flex-1 min-w-0 w-full space-y-6">
+            @if (! $u->isAdmin())
+                <div class="max-w-4xl mx-auto">
+                    @include('partials.membership-compare')
+                </div>
+            @endif
 
     {{-- 订阅（独立条，原型外补充） --}}
-    <div id="dash-subscription" class="oc-surface p-6">
+    <div id="dash-subscription" class="oc-dash-panel oc-surface p-6" data-panel="subscription">
         <h3 class="font-bold oc-heading mb-3">订阅</h3>
         @if ($u->isAdmin())
             <p class="text-sm oc-muted mb-4">超级管理员享有全站权益，无需开通 VIP。</p>
@@ -141,41 +197,8 @@
         @endif
     </div>
 
-    {{-- 快捷入口 --}}
-    <div id="dash-quick">
-        <h3 class="text-sm font-bold oc-heading mb-4">快捷入口</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <a href="{{ route('user-posts.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-5 rounded-xl text-center">
-                <span class="text-2xl" aria-hidden="true">📝</span>
-                <span class="text-sm font-semibold oc-heading">我的发布</span>
-            </a>
-            <a href="{{ route('favorites.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-5 rounded-xl text-center">
-                <span class="text-2xl" aria-hidden="true">⭐</span>
-                <span class="text-sm font-semibold oc-heading">我的收藏</span>
-            </a>
-            <a href="{{ route('history.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-5 rounded-xl text-center">
-                <span class="text-2xl" aria-hidden="true">👣</span>
-                <span class="text-sm font-semibold oc-heading">浏览历史</span>
-            </a>
-            <a href="{{ route('dashboard.comments') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-5 rounded-xl text-center">
-                <span class="text-2xl" aria-hidden="true">💬</span>
-                <span class="text-sm font-semibold oc-heading">我的评论</span>
-            </a>
-            <a href="{{ route('dashboard.orders') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-5 rounded-xl text-center">
-                <span class="text-2xl" aria-hidden="true">💳</span>
-                <span class="text-sm font-semibold oc-heading">我的订单</span>
-            </a>
-            @if ($u->role === 'svip' || $u->isAdmin())
-                <a href="{{ route('svip-subscriptions.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-5 rounded-xl text-center">
-                    <span class="text-2xl" aria-hidden="true">✨</span>
-                    <span class="text-sm font-semibold oc-heading">SVIP 定制</span>
-                </a>
-            @endif
-        </div>
-    </div>
-
     {{-- 最近动态 --}}
-    <div id="dash-timeline" class="oc-surface p-6 md:p-8">
+    <div id="dash-timeline" class="oc-dash-panel oc-surface p-6 md:p-8 hidden" data-panel="timeline">
         <h3 class="text-lg font-bold oc-heading mb-4">最近动态</h3>
         <p class="text-xs oc-muted mb-4">时间线</p>
         @if ($timeline->isEmpty())
@@ -192,11 +215,65 @@
             </ul>
         @endif
     </div>
-        </div>
+        </section>
     </div>
 @endsection
 
 @push('scripts')
+    <script>
+        (function () {
+            const shell = document.getElementById('oc-dashboard-shell');
+            const left = document.getElementById('oc-dash-left');
+            const resizer = document.getElementById('oc-dash-resizer');
+            if (!shell || !left || !resizer) return;
+
+            // Tabs: 左侧菜单切换右侧内容
+            const tabs = Array.from(shell.querySelectorAll('.oc-dash-tab'));
+            const panels = Array.from(shell.querySelectorAll('.oc-dash-panel'));
+            const setActive = (name) => {
+                tabs.forEach((t) => {
+                    const on = t.getAttribute('data-tab') === name;
+                    t.classList.toggle('oc-link', !on);
+                    t.classList.toggle('oc-heading', on);
+                    t.style.background = on ? 'rgba(148,163,184,.12)' : 'transparent';
+                });
+                panels.forEach((p) => {
+                    const on = p.getAttribute('data-panel') === name;
+                    p.classList.toggle('hidden', !on);
+                });
+            };
+            tabs.forEach((t) => t.addEventListener('click', () => setActive(t.getAttribute('data-tab'))));
+            setActive('subscription');
+
+            // Resizer: 调整左侧宽度（桌面端）
+            let dragging = false;
+            let startX = 0;
+            let startW = 0;
+            const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+            const onMove = (e) => {
+                if (!dragging) return;
+                const dx = (e.clientX || 0) - startX;
+                const next = clamp(startW + dx, 240, 520);
+                shell.style.setProperty('--ocDashLeft', `${next}px`);
+            };
+            const stop = () => {
+                if (!dragging) return;
+                dragging = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            };
+            resizer.addEventListener('mousedown', (e) => {
+                dragging = true;
+                startX = e.clientX || 0;
+                startW = left.getBoundingClientRect().width || 320;
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            });
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', stop);
+        })();
+    </script>
     <script>
         (function () {
             const el = document.getElementById('vip-expiry-countdown');
