@@ -39,6 +39,9 @@ fi
 echo "[0/4] ensure containers are up..."
 docker compose -f "$COMPOSE_FILE" up -d
 
+echo "[0b/4] fix storage & bootstrap/cache permissions (avoid Blade Permission denied)…"
+docker compose -f "$COMPOSE_FILE" exec -T --user 0 php sh -lc 'mkdir -p storage/framework/views storage/framework/cache storage/framework/sessions storage/framework/testing storage/logs storage/app/public bootstrap/cache && chown -R www-data:www-data storage bootstrap/cache && chmod -R ug+rwX storage bootstrap/cache' || true
+
 echo "[1/4] pull latest code..."
 # Optimization for slow servers:
 # - protocol v2 + partial clone blob filter to reduce transfer

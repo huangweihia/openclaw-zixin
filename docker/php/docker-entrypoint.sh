@@ -2,6 +2,12 @@
 set -e
 cd /var/www/html || exit 1
 
+# 代码卷从宿主机 bind 进来时，storage / bootstrap/cache 常为 root 属主，PHP-FPM（www-data）无法写入
+# Blade 编译会报：file_put_contents(...storage/framework/views/...): Permission denied
+mkdir -p storage/framework/views storage/framework/cache storage/framework/sessions storage/framework/testing storage/logs storage/app/public bootstrap/cache 2>/dev/null || true
+chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+chmod -R ug+rwX storage bootstrap/cache 2>/dev/null || true
+
 # 宿主机代码卷里的 bootstrap/cache/*.php 若来自「带 dev 依赖」的 package:discover，
 # 而本容器 vendor 为 --no-dev（无 Collision / Ignition 等），会导致
 # Class "...CollisionServiceProvider" not found，连 artisan 都无法执行。
