@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AiToolMonetization;
 use App\Models\Article;
+use App\Models\PersonalityQuizSetting;
 use App\Models\Project;
 use App\Support\PricingConfig;
 use App\Models\PersonalityQuestion;
@@ -38,7 +39,13 @@ class HomeController extends Controller
         $featuredProjects = $this->featuredProjects();
         $featuredCases = $this->featuredCases();
 
-        $personalityQuizAvailable = Schema::hasTable('personality_questions')
+        $personalityQuizEnabled = true;
+        if (Schema::hasTable('personality_quiz_settings')) {
+            $personalityQuizEnabled = (int) (PersonalityQuizSetting::getValue('enabled', '1') ?? 1) === 1;
+        }
+
+        $personalityQuizAvailable = $personalityQuizEnabled
+            && Schema::hasTable('personality_questions')
             && PersonalityQuestion::query()->exists();
 
         return view('home', compact(

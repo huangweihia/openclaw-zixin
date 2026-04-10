@@ -23,6 +23,10 @@ class PersonalityQuizSeeder extends Seeder
                 ['key' => 'low_match_threshold'],
                 ['value' => '60']
             );
+            PersonalityQuizSetting::query()->updateOrCreate(
+                ['key' => 'enabled'],
+                ['value' => '1']
+            );
 
             $groups = [
                 '自我视角' => [

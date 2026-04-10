@@ -23,6 +23,10 @@
                 <span class="text-slate-600">低匹配阈值 low_match_threshold（0–100）</span>
                 <input id="set-threshold" type="number" min="0" max="100" class="border rounded-lg px-3 py-2 w-40" />
             </label>
+            <label class="inline-flex items-center gap-2 text-sm">
+                <input type="checkbox" id="set-enabled" />
+                <span class="text-slate-600">启用（开启时首页展示入口）</span>
+            </label>
             <button type="button" id="btn-save-setting" class="px-4 py-2 rounded-lg bg-teal-600 text-white text-sm">保存</button>
         </div>
     </section>
@@ -322,6 +326,7 @@
             state.settings = data.settings || {};
             document.getElementById('dim-count').textContent = String(data.active_dimension_count ?? '—');
             document.getElementById('set-threshold').value = state.settings.low_match_threshold ?? '';
+            document.getElementById('set-enabled').checked = String(state.settings.enabled ?? '1') !== '0';
             renderTypes();
             renderDimSelect();
             const sel = document.getElementById('dim-select');
@@ -335,8 +340,12 @@
 
     document.getElementById('btn-save-setting').addEventListener('click', () => {
         const value = String(document.getElementById('set-threshold').value || '');
+        const enabled = document.getElementById('set-enabled').checked ? '1' : '0';
         api('/settings', { method: 'PUT', body: JSON.stringify({ key: 'low_match_threshold', value }) })
-            .then(() => loadAll()).then(() => setStatus('设置已保存', true)).catch(e => setStatus(e.message, false));
+            .then(() => api('/settings', { method: 'PUT', body: JSON.stringify({ key: 'enabled', value: enabled }) }))
+            .then(() => loadAll())
+            .then(() => setStatus('设置已保存', true))
+            .catch(e => setStatus(e.message, false));
     });
 
     document.getElementById('btn-type-create').addEventListener('click', () => {

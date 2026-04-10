@@ -47,6 +47,7 @@ final class PersonalityQuizScoringService
             'questions' => $questions,
             'settings' => [
                 'low_match_threshold' => (int) (PersonalityQuizSetting::getValue('low_match_threshold', '60') ?? 60),
+                'enabled' => (int) (PersonalityQuizSetting::getValue('enabled', '1') ?? 1),
             ],
             'disclaimer' => '本测试仅供娱乐，不构成任何心理或职业建议。',
         ];
