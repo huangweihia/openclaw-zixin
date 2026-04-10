@@ -9,76 +9,6 @@
 
     <h1 class="text-3xl font-bold text-center mb-8 oc-heading">👤 个人中心</h1>
 
-    {{-- 顶部主卡片（占据个人中心页顶部部分） --}}
-    <div class="oc-surface p-6 md:p-8 mb-6">
-        <div class="flex flex-col sm:flex-row sm:items-start gap-6">
-            <div class="shrink-0 mx-auto sm:mx-0 text-center sm:text-left">
-                @if ($u->avatar)
-                    <img src="{{ $u->avatar }}" alt="" class="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-2 mx-auto sm:mx-0" style="border-color: rgba(148,163,184,.35);" />
-                @else
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full mx-auto sm:mx-0 flex items-center justify-center text-2xl font-bold text-white" style="background: var(--gradient-primary);">
-                        {{ mb_substr($u->name, 0, 1) }}
-                    </div>
-                @endif
-            </div>
-            <div class="flex-1 min-w-0 text-center sm:text-left">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-2 w-full">
-                    <h2 class="text-xl md:text-2xl font-bold oc-heading m-0">{{ $u->name }}</h2>
-                    <a href="{{ route('dashboard.edit') }}" class="btn btn-secondary text-sm shrink-0">编辑</a>
-                </div>
-                <p class="text-sm oc-muted mb-1">{{ $handle }}</p>
-                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-sm">
-                    <span class="font-semibold oc-heading">{{ $roleLabel }}</span>
-                    @if ($vipDays !== null)
-                        <span class="{{ !empty($vipIsUrgent) ? 'text-red-600 font-semibold' : 'oc-muted' }}">
-                            剩余 <strong class="oc-heading">{{ $vipDays }}</strong> 天
-                        </span>
-                        @if (!empty($vipIsUrgent) && !empty($vipSecondsLeft) && $vipSecondsLeft > 0)
-                            <span
-                                id="vip-expiry-countdown"
-                                class="text-xs px-2 py-1 rounded-full"
-                                style="background: #fee2e2; color: #b91c1c;"
-                                data-left="{{ (int) $vipSecondsLeft }}"
-                            >倒计时加载中...</span>
-                        @endif
-                    @elseif ($vipExpiresAt)
-                        <span class="oc-muted">有效期至 {{ $vipExpiresAt->format('Y-m-d H:i') }}</span>
-                    @endif
-                </div>
-                @if ($u->bio)
-                    <p class="text-sm oc-muted mt-3 line-clamp-2">{{ $u->bio }}</p>
-                @endif
-            </div>
-        </div>
-
-        <div class="mt-8 pt-6 border-t oc-border">
-            <h3 class="text-sm font-bold oc-heading mb-4">📊 统计数据</h3>
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div class="oc-stat-card rounded-xl p-4 text-center">
-                    <div class="text-lg mb-1">📝</div>
-                    <div class="text-xs oc-muted">发布数</div>
-                    <div class="text-xl font-bold oc-heading">{{ number_format($postsCount) }}</div>
-                </div>
-                <div class="oc-stat-card rounded-xl p-4 text-center">
-                    <div class="text-lg mb-1">👁️</div>
-                    <div class="text-xs oc-muted">内容被浏览</div>
-                    <div class="text-xl font-bold oc-heading">{{ number_format($viewsCount) }}</div>
-                    <div class="text-[11px] oc-muted mt-1">足迹 {{ number_format($footprintCount) }} 条</div>
-                </div>
-                <div class="oc-stat-card rounded-xl p-4 text-center">
-                    <div class="text-lg mb-1">⭐</div>
-                    <div class="text-xs oc-muted">收藏数</div>
-                    <div class="text-xl font-bold oc-heading">{{ number_format($favoritesCount) }}</div>
-                </div>
-                <div class="oc-stat-card rounded-xl p-4 text-center">
-                    <div class="text-lg mb-1">💬</div>
-                    <div class="text-xs oc-muted">评论数</div>
-                    <div class="text-xl font-bold oc-heading">{{ number_format($commentsCount) }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div
         id="oc-dashboard-shell"
         class="flex flex-col lg:flex-row gap-6 items-start"
@@ -92,7 +22,10 @@
         >
             <h3 class="text-sm font-bold oc-heading mb-3">快捷菜单</h3>
             <nav class="space-y-1" aria-label="个人中心菜单">
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm font-semibold oc-heading" data-tab="subscription" style="background: rgba(148,163,184,.12);">
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm font-semibold oc-heading" data-tab="profile" style="background: rgba(148,163,184,.12);">
+                    个人资料
+                </button>
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="subscription">
                     会员与订阅
                 </button>
                 <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="timeline">
@@ -146,15 +79,84 @@
 
         {{-- 右侧：内容区（宽度可调节，随左侧变化自适应） --}}
         <section id="oc-dash-right" class="flex-1 min-w-0 w-full space-y-6">
-            @if (! $u->isAdmin())
-                <div class="max-w-4xl mx-auto">
-                    @include('partials.membership-compare')
+            {{-- 个人资料（默认面板：包含顶部主卡片 + 统计，占据右侧顶部） --}}
+            <div id="dash-profile" class="oc-dash-panel oc-surface p-6 md:p-8" data-panel="profile">
+                <div class="flex flex-col sm:flex-row sm:items-start gap-6">
+                    <div class="shrink-0 mx-auto sm:mx-0 text-center sm:text-left">
+                        @if ($u->avatar)
+                            <img src="{{ $u->avatar }}" alt="" class="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-2 mx-auto sm:mx-0" style="border-color: rgba(148,163,184,.35);" />
+                        @else
+                            <div class="w-20 h-20 md:w-24 md:h-24 rounded-full mx-auto sm:mx-0 flex items-center justify-center text-2xl font-bold text-white" style="background: var(--gradient-primary);">
+                                {{ mb_substr($u->name, 0, 1) }}
+                            </div>
+                        @endif
+                    </div>
+                    <div class="flex-1 min-w-0 text-center sm:text-left">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-2 w-full">
+                            <h2 class="text-xl md:text-2xl font-bold oc-heading m-0">{{ $u->name }}</h2>
+                            <a href="{{ route('dashboard.edit') }}" class="btn btn-secondary text-sm shrink-0">编辑</a>
+                        </div>
+                        <p class="text-sm oc-muted mb-1">{{ $handle }}</p>
+                        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-sm">
+                            <span class="font-semibold oc-heading">{{ $roleLabel }}</span>
+                            @if ($vipDays !== null)
+                                <span class="{{ !empty($vipIsUrgent) ? 'text-red-600 font-semibold' : 'oc-muted' }}">
+                                    剩余 <strong class="oc-heading">{{ $vipDays }}</strong> 天
+                                </span>
+                                @if (!empty($vipIsUrgent) && !empty($vipSecondsLeft) && $vipSecondsLeft > 0)
+                                    <span
+                                        id="vip-expiry-countdown"
+                                        class="text-xs px-2 py-1 rounded-full"
+                                        style="background: #fee2e2; color: #b91c1c;"
+                                        data-left="{{ (int) $vipSecondsLeft }}"
+                                    >倒计时加载中...</span>
+                                @endif
+                            @elseif ($vipExpiresAt)
+                                <span class="oc-muted">有效期至 {{ $vipExpiresAt->format('Y-m-d H:i') }}</span>
+                            @endif
+                        </div>
+                        @if ($u->bio)
+                            <p class="text-sm oc-muted mt-3 line-clamp-2">{{ $u->bio }}</p>
+                        @endif
+                    </div>
                 </div>
-            @endif
+
+                <div class="mt-8 pt-6 border-t oc-border">
+                    <h3 class="text-sm font-bold oc-heading mb-4">📊 统计数据</h3>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="oc-stat-card rounded-xl p-4 text-center">
+                            <div class="text-lg mb-1">📝</div>
+                            <div class="text-xs oc-muted">发布数</div>
+                            <div class="text-xl font-bold oc-heading">{{ number_format($postsCount) }}</div>
+                        </div>
+                        <div class="oc-stat-card rounded-xl p-4 text-center">
+                            <div class="text-lg mb-1">👁️</div>
+                            <div class="text-xs oc-muted">内容被浏览</div>
+                            <div class="text-xl font-bold oc-heading">{{ number_format($viewsCount) }}</div>
+                            <div class="text-[11px] oc-muted mt-1">足迹 {{ number_format($footprintCount) }} 条</div>
+                        </div>
+                        <div class="oc-stat-card rounded-xl p-4 text-center">
+                            <div class="text-lg mb-1">⭐</div>
+                            <div class="text-xs oc-muted">收藏数</div>
+                            <div class="text-xl font-bold oc-heading">{{ number_format($favoritesCount) }}</div>
+                        </div>
+                        <div class="oc-stat-card rounded-xl p-4 text-center">
+                            <div class="text-lg mb-1">💬</div>
+                            <div class="text-xs oc-muted">评论数</div>
+                            <div class="text-xl font-bold oc-heading">{{ number_format($commentsCount) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
     {{-- 订阅（独立条，原型外补充） --}}
-    <div id="dash-subscription" class="oc-dash-panel oc-surface p-6" data-panel="subscription">
+    <div id="dash-subscription" class="oc-dash-panel oc-surface p-6 hidden" data-panel="subscription">
         <h3 class="font-bold oc-heading mb-3">订阅</h3>
+        @if (! $u->isAdmin())
+            <div class="max-w-4xl mx-auto mb-6">
+                @include('partials.membership-compare')
+            </div>
+        @endif
         @if ($u->isAdmin())
             <p class="text-sm oc-muted mb-4">超级管理员享有全站权益，无需开通 VIP。</p>
             <a href="{{ route('pricing') }}" class="btn btn-secondary text-sm">查看价格页（演示）</a>
@@ -243,7 +245,7 @@
                 });
             };
             tabs.forEach((t) => t.addEventListener('click', () => setActive(t.getAttribute('data-tab'))));
-            setActive('subscription');
+            setActive('profile');
 
             // Resizer: 调整左侧宽度（桌面端）
             let dragging = false;
