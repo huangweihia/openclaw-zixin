@@ -1,7 +1,7 @@
 <div id="oc-pq-root" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" aria-hidden="true">
     <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[92vh] overflow-hidden flex flex-col border border-slate-200">
         <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50">
-            <div class="font-semibold text-slate-900">趣味人格测试</div>
+            <div class="font-semibold text-slate-900">SBTI 测试</div>
             <button type="button" id="oc-pq-close" class="text-slate-500 hover:text-slate-800 text-2xl leading-none px-2" aria-label="关闭">&times;</button>
         </div>
         <div id="oc-pq-body" class="p-5 overflow-y-auto text-sm text-slate-700 space-y-4"></div>

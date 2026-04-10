@@ -87,7 +87,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <AdminPageShell title="趣味人格测试">
+    <AdminPageShell title="SBTI 测试">
         <div class="card">
             <div class="card__body space-y-4">
                 <div class="text-slate-600">
