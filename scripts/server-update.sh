@@ -51,12 +51,8 @@ echo "[2/4] install PHP deps (composer)..."
 docker compose -f "$COMPOSE_FILE" exec -T php composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
 
 echo "[3/4] build frontend assets (Vite)..."
-if docker compose -f "$COMPOSE_FILE" exec -T php sh -lc "command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1"; then
-  docker compose -f "$COMPOSE_FILE" exec -T php sh -lc "npm ci && npm run build"
-else
-  echo "php container has no node/npm, using node:20-alpine to build..."
-  docker run --rm -v "$REPO_DIR":/app -w /app node:20-alpine sh -lc "npm ci && npm run build"
-fi
+echo "using node:20-alpine to build..."
+docker run --rm -v "$REPO_DIR":/app -w /app node:20-alpine sh -lc "npm ci && npm run build"
 
 echo "[4/4] run migrate (no data reset) + refresh laravel caches..."
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan migrate --force
