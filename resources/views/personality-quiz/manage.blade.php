@@ -41,6 +41,8 @@
                 <input id="type-cn-name" class="w-full border rounded-lg px-3 py-2" />
                 <label class="block text-slate-600">intro</label>
                 <input id="type-intro" class="w-full border rounded-lg px-3 py-2" />
+                <label class="block text-slate-600">结果图 image_url（可填外链或站内静态资源路径）</label>
+                <input id="type-image-url" class="w-full border rounded-lg px-3 py-2" placeholder="https://... 或 /storage/..." />
                 <label class="block text-slate-600">pattern（L/M/H，长度=启用维度数；兜底类型可空）</label>
                 <input id="type-pattern" class="w-full border rounded-lg px-3 py-2 font-mono text-xs" />
                 <label class="inline-flex items-center gap-2"><input type="checkbox" id="type-fallback" /> 兜底类型（全局仅建议保留一个）</label>
@@ -177,6 +179,7 @@
         document.getElementById('type-code').value = t.code || '';
         document.getElementById('type-cn-name').value = t.cn_name || '';
         document.getElementById('type-intro').value = t.intro || '';
+        document.getElementById('type-image-url').value = t.image_url || '';
         document.getElementById('type-pattern').value = t.pattern || '';
         document.getElementById('type-fallback').checked = !!t.is_fallback;
         document.getElementById('type-active').checked = !!t.is_active;
@@ -190,6 +193,7 @@
         document.getElementById('type-code').value = '';
         document.getElementById('type-cn-name').value = '';
         document.getElementById('type-intro').value = '';
+        document.getElementById('type-image-url').value = '';
         document.getElementById('type-pattern').value = '';
         document.getElementById('type-fallback').checked = false;
         document.getElementById('type-active').checked = true;
@@ -353,6 +357,7 @@
             code: document.getElementById('type-code').value.trim(),
             cn_name: document.getElementById('type-cn-name').value.trim(),
             intro: document.getElementById('type-intro').value.trim() || null,
+            image_url: document.getElementById('type-image-url').value.trim() || null,
             description: document.getElementById('type-desc').value.trim() || null,
             pattern: document.getElementById('type-pattern').value.trim() || null,
             is_fallback: document.getElementById('type-fallback').checked,
@@ -371,6 +376,7 @@
             code: document.getElementById('type-code').value.trim(),
             cn_name: document.getElementById('type-cn-name').value.trim(),
             intro: document.getElementById('type-intro').value.trim() || null,
+            image_url: document.getElementById('type-image-url').value.trim() || null,
             description: document.getElementById('type-desc').value.trim() || null,
             pattern: document.getElementById('type-pattern').value.trim() || null,
             is_fallback: document.getElementById('type-fallback').checked,

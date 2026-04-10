@@ -178,6 +178,7 @@ final class PersonalityQuizScoringService
                 'cn_name' => $final->cn_name,
                 'intro' => $final->intro,
                 'description' => $final->description,
+                'image_url' => $final->image_url,
             ],
             'match' => [
                 'display_similarity' => $usedFallback ? (int) ($catalogBestSimilarity ?? 0) : $bestSimilarity,

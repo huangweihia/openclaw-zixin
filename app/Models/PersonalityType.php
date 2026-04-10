@@ -11,6 +11,7 @@ class PersonalityType extends Model
         'cn_name',
         'intro',
         'description',
+        'image_url',
         'pattern',
         'is_fallback',
         'is_active',

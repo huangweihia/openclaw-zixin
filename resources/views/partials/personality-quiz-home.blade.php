@@ -1,5 +1,5 @@
 <div id="oc-pq-root" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" aria-hidden="true">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col border border-slate-200">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[92vh] overflow-hidden flex flex-col border border-slate-200">
         <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50">
             <div class="font-semibold text-slate-900">趣味人格测试</div>
             <button type="button" id="oc-pq-close" class="text-slate-500 hover:text-slate-800 text-2xl leading-none px-2" aria-label="关闭">&times;</button>
@@ -25,6 +25,10 @@
 
     var apiBase = @json(url('/api/personality-quiz'));
     var registerUrl = @json(route('register'));
+    var csrfToken = (function () {
+        var m = document.querySelector('meta[name="csrf-token"]');
+        return m ? m.getAttribute('content') : '';
+    })();
 
     var LS_KEY = 'oc_pq_guest_token';
     function ensureGuestToken() {
@@ -94,7 +98,14 @@
             var gp = state.payload && state.payload.guest_play ? state.payload.guest_play : {};
             var can = !!gp.can_play;
             var reg = esc(gp.register_url || registerUrl);
-            var introMain = '<p class="text-base text-slate-800">共 ' + (state.payload.questions || []).length + ' 题，按直觉选最像你的即可。</p>';
+            var introMain = '<div class="space-y-2">' +
+                '<p class="text-base text-slate-900 font-semibold">共 ' + (state.payload.questions || []).length + ' 题，按直觉选最像你的即可。</p>' +
+                '<ul class="text-sm text-slate-600 list-disc pl-5 space-y-1">' +
+                '<li>无需登录即可首次体验</li>' +
+                '<li>每题 3 个选项，选最像你的一项</li>' +
+                '<li>结果仅供娱乐参考</li>' +
+                '</ul>' +
+                '</div>';
             if (!can) {
                 var msg = gp.message ? esc(gp.message) : '每位游客仅可完整体验一次，注册账号后可再次参与。';
                 introMain = '<p class="text-base text-amber-800 font-medium">' + msg + '</p>' +
@@ -156,7 +167,8 @@
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken || ''
                 },
                 credentials: 'same-origin',
                 body: JSON.stringify(submitBody)
@@ -197,9 +209,10 @@
             var fin = state.result.final || {};
             var m = state.result.match || {};
             var lines = [];
-            lines.push('<div class="rounded-xl bg-teal-50 border border-teal-100 p-4 space-y-1">');
+            lines.push('<div class="grid md:grid-cols-2 gap-4">');
+            lines.push('<div class="rounded-xl bg-teal-50 border border-teal-100 p-4 space-y-2">');
             lines.push('<div class="text-xs text-teal-800 uppercase tracking-wide">' + esc(fin.code || '') + '</div>');
-            lines.push('<div class="text-xl font-bold text-slate-900">' + esc(fin.cn_name || '') + '</div>');
+            lines.push('<div class="text-2xl font-bold text-slate-900">' + esc(fin.cn_name || '') + '</div>');
             if (fin.intro) lines.push('<div class="text-sm text-slate-700">' + esc(fin.intro) + '</div>');
             var sim = m.display_similarity;
             if (sim != null) {
@@ -212,7 +225,18 @@
                 }
                 lines.push('<div class="text-xs text-slate-600 mt-2">' + simLine + '</div>');
             }
-            lines.push('</div>');
+            lines.push('</div>'); // left card
+
+            if (fin.image_url) {
+                lines.push('<div class="rounded-xl border border-slate-200 overflow-hidden bg-white">');
+                lines.push('<img alt="" src="' + esc(fin.image_url) + '" class="w-full h-[220px] object-cover" loading="lazy" />');
+                lines.push('<div class="p-3 text-xs text-slate-500">结果配图可在后台配置（image_url）。</div>');
+                lines.push('</div>');
+            } else {
+                lines.push('<div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">暂无结果图，可在后台为该类型填写 image_url。</div>');
+            }
+            lines.push('</div>'); // grid
+
             if (fin.description) {
                 lines.push('<p class="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">' + esc(fin.description) + '</p>');
             }

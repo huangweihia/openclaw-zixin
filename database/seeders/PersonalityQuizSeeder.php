@@ -98,13 +98,13 @@ class PersonalityQuizSeeder extends Seeder
             }
 
             $types = [
-                ['code' => 'PLANNER', 'cn_name' => '规划型', 'intro' => '先把路线画清楚，再出发。', 'pattern' => 'HHHHHHHHHHHHHHH', 'sort' => 10],
-                ['code' => 'EXPLORER', 'cn_name' => '探索型', 'intro' => '世界很大，先走走看。', 'pattern' => 'LLLLLLLLLLLLLLL', 'sort' => 20],
-                ['code' => 'BALANCE', 'cn_name' => '平衡型', 'intro' => '不高不低，刚刚好。', 'pattern' => 'MMMMMMMMMMMMMMM', 'sort' => 30],
-                ['code' => 'WAVE', 'cn_name' => '起伏型', 'intro' => '高低搭配，像心电图。', 'pattern' => 'HHLHHLHHLHHLHHL', 'sort' => 40],
-                ['code' => 'GUARD', 'cn_name' => '守势型', 'intro' => '先站稳，再谈别的。', 'pattern' => 'LLHHMMHHLLMMHHH', 'sort' => 50],
-                ['code' => 'RUSH', 'cn_name' => '推进型', 'intro' => '动起来，问题会变小。', 'pattern' => 'HHMMLLHHMMLLHHM', 'sort' => 60],
-                ['code' => 'MIXED', 'cn_name' => '混合态', 'intro' => '标准答案配不上你。', 'pattern' => null, 'sort' => 90, 'fallback' => true],
+                ['code' => 'PLANNER', 'cn_name' => '规划型', 'intro' => '先把路线画清楚，再出发。', 'pattern' => 'HHHHHHHHHHHHHHH', 'sort' => 10, 'img' => 'https://picsum.photos/seed/oc-planner/1200/630'],
+                ['code' => 'EXPLORER', 'cn_name' => '探索型', 'intro' => '世界很大，先走走看。', 'pattern' => 'LLLLLLLLLLLLLLL', 'sort' => 20, 'img' => 'https://picsum.photos/seed/oc-explorer/1200/630'],
+                ['code' => 'BALANCE', 'cn_name' => '平衡型', 'intro' => '不高不低，刚刚好。', 'pattern' => 'MMMMMMMMMMMMMMM', 'sort' => 30, 'img' => 'https://picsum.photos/seed/oc-balance/1200/630'],
+                ['code' => 'WAVE', 'cn_name' => '起伏型', 'intro' => '高低搭配，像心电图。', 'pattern' => 'HHLHHLHHLHHLHHL', 'sort' => 40, 'img' => 'https://picsum.photos/seed/oc-wave/1200/630'],
+                ['code' => 'GUARD', 'cn_name' => '守势型', 'intro' => '先站稳，再谈别的。', 'pattern' => 'LLHHMMHHLLMMHHH', 'sort' => 50, 'img' => 'https://picsum.photos/seed/oc-guard/1200/630'],
+                ['code' => 'RUSH', 'cn_name' => '推进型', 'intro' => '动起来，问题会变小。', 'pattern' => 'HHMMLLHHMMLLHHM', 'sort' => 60, 'img' => 'https://picsum.photos/seed/oc-rush/1200/630'],
+                ['code' => 'MIXED', 'cn_name' => '混合态', 'intro' => '标准答案配不上你。', 'pattern' => null, 'sort' => 90, 'fallback' => true, 'img' => 'https://picsum.photos/seed/oc-mixed/1200/630'],
             ];
 
             foreach ($types as $t) {
@@ -113,6 +113,7 @@ class PersonalityQuizSeeder extends Seeder
                     'cn_name' => $t['cn_name'],
                     'intro' => $t['intro'],
                     'description' => '这是站点内置的示例解读，可在后台改成自己的文案。维度得分仅用于娱乐向展示。',
+                    'image_url' => $t['img'] ?? null,
                     'pattern' => $t['pattern'],
                     'is_fallback' => ! empty($t['fallback']),
                     'is_active' => true,
