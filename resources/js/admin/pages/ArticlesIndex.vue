@@ -3,6 +3,8 @@ import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -82,27 +84,26 @@ function onPerPageChange(next) {
 </script>
 
 <template>
-    <div>
-        <div class="head">
-            <h1 class="page-title">文章管理</h1>
-            <button type="button" class="btn primary" @click="router.push({ name: 'article-create' })">
-                新建文章
-            </button>
-        </div>
-        <nav class="tabs">
-            <button type="button" class="tab" :class="{ on: publishedFilter === '' }" @click="setPublishedFilter('')">
-                全部
-            </button>
-            <button type="button" class="tab" :class="{ on: publishedFilter === '1' }" @click="setPublishedFilter('1')">
-                已发布
-            </button>
-            <button type="button" class="tab" :class="{ on: publishedFilter === '0' }" @click="setPublishedFilter('0')">
-                草稿
-            </button>
-        </nav>
-        <input v-model="q" class="search" type="search" placeholder="标题 / slug / 摘要" @input="onSearch" />
+    <AdminPageShell title="文章管理" lead="支持草稿/已发布筛选，支持搜索与分页。">
+        <template #actions>
+            <button type="button" class="btn primary" @click="router.push({ name: 'article-create' })">新建文章</button>
+        </template>
+        <template #toolbar>
+            <nav class="tabs">
+                <button type="button" class="tab" :class="{ on: publishedFilter === '' }" @click="setPublishedFilter('')">
+                    全部
+                </button>
+                <button type="button" class="tab" :class="{ on: publishedFilter === '1' }" @click="setPublishedFilter('1')">
+                    已发布
+                </button>
+                <button type="button" class="tab" :class="{ on: publishedFilter === '0' }" @click="setPublishedFilter('0')">
+                    草稿
+                </button>
+            </nav>
+            <input v-model="q" class="search" type="search" placeholder="标题 / slug / 摘要" @input="onSearch" />
+        </template>
         <p v-if="err" class="err">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -132,7 +133,7 @@ function onPerPageChange(next) {
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无数据</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -141,27 +142,15 @@ function onPerPageChange(next) {
             @update:page="load"
             @update:per-page="onPerPageChange"
         />
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-}
-.page-title {
-    margin: 0;
-    font-size: 1.5rem;
-}
 .tabs {
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
-    margin-bottom: 0.75rem;
+    margin: 0;
 }
 .tab {
     padding: 0.4rem 0.85rem;
@@ -182,16 +171,9 @@ function onPerPageChange(next) {
     padding: 0.5rem 0.65rem;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    margin-bottom: 1rem;
 }
 .err {
     color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
-    overflow: auto;
 }
 .table {
     width: 100%;

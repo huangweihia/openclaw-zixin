@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const rows = ref([]);
 const err = ref('');
@@ -132,18 +134,19 @@ async function remove(row) {
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">首页用户评价</h1>
-        <p class="lead">数据表 <code>site_testimonials</code>；前台首页「用户评价」区读取已发布记录（最多 6 条）。无数据时首页会自动写入演示数据。</p>
+    <AdminPageShell
+        title="首页用户评价"
+        lead="site_testimonials：前台首页读取已发布记录（最多 6 条）；无数据时首页会自动写入演示数据。"
+    >
+        <template #toolbar>
+            <div class="toolbar">
+                <button type="button" class="btn primary" @click="openCreate">新建评价</button>
+                <button type="button" class="btn" @click="load">刷新</button>
+            </div>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err" class="err">{{ err }}</p>
-
-        <div class="toolbar">
-            <button type="button" class="btn primary" @click="openCreate">新建评价</button>
-            <button type="button" class="btn" @click="load">刷新</button>
-        </div>
-
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -172,7 +175,7 @@ async function remove(row) {
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无记录</p>
-        </div>
+        </AdminCard>
 
         <div v-if="mode" class="modal">
             <div class="modal__box">
@@ -229,7 +232,7 @@ async function remove(row) {
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

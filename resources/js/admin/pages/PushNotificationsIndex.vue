@@ -4,6 +4,8 @@ import { onMounted, ref } from 'vue';
 
 import axios from 'axios';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 
 
@@ -393,21 +395,12 @@ onMounted(() => load(1));
 
 <template>
 
-    <div class="pg">
-
-        <div class="pg__head">
-
-            <h1 class="pg__title">站内推送</h1>
-
+    <AdminPageShell title="站内推送" lead="push_notifications（按用户维度）。保存后会同步到前台用户通知中心。">
+        <template #actions>
             <button type="button" class="btn btn--pri" @click="openCreate">新建</button>
-
-        </div>
-
-        <p class="pg__lead">
-            表 <code>push_notifications</code>（按用户维度）。保存后会同步到前台用户「通知中心」表 <code>notifications</code>（需已执行迁移 <code>push_notification_id</code> 列）。
-        </p>
-
-        <div class="filt filt--user">
+        </template>
+        <template #toolbar>
+            <div class="filt filt--user">
 
             <span>筛选用户</span>
 
@@ -443,13 +436,14 @@ onMounted(() => load(1));
 
             <button v-if="filterUserId" type="button" class="btn btn--sm" @click="clearFilterUser">清除筛选</button>
 
-        </div>
+            </div>
+        </template>
 
         <p v-if="msg" class="ok">{{ msg }}</p>
 
         <p v-if="err && !mode" class="bad">{{ err }}</p>
 
-        <div class="card">
+        <AdminCard>
 
             <table class="tbl">
 
@@ -499,7 +493,7 @@ onMounted(() => load(1));
 
             <p v-if="rows.length === 0" class="empty">暂无</p>
 
-        </div>
+        </AdminCard>
 
         <AdminPagination
             v-if="meta"
@@ -585,48 +579,13 @@ onMounted(() => load(1));
 
         </div>
 
-    </div>
+    </AdminPageShell>
 
 </template>
 
 
 
 <style scoped>
-
-.pg__head {
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    flex-wrap: wrap;
-
-    gap: 0.5rem;
-
-    margin-bottom: 0.35rem;
-
-}
-
-.pg__title {
-
-    margin: 0;
-
-    font-size: 1.5rem;
-
-}
-
-.pg__lead {
-
-    margin: 0 0 0.5rem;
-
-    font-size: 0.85rem;
-
-    color: #64748b;
-
-}
-
 .filt {
 
     display: flex;

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
 import { enumLabel, enumOptions } from '../constants/labels';
 
 const rows = ref([]);
@@ -206,18 +207,15 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div>
-        <div class="head">
-            <h1 class="page-title">OpenClaw 任务日志</h1>
-            <div class="head__actions">
-                <button type="button" class="btn" :disabled="loading" @click="load(meta.current_page || 1)">
-                    刷新
-                </button>
-            </div>
-        </div>
-        <p class="lead">
-            记录 OpenClaw 定时任务执行情况（success / error / timeout / skipped），用于排障与数据量核对。
-        </p>
+    <AdminPageShell
+        title="OpenClaw 任务日志"
+        lead="记录 OpenClaw 定时任务执行情况（success / error / timeout / skipped），用于排障与数据量核对。"
+    >
+        <template #actions>
+            <button type="button" class="btn" :disabled="loading" @click="load(meta.current_page || 1)">
+                刷新
+            </button>
+        </template>
 
         <div class="card chart-card">
             <div class="chart-card__head">
@@ -436,7 +434,7 @@ onMounted(async () => {
                 <p v-else class="muted">加载中…</p>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

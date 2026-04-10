@@ -3,6 +3,8 @@ import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const commentReportStatusOpts = enumOptions('commentReportStatus');
 
@@ -74,15 +76,15 @@ onMounted(() => load(1));
 </script>
 
 <template>
-    <div class="pg">
-        <h1 class="pg__title">评论举报</h1>
-        <p class="pg__lead">表 <code>comment_reports</code></p>
-        <el-tabs v-model="status" class="tabs" type="card">
-            <el-tab-pane v-for="t in tabs" :key="t.value || 'a'" :label="t.label" :name="t.value" />
-        </el-tabs>
+    <AdminPageShell title="评论举报" lead="表 comment_reports。">
+        <template #toolbar>
+            <el-tabs v-model="status" class="tabs" type="card">
+                <el-tab-pane v-for="t in tabs" :key="t.value || 'a'" :label="t.label" :name="t.value" />
+            </el-tabs>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !editing" class="bad">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="tbl">
                 <thead>
                     <tr>
@@ -102,7 +104,7 @@ onMounted(() => load(1));
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -129,7 +131,7 @@ onMounted(() => load(1));
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

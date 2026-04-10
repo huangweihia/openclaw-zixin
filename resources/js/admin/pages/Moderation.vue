@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import axios from 'axios';
 import { enumLabel } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
 
 const posts = ref([]);
 const meta = ref(null);
@@ -149,11 +150,9 @@ async function confirmBatchReject() {
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">审核投稿</h1>
-        <p class="lead">对齐文档「审核管理模块」：单条 / 批量通过或拒绝（最多 50 条/次）。</p>
-
-        <div v-if="!loadErr && posts.length" class="toolbar">
+    <AdminPageShell title="审核投稿" lead="对齐文档「审核管理模块」：单条 / 批量通过或拒绝（最多 50 条/次）。">
+        <template #toolbar>
+            <div v-if="!loadErr && posts.length" class="toolbar">
             <label class="check-all">
                 <input type="checkbox" :checked="allSelectedOnPage" @change="toggleSelectAll" />
                 本页全选
@@ -175,7 +174,8 @@ async function confirmBatchReject() {
             >
                 批量拒绝
             </button>
-        </div>
+            </div>
+        </template>
 
         <p v-if="loadErr" class="msg-err">{{ loadErr }}</p>
         <ul class="list">
@@ -261,7 +261,7 @@ async function confirmBatchReject() {
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

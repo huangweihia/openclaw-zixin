@@ -3,6 +3,8 @@ import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const adSlotTypeOpts = enumOptions('adSlotType');
 const adAudienceOpts = enumOptions('adAudience');
@@ -174,26 +176,25 @@ async function saveEdit() {
 </script>
 
 <template>
-    <div>
-        <div class="head">
-            <h1 class="page-title">广告位</h1>
-            <div class="head__actions">
-                <input v-model="query" type="search" class="search" placeholder="搜索名称/代码" />
-                <select v-model="perPage" class="per-page">
-                    <option :value="10">10 / 页</option>
-                    <option :value="20">20 / 页</option>
-                    <option :value="50">50 / 页</option>
-                    <option :value="100">100 / 页</option>
-                </select>
-                <button type="button" class="btn primary" @click="openCreate">新建广告位</button>
-            </div>
-        </div>
+    <AdminPageShell title="广告位" lead="仅维护兜底素材（图片/链接/文案）；系统限制全局同时仅可启用 1 个广告位。">
+        <template #actions>
+            <button type="button" class="btn primary" @click="openCreate">新建广告位</button>
+        </template>
+        <template #toolbar>
+            <input v-model="query" type="search" class="search" placeholder="搜索名称/代码" />
+            <select v-model="perPage" class="per-page">
+                <option :value="10">10 / 页</option>
+                <option :value="20">20 / 页</option>
+                <option :value="50">50 / 页</option>
+                <option :value="100">100 / 页</option>
+            </select>
+        </template>
         <p class="lead">
             当前仅保留<strong>广告位兜底素材</strong>（图片/链接/文案），不再使用广告投放。系统层面已限制为<strong>全局同时仅可启用 1 个广告位</strong>。
         </p>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !showCreate && !editing" class="err">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -222,7 +223,7 @@ async function saveEdit() {
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无广告位</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta.last_page > 1"
             :meta="meta"
@@ -358,24 +359,10 @@ async function saveEdit() {
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-bottom: 0.35rem;
-}
-.head__actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.65rem;
-}
 .search {
     min-width: 180px;
     padding: 0.4rem 0.6rem;
@@ -395,10 +382,6 @@ async function saveEdit() {
 }
 .link-out:hover {
     text-decoration: underline;
-}
-.page-title {
-    margin: 0;
-    font-size: 1.5rem;
 }
 .lead {
     margin: 0 0 1rem;

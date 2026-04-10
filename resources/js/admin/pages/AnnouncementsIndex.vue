@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const rows = ref([]);
 const err = ref('');
@@ -159,19 +161,16 @@ async function removeRow(row) {
 </script>
 
 <template>
-    <div>
-        <div class="head">
-            <h1 class="page-title">公告管理</h1>
+    <AdminPageShell
+        title="公告管理"
+        lead="对应表 announcements。无单独「公告类型」字段；优先级用于同轨道排序；展示位置决定横条或浮动；顶部/底部跑马灯须关闭「浮动展示」。详见 docs/后台管理-前台功能对应说明.md。"
+    >
+        <template #actions>
             <button type="button" class="btn primary" @click="openCreate">新建公告</button>
-        </div>
-        <p class="lead">
-            对应表 <span class="mono">announcements</span>。说明：<strong>无单独「公告类型」字段</strong>；列表中的<strong>优先级</strong>（低/中/高）用于同一条跑马灯轨道内的排序；
-            <strong>展示位置</strong>决定顶部/底部横条或左/右浮动；顶部/底部跑马灯须<strong>关闭「浮动展示」</strong>。
-            详见项目文档 <span class="mono">docs/后台管理-前台功能对应说明.md</span> 的「公告管理」说明。
-        </p>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !mode" class="err">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -205,7 +204,7 @@ async function removeRow(row) {
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无公告，点击「新建公告」添加。</p>
-        </div>
+        </AdminCard>
 
         <div v-if="mode" class="modal" @click.self="close">
             <div class="modal__box modal__box--lg" @click.stop>
@@ -268,7 +267,7 @@ async function removeRow(row) {
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

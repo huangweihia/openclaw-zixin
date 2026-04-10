@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const rows = ref([]);
 const meta = ref(null);
@@ -43,15 +45,15 @@ function onFilter() {
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">积分流水</h1>
-        <p class="lead">表 <code>points</code>，含注册赠送等入账记录。</p>
-        <div class="toolbar">
-            <input v-model="userId" type="search" class="search" placeholder="按用户 ID 筛选" @keyup.enter="onFilter" />
-            <button type="button" class="btn" @click="onFilter">筛选</button>
-        </div>
+    <AdminPageShell title="积分流水" lead="表 points，含注册赠送等入账记录。">
+        <template #toolbar>
+            <div class="toolbar">
+                <input v-model="userId" type="search" class="search" placeholder="按用户 ID 筛选" @keyup.enter="onFilter" />
+                <button type="button" class="btn" @click="onFilter">筛选</button>
+            </div>
+        </template>
         <p v-if="loadErr" class="msg-err">{{ loadErr }}</p>
-        <div class="table-wrap">
+        <AdminCard class="table-wrap">
             <table class="table">
                 <thead>
                     <tr>
@@ -82,7 +84,7 @@ function onFilter() {
                 </tbody>
             </table>
             <p v-if="!loading && rows.length === 0" class="empty">暂无流水</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -91,7 +93,7 @@ function onFilter() {
             :loading="loading"
             @update:page="load"
         />
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

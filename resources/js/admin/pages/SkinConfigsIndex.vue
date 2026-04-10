@@ -2,6 +2,8 @@
 import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const skinTypeOpts = enumOptions('skinType');
 
@@ -303,20 +305,16 @@ onMounted(load);
 </script>
 
 <template>
-    <div class="pg">
-        <div class="pg__head">
-            <h1 class="pg__title">皮肤主题</h1>
+    <AdminPageShell
+        title="皮肤主题"
+        lead="skin_configs：css_variables 存主题变量。必填：primary/secondary/bg-primary/text-primary；gradient-primary 保存时自动生成。"
+    >
+        <template #actions>
             <button type="button" class="btn btn--pri" @click="openCreate">新建</button>
-        </div>
-        <p class="pg__lead">
-            数据表 skin_configs；字段 css_variables 存 JSON 主题变量。必填且不可删除的键：
-            <code class="inline-code">primary</code>、<code class="inline-code">secondary</code>、
-            <code class="inline-code">bg-primary</code>、<code class="inline-code">text-primary</code>。
-            主渐变 <code class="inline-code">gradient-primary</code> 保存时由系统根据主色与辅色自动生成并写入，无需在表单中填写。
-        </p>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !mode" class="bad">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="tbl">
                 <thead>
                     <tr>
@@ -341,7 +339,7 @@ onMounted(load);
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无</p>
-        </div>
+        </AdminCard>
         <div v-if="mode" class="modal" @click.self="closeSkinModal">
             <div class="modal__box modal__box--lg" @click.stop>
                 <h2>{{ mode === 'create' ? '新建' : '编辑' }}</h2>
@@ -490,27 +488,10 @@ onMounted(load);
                 </button>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.pg__head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.35rem;
-}
-.pg__title {
-    margin: 0;
-    font-size: 1.5rem;
-}
-.pg__lead {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
-    color: #64748b;
-}
 .ok {
     color: #166534;
 }

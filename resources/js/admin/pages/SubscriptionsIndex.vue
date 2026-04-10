@@ -3,6 +3,8 @@ import { onMounted, ref } from 'vue';
 import axios from 'axios';
 import { enumLabel } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const rows = ref([]);
 const meta = ref(null);
@@ -25,11 +27,9 @@ onMounted(() => load(1));
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">会员订阅记录</h1>
-        <p class="lead">对应文档「会员权益管理」后台数据：subscriptions 表联 users。</p>
+    <AdminPageShell title="会员订阅记录" lead="subscriptions 表联 users。">
         <p v-if="err" class="err">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -53,7 +53,7 @@ onMounted(() => load(1));
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无订阅记录</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -61,7 +61,7 @@ onMounted(() => load(1));
             :total="total"
             @update:page="load"
         />
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

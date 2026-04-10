@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import axios from 'axios';
 import { enumOptions } from '../constants/labels';
 import { toast } from '../../frontend/utils/toast';
+import AdminPageShell from '../components/AdminPageShell.vue';
 
 const giftRoleOpts = enumOptions('userRole').filter((o) => o.value === 'vip' || o.value === 'svip');
 
@@ -156,13 +157,10 @@ async function save() {
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">系统与站点</h1>
-        <p class="lead">
-            统一写入 <code>site_settings</code> 表。<strong>注册赠送会员</strong>已在
-            <code>RegisterController</code> 闭环生效；邮件时间窗供定时任务/队列读取（可在
-            <code>app/Console/Kernel.php</code> 调度里判断当前小时）。
-        </p>
+    <AdminPageShell
+        title="系统与站点"
+        lead="统一写入 site_settings 表。注册赠送会员已在 RegisterController 闭环生效；邮件时间窗供定时任务/队列读取（可在 app/Console/Kernel.php 调度里判断当前小时）。"
+    >
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="hint" class="hint-banner">{{ hint }}</p>
         <p v-if="err" class="err">{{ err }}</p>
@@ -298,7 +296,7 @@ async function save() {
         </div>
 
         <button type="button" class="btn primary" @click="save">保存全部设置</button>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

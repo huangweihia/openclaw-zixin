@@ -3,6 +3,8 @@ import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const refundStatusOpts = enumOptions('refundStatus');
 
@@ -66,15 +68,15 @@ onMounted(() => load(1));
 </script>
 
 <template>
-    <div class="pg">
-        <h1 class="pg__title">退款申请</h1>
-        <p class="pg__lead">表 <code>refund_requests</code>：处理状态与管理员备注</p>
-        <el-tabs v-model="status" class="tabs" type="card">
-            <el-tab-pane v-for="t in tabs" :key="t.value || 'a'" :label="t.label" :name="t.value" />
-        </el-tabs>
+    <AdminPageShell title="退款申请" lead="表 refund_requests：处理状态与管理员备注。">
+        <template #toolbar>
+            <el-tabs v-model="status" class="tabs" type="card">
+                <el-tab-pane v-for="t in tabs" :key="t.value || 'a'" :label="t.label" :name="t.value" />
+            </el-tabs>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !editing" class="bad">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="tbl">
                 <thead>
                     <tr>
@@ -96,7 +98,7 @@ onMounted(() => load(1));
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -122,33 +124,18 @@ onMounted(() => load(1));
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.pg__title {
-    margin: 0 0 0.35rem;
-    font-size: 1.5rem;
-}
-.pg__lead {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
-    color: #64748b;
-}
 .tabs {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0;
 }
 .ok {
     color: #166534;
 }
 .bad {
     color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    overflow: auto;
 }
 .tbl {
     width: 100%;

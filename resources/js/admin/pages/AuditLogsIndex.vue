@@ -3,6 +3,8 @@ import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { enumLabel } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const action = ref('');
 const rows = ref([]);
@@ -30,15 +32,15 @@ onMounted(() => load(1));
 </script>
 
 <template>
-    <div class="pg">
-        <h1 class="pg__title">操作审计</h1>
-        <p class="pg__lead">数据表 audit_logs（只读）</p>
-        <label class="filt">
-            操作类型筛选
-            <input v-model="action" type="text" placeholder="如 update、create" />
-        </label>
+    <AdminPageShell title="操作审计" lead="数据表 audit_logs（只读）。">
+        <template #toolbar>
+            <label class="filt">
+                操作类型筛选
+                <input v-model="action" type="text" placeholder="如 update、create" />
+            </label>
+        </template>
         <p v-if="err" class="bad">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="tbl">
                 <thead>
                     <tr>
@@ -60,7 +62,7 @@ onMounted(() => load(1));
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -68,24 +70,15 @@ onMounted(() => load(1));
             :total="total"
             @update:page="load"
         />
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.pg__title {
-    margin: 0 0 0.35rem;
-    font-size: 1.5rem;
-}
-.pg__lead {
-    margin: 0 0 0.5rem;
-    font-size: 0.85rem;
-    color: #64748b;
-}
 .filt {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
     font-size: 0.85rem;
 }
 .filt input {
@@ -96,12 +89,6 @@ onMounted(() => load(1));
 }
 .bad {
     color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    overflow: auto;
 }
 .tbl {
     width: 100%;

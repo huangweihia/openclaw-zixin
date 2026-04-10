@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const rows = ref([]);
 const err = ref('');
@@ -156,15 +158,13 @@ async function runPreview() {
 </script>
 
 <template>
-    <div>
-        <div class="head-row">
-            <h1 class="page-title">邮件模板</h1>
+    <AdminPageShell title="邮件模板" lead="模板键 key 由系统根据名称自动生成（小写字母、数字、下划线）；创建后不可改。">
+        <template #actions>
             <button type="button" class="btn primary" @click="openCreate">新建模板</button>
-        </div>
-        <p class="lead">模板键 key 由系统根据名称自动生成（小写字母、数字、下划线）；创建后不可改。</p>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !mode" class="err">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -191,7 +191,7 @@ async function runPreview() {
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无模板数据</p>
-        </div>
+        </AdminCard>
 
         <div v-if="mode" class="modal" @click.self="close">
             <div class="modal__box modal__box--lg" @click.stop>
@@ -258,7 +258,7 @@ async function runPreview() {
                 </template>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

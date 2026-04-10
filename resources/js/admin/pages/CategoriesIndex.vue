@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const rows = ref([]);
 const err = ref('');
@@ -77,14 +79,13 @@ async function removeRow(id) {
 </script>
 
 <template>
-    <div>
-        <div class="head">
-            <h1 class="page-title">分类管理</h1>
+    <AdminPageShell title="分类管理" lead="用于文章/项目等内容的分类维护。">
+        <template #actions>
             <button type="button" class="btn primary" @click="openCreate">新建分类</button>
-        </div>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !editing" class="err">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -111,7 +112,7 @@ async function removeRow(id) {
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无分类</p>
-        </div>
+        </AdminCard>
 
         <div v-if="editing !== null" class="modal" @click.self="closeModal">
             <div class="modal__box" @click.stop>
@@ -148,33 +149,15 @@ async function removeRow(id) {
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-.page-title {
-    margin: 0;
-    font-size: 1.5rem;
-}
 .ok {
     color: #166534;
 }
 .err {
     color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
-    overflow: auto;
 }
 .table {
     width: 100%;

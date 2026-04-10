@@ -2,6 +2,8 @@
 import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const filter = ref('');
 const rows = ref([]);
@@ -76,15 +78,16 @@ function onPerPageChange(next) {
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">评论管理</h1>
-        <el-tabs v-model="filter" class="tabs" type="card">
-            <el-tab-pane label="全部" name="" />
-            <el-tab-pane label="可见" name="visible" />
-            <el-tab-pane label="已隐藏" name="hidden" />
-        </el-tabs>
+    <AdminPageShell title="评论管理" lead="支持按可见性筛选、分页、隐藏/删除操作。">
+        <template #toolbar>
+            <el-tabs v-model="filter" class="tabs" type="card">
+                <el-tab-pane label="全部" name="" />
+                <el-tab-pane label="可见" name="visible" />
+                <el-tab-pane label="已隐藏" name="hidden" />
+            </el-tabs>
+        </template>
         <p v-if="err" class="err">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -116,7 +119,7 @@ function onPerPageChange(next) {
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无评论</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -127,25 +130,15 @@ function onPerPageChange(next) {
             @update:page="load"
             @update:per-page="onPerPageChange"
         />
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.page-title {
-    margin: 0 0 1rem;
-    font-size: 1.5rem;
-}
 .tabs {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0;
 }
 .err {
     color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
-    overflow: auto;
 }
 .table {
     width: 100%;

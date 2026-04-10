@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { enumOptions } from '../constants/labels';
+import AdminPageShell from '../components/AdminPageShell.vue';
 
 const projectDifficultyOpts = enumOptions('projectDifficulty');
 
@@ -116,11 +117,10 @@ async function save() {
 </script>
 
 <template>
-    <div>
-        <p class="back">
+    <AdminPageShell :title="isCreate ? '新建项目' : '编辑项目'">
+        <template #actions>
             <button type="button" class="link" @click="router.push({ name: 'projects' })">← 返回列表</button>
-        </p>
-        <h1 class="page-title">{{ isCreate ? '新建项目' : '编辑项目' }}</h1>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err" class="err">{{ err }}</p>
         <div class="card">
@@ -186,7 +186,7 @@ async function save() {
             </label>
             <button type="button" class="btn primary" @click="save">保存</button>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

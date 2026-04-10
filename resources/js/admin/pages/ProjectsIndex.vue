@@ -3,6 +3,8 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const router = useRouter();
 const q = ref('');
@@ -53,14 +55,15 @@ function onPerPageChange(next) {
 </script>
 
 <template>
-    <div>
-        <div class="head">
-            <h1 class="page-title">项目管理</h1>
+    <AdminPageShell title="项目管理" lead="支持搜索与分页，点击编辑进入详情页。">
+        <template #actions>
             <button type="button" class="btn primary" @click="router.push({ name: 'project-create' })">新建项目</button>
-        </div>
-        <input v-model="q" class="search" type="search" placeholder="名称 / 仓库 / URL" @input="onSearch" />
+        </template>
+        <template #toolbar>
+            <input v-model="q" class="search" type="search" placeholder="名称 / 仓库 / URL" @input="onSearch" />
+        </template>
         <p v-if="err" class="err">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -90,7 +93,7 @@ function onPerPageChange(next) {
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无数据</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -100,38 +103,19 @@ function onPerPageChange(next) {
             @update:page="load"
             @update:per-page="onPerPageChange"
         />
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-}
-.page-title {
-    margin: 0;
-    font-size: 1.5rem;
-}
 .search {
     width: 100%;
     max-width: 360px;
     padding: 0.5rem 0.65rem;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    margin-bottom: 1rem;
 }
 .err {
     color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
-    overflow: auto;
 }
 .table {
     width: 100%;

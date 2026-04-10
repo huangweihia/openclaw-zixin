@@ -3,6 +3,8 @@ import { onMounted, ref } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const aiCategoryOpts = enumOptions('aiToolCategory');
 const aiPricingOpts = enumOptions('aiToolMonetization');
@@ -153,19 +155,19 @@ onMounted(load);
 </script>
 
 <template>
-    <div class="pg">
-        <div class="pg__head">
-            <h1 class="pg__title">AI 工具变现</h1>
+    <AdminPageShell title="AI 工具变现" lead="数据表 ai_tool_monetization。">
+        <template #actions>
             <button type="button" class="btn btn--pri" @click="openCreate">新建</button>
-        </div>
-        <p class="pg__lead">数据表 ai_tool_monetization</p>
-        <div class="flt">
-            <input v-model.trim="query" type="text" placeholder="搜索工具名/别名/链接" @keyup.enter="load(1)" />
-            <button type="button" class="btn" @click="load(1)">搜索</button>
-        </div>
+        </template>
+        <template #toolbar>
+            <div class="flt">
+                <input v-model.trim="query" type="text" placeholder="搜索工具名/别名/链接" @keyup.enter="load(1)" />
+                <button type="button" class="btn" @click="load(1)">搜索</button>
+            </div>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !mode" class="bad">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="tbl">
                 <thead>
                     <tr>
@@ -188,7 +190,7 @@ onMounted(load);
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无数据</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -243,7 +245,7 @@ onMounted(load);
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

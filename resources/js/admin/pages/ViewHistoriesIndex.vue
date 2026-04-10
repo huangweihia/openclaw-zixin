@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const rows = ref([]);
 const meta = ref(null);
@@ -30,10 +32,9 @@ onMounted(() => load(1));
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">浏览历史（全站）</h1>
-        <p class="lead">对齐功能清单 26：后台可审计 view_histories，与前台「我的浏览」同源数据。</p>
-        <div class="toolbar">
+    <AdminPageShell title="浏览历史（全站）" lead="对齐功能清单 26：后台可审计 view_histories，与前台「我的浏览」同源数据。">
+        <template #toolbar>
+            <div class="toolbar">
             <input
                 v-model="userId"
                 type="search"
@@ -42,9 +43,10 @@ onMounted(() => load(1));
                 @change="load(1)"
             />
             <button type="button" class="btn" @click="load(1)">筛选</button>
-        </div>
+            </div>
+        </template>
         <p v-if="err" class="err">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="table">
                 <thead>
                     <tr>
@@ -69,7 +71,7 @@ onMounted(() => load(1));
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无记录</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -77,7 +79,7 @@ onMounted(() => load(1));
             :total="total"
             @update:page="load"
         />
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import AdminPageShell from '../components/AdminPageShell.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -106,11 +107,10 @@ async function save() {
 </script>
 
 <template>
-    <div>
-        <p class="back">
+    <AdminPageShell :title="isCreate ? '新建文章' : '编辑文章'">
+        <template #actions>
             <button type="button" class="link" @click="router.push({ name: 'articles' })">← 返回列表</button>
-        </p>
-        <h1 class="page-title">{{ isCreate ? '新建文章' : '编辑文章' }}</h1>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err" class="err">{{ err }}</p>
         <div class="card">
@@ -175,7 +175,7 @@ async function save() {
             </label>
             <button type="button" class="btn primary" @click="save">保存</button>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

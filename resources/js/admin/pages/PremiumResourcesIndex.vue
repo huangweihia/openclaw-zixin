@@ -3,6 +3,8 @@ import { onMounted, ref } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const prTypeOpts = enumOptions('premiumResourceType');
 const prVisibilityOpts = enumOptions('resourceVisibility').filter((o) => o.value === 'public' || o.value === 'vip');
@@ -137,19 +139,19 @@ onMounted(load);
 </script>
 
 <template>
-    <div class="pg">
-        <div class="pg__head">
-            <h1 class="pg__title">会员资源</h1>
+    <AdminPageShell title="会员资源" lead="数据表 premium_resources：slug 唯一；tags 存 JSON 数组。">
+        <template #actions>
             <el-button type="primary" size="small" @click="openCreate">新建</el-button>
-        </div>
-        <p class="pg__lead">数据表 premium_resources：slug 唯一；tags 存 JSON 数组。</p>
-        <div class="flt">
-            <input v-model.trim="query" type="text" placeholder="搜索标题/别名" @keyup.enter="load(1)" />
-            <button type="button" class="btn" @click="load(1)">搜索</button>
-        </div>
+        </template>
+        <template #toolbar>
+            <div class="flt">
+                <input v-model.trim="query" type="text" placeholder="搜索标题/别名" @keyup.enter="load(1)" />
+                <button type="button" class="btn" @click="load(1)">搜索</button>
+            </div>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !mode" class="bad">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="tbl">
                 <thead>
                     <tr>
@@ -174,7 +176,7 @@ onMounted(load);
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无数据</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -222,7 +224,7 @@ onMounted(load);
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

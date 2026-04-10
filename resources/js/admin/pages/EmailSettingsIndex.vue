@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const rows = ref([]);
 const err = ref('');
@@ -92,11 +94,10 @@ async function sendTest() {
 </script>
 
 <template>
-    <div class="pg">
-        <div class="pg__head">
-            <h1 class="pg__title">邮件配置</h1>
+    <AdminPageShell title="邮件配置" lead="SMTP/订阅发送相关参数（后台可维护键值），支持测试发信。">
+        <template #actions>
             <button type="button" class="btn btn--pri" @click="openCreate">新建</button>
-        </div>
+        </template>
         <p class="pg__lead">
             表 <code>email_settings</code>（键值对）。连通性测试使用环境变量中的 <code>MAIL_*</code>，与注册发信等共用 Laravel Mail。
             订阅推荐键：<code>mail_sub_batch_size</code>（每批发送数）、<code>mail_sub_daily_cap</code>（每日最大发送数，0 不限）。
@@ -126,7 +127,7 @@ async function sendTest() {
         </div>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !mode" class="bad">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="tbl">
                 <thead>
                     <tr>
@@ -149,7 +150,7 @@ async function sendTest() {
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无</p>
-        </div>
+        </AdminCard>
         <div v-if="mode" class="modal" @click.self="closeFormModal">
             <div class="modal__box" @click.stop>
                 <h2>{{ mode === 'create' ? '新建' : '编辑' }}</h2>
@@ -171,7 +172,7 @@ async function sendTest() {
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

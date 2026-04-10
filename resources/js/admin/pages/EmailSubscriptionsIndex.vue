@@ -2,6 +2,8 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const TOPICS = [
     { v: 'daily', label: '日报' },
@@ -199,17 +201,9 @@ const publicUnsubExample = computed(() => {
 </script>
 
 <template>
-    <div>
-        <h1 class="page-title">邮箱订阅</h1>
-        <p class="lead">
-            对应表 <code>email_subscriptions</code>，与文档「订阅类型」一致。前台可 POST
-            <code>/api/email-subscriptions</code> 订阅；退订链
-            <code>{{ publicUnsubExample }}</code>（将 token 替换为列表中的值）。
-        </p>
-        <p v-if="banner" class="banner">{{ banner }}</p>
-        <p v-if="err && !addOpen" class="err">{{ err }}</p>
-
-        <div class="toolbar">
+    <AdminPageShell title="邮箱订阅" lead="对应表 email_subscriptions；支持筛选/搜索/编辑订阅主题与发送时间。">
+        <template #toolbar>
+            <div class="toolbar">
             <el-tabs v-model="unsub" class="tabs" type="card">
                 <el-tab-pane label="全部" name="" />
                 <el-tab-pane label="订阅中" name="0" />
@@ -217,9 +211,13 @@ const publicUnsubExample = computed(() => {
             </el-tabs>
             <input v-model="q" class="search" type="search" placeholder="搜索邮箱…" />
             <el-button type="primary" size="small" @click="openAddModal">新增订阅</el-button>
-        </div>
+            </div>
+        </template>
 
-        <div v-if="!banner" class="card">
+        <p v-if="banner" class="banner">{{ banner }}</p>
+        <p v-if="err && !addOpen" class="err">{{ err }}</p>
+
+        <AdminCard v-if="!banner" padded>
             <table class="table">
                 <thead>
                     <tr>
@@ -282,7 +280,7 @@ const publicUnsubExample = computed(() => {
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无记录</p>
-        </div>
+        </AdminCard>
 
         <AdminPagination
             v-if="meta"
@@ -359,7 +357,7 @@ const publicUnsubExample = computed(() => {
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

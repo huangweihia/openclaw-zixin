@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { enumOptions } from '../constants/labels';
+import AdminPageShell from '../components/AdminPageShell.vue';
 
 const userRoleOpts = enumOptions('userRole');
 const subscriptionPlanOpts = enumOptions('subscriptionPlan');
@@ -191,11 +192,10 @@ async function resetPassword() {
 </script>
 
 <template>
-    <div>
-        <p class="back">
+    <AdminPageShell title="编辑用户">
+        <template #actions>
             <button type="button" class="link-btn" @click="router.push({ name: 'users' })">← 返回列表</button>
-        </p>
-        <h1 class="page-title">编辑用户</h1>
+        </template>
         <p v-if="loadErr" class="msg-err">{{ loadErr }}</p>
         <template v-else-if="user">
             <p v-if="flash" class="msg-ok">{{ flash }}</p>
@@ -315,7 +315,7 @@ async function resetPassword() {
                 <button type="button" class="btn primary" @click="saveAdminProfile">保存后台档案</button>
             </section>
         </template>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>

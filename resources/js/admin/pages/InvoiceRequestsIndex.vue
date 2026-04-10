@@ -3,6 +3,8 @@ import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { enumLabel, enumOptions } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
+import AdminPageShell from '../components/AdminPageShell.vue';
+import AdminCard from '../components/AdminCard.vue';
 
 const invoiceStatusOpts = enumOptions('invoiceStatus');
 
@@ -69,17 +71,24 @@ onMounted(() => load(1));
 </script>
 
 <template>
-    <div class="pg">
-        <h1 class="pg__title">发票申请</h1>
-        <p class="pg__lead">表 <code>invoice_requests</code></p>
-        <nav class="tabs">
-            <button v-for="t in tabs" :key="t.value || 'a'" type="button" class="tab" :class="{ on: status === t.value }" @click="status = t.value">
-                {{ t.label }}
-            </button>
-        </nav>
+    <AdminPageShell title="发票申请" lead="表 invoice_requests。">
+        <template #toolbar>
+            <nav class="tabs">
+                <button
+                    v-for="t in tabs"
+                    :key="t.value || 'a'"
+                    type="button"
+                    class="tab"
+                    :class="{ on: status === t.value }"
+                    @click="status = t.value"
+                >
+                    {{ t.label }}
+                </button>
+            </nav>
+        </template>
         <p v-if="msg" class="ok">{{ msg }}</p>
         <p v-if="err && !editing" class="bad">{{ err }}</p>
-        <div class="card">
+        <AdminCard>
             <table class="tbl">
                 <thead>
                     <tr>
@@ -101,7 +110,7 @@ onMounted(() => load(1));
                 </tbody>
             </table>
             <p v-if="rows.length === 0" class="empty">暂无</p>
-        </div>
+        </AdminCard>
         <AdminPagination
             v-if="meta"
             :current-page="meta.current_page"
@@ -127,24 +136,15 @@ onMounted(() => load(1));
                 </div>
             </div>
         </div>
-    </div>
+    </AdminPageShell>
 </template>
 
 <style scoped>
-.pg__title {
-    margin: 0 0 0.35rem;
-    font-size: 1.5rem;
-}
-.pg__lead {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
-    color: #64748b;
-}
 .tabs {
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
 }
 .tab {
     padding: 0.35rem 0.75rem;
@@ -164,12 +164,6 @@ onMounted(() => load(1));
 }
 .bad {
     color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    overflow: auto;
 }
 .tbl {
     width: 100%;
