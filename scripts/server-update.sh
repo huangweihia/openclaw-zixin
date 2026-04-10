@@ -3,6 +3,8 @@ set -euo pipefail
 
 # One-click server update:
 # - pull latest code
+# - install PHP deps (composer)
+# - build frontend assets (Vite/Vue)
 # - run non-destructive migrations
 # - clear/cache optimize for Laravel
 #
@@ -19,6 +21,10 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 DEFAULT_REPO_DIR="$(cd -- "$SCRIPT_DIR/.." >/dev/null 2>&1 && pwd)"
 REPO_DIR="${REPO_DIR:-$DEFAULT_REPO_DIR}"
 COMPOSE_FILE="docker-compose.server.yml"
+REMOTE="${REMOTE:-origin}"
+BRANCH="${BRANCH:-main}"
+DEPTH="${DEPTH:-1}"
+FILTER="${FILTER:-blob:none}"
 
 cd "$REPO_DIR"
 
@@ -28,30 +34,33 @@ if [ ! -f "artisan" ] || [ ! -f "$COMPOSE_FILE" ]; then
   exit 1
 fi
 
-echo "[1/3] pull latest code..."
+echo "[0/4] ensure containers are up..."
+docker compose -f "$COMPOSE_FILE" up -d
+
+echo "[1/4] pull latest code..."
 # Optimization for slow servers:
 # - protocol v2 + partial clone blob filter to reduce transfer
-# - depth=1 shallow fetch by default (override with GIT_DEPTH=0 to disable)
-REMOTE="${GIT_REMOTE:-origin}"
-BRANCH="${GIT_BRANCH:-main}"
-DEPTH="${GIT_DEPTH:-1}"
-FILTER="${GIT_FILTER:-blob:none}"
-
-if [ "$DEPTH" = "0" ]; then
-  echo "git fetch (full) from $REMOTE $BRANCH..."
-  git -c protocol.version=2 fetch --prune --no-tags "$REMOTE" "$BRANCH"
-else
-  echo "git fetch (depth=$DEPTH, filter=$FILTER) from $REMOTE $BRANCH..."
-  git -c protocol.version=2 fetch --prune --no-tags --filter="$FILTER" --depth="$DEPTH" "$REMOTE" "$BRANCH"
-fi
+# - depth=1 shallow fetch by default
+git config --local protocol.version 2 >/dev/null 2>&1 || true
+git fetch --prune --no-tags --filter="$FILTER" --depth="$DEPTH" "$REMOTE" "$BRANCH"
 
 echo "git fast-forward merge..."
 git merge --ff-only FETCH_HEAD
 
-echo "[2/3] run migrate (no data reset)..."
+echo "[2/4] install PHP deps (composer)..."
+docker compose -f "$COMPOSE_FILE" exec -T php composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
+
+echo "[3/4] build frontend assets (Vite)..."
+if docker compose -f "$COMPOSE_FILE" exec -T php sh -lc "command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1"; then
+  docker compose -f "$COMPOSE_FILE" exec -T php sh -lc "npm ci && npm run build"
+else
+  echo "php container has no node/npm, using node:20-alpine to build..."
+  docker run --rm -v "$REPO_DIR":/app -w /app node:20-alpine sh -lc "npm ci && npm run build"
+fi
+
+echo "[4/4] run migrate (no data reset) + refresh laravel caches..."
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan migrate --force
 
-echo "[3/3] refresh laravel caches..."
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan optimize:clear
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan config:cache
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan route:cache
