@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             DemoContentSeeder::class,
             EmailTemplateSeeder::class,
             ZhixinTestDataSeeder::class,
+            PersonalityQuizSeeder::class,
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PersonalityQuizManageController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\VipController;
@@ -47,6 +48,10 @@ use App\Http\Controllers\UserMessageController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::redirect('/home', '/');
+
+Route::get('/personality-quiz/manage', PersonalityQuizManageController::class)
+    ->middleware('personality.quiz.admin')
+    ->name('personality-quiz.manage');
 
 Route::get('/cases', [SideHustleCaseWebController::class, 'index'])->name('cases.index');
 Route::get('/cases/{sideHustleCase}', [SideHustleCaseWebController::class, 'show'])->name('cases.show');

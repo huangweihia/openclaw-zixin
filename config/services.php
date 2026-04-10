@@ -41,4 +41,9 @@ return [
         'token' => env('SVIP_SUBSCRIPTION_TOKEN', 'svip-subscription-2026'),
     ],
 
+    // 趣味人格测试：无登录后台，使用强随机 token（勿泄露管理页 URL）
+    'personality_quiz' => [
+        'admin_token' => env('PERSONALITY_QUIZ_ADMIN_TOKEN', ''),
+    ],
+
 ];

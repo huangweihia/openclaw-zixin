@@ -6,6 +6,7 @@ use App\Models\AiToolMonetization;
 use App\Models\Article;
 use App\Models\Project;
 use App\Support\PricingConfig;
+use App\Models\PersonalityQuestion;
 use App\Models\PrivateTrafficSop;
 use App\Models\SideHustleCase;
 use App\Models\SiteTestimonial;
@@ -37,6 +38,9 @@ class HomeController extends Controller
         $featuredProjects = $this->featuredProjects();
         $featuredCases = $this->featuredCases();
 
+        $personalityQuizAvailable = Schema::hasTable('personality_questions')
+            && PersonalityQuestion::query()->exists();
+
         return view('home', compact(
             'vipActivities',
             'homeStats',
@@ -47,7 +51,8 @@ class HomeController extends Controller
             'featuredProjects',
             'featuredCases',
             'canVip',
-            'canSvip'
+            'canSvip',
+            'personalityQuizAvailable'
         ));
     }
 

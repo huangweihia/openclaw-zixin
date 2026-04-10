@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\SvipContentController;
 use App\Http\Controllers\Api\SvipSubscriptionController;
 use App\Http\Controllers\Api\OpenClawDataController;
 use App\Http\Controllers\Api\OpenClawTaskLogController;
+use App\Http\Controllers\Api\PersonalityQuizAdminController;
+use App\Http\Controllers\Api\PersonalityQuizController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -48,3 +50,26 @@ Route::post('/openclaw/data', [OpenClawDataController::class, 'store']);
 
 // OpenClaw Task Logs - 接收定时任务执行日志
 Route::post('/openclaw/task-log', [OpenClawTaskLogController::class, 'store']);
+
+// 趣味人格测试（公开）
+Route::get('/personality-quiz', [PersonalityQuizController::class, 'show']);
+Route::post('/personality-quiz/submit', [PersonalityQuizController::class, 'submit'])
+    ->middleware('throttle:40,1');
+
+// 趣味人格测试管理（无登录，凭 PERSONALITY_QUIZ_ADMIN_TOKEN）
+Route::prefix('personality-quiz/admin')->middleware('personality.quiz.admin')->group(function () {
+    Route::get('/bootstrap', [PersonalityQuizAdminController::class, 'bootstrap']);
+    Route::post('/dimensions', [PersonalityQuizAdminController::class, 'storeDimension']);
+    Route::patch('/dimensions/{dimension}', [PersonalityQuizAdminController::class, 'updateDimension']);
+    Route::delete('/dimensions/{dimension}', [PersonalityQuizAdminController::class, 'destroyDimension']);
+    Route::post('/questions', [PersonalityQuizAdminController::class, 'storeQuestion']);
+    Route::patch('/questions/{question}', [PersonalityQuizAdminController::class, 'updateQuestion']);
+    Route::delete('/questions/{question}', [PersonalityQuizAdminController::class, 'destroyQuestion']);
+    Route::post('/options', [PersonalityQuizAdminController::class, 'storeOption']);
+    Route::patch('/options/{option}', [PersonalityQuizAdminController::class, 'updateOption']);
+    Route::delete('/options/{option}', [PersonalityQuizAdminController::class, 'destroyOption']);
+    Route::post('/types', [PersonalityQuizAdminController::class, 'storeType']);
+    Route::patch('/types/{type}', [PersonalityQuizAdminController::class, 'updateType']);
+    Route::delete('/types/{type}', [PersonalityQuizAdminController::class, 'destroyType']);
+    Route::put('/settings', [PersonalityQuizAdminController::class, 'putSetting']);
+});

@@ -66,5 +66,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'admin' => \App\Http\Middleware\EnsureAdmin::class,
         'perm' => \App\Http\Middleware\EnsureAdminPermission::class,
+        'personality.quiz.admin' => \App\Http\Middleware\EnsurePersonalityQuizAdminToken::class,
     ];
 }

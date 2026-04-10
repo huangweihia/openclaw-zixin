@@ -151,6 +151,11 @@
                         class="oc-hero-cta-outline">
                     看看有什么
                 </button>
+                @if (! empty($personalityQuizAvailable))
+                    <button type="button" id="oc-pq-open" class="oc-hero-cta-outline">
+                        趣味人格测试
+                    </button>
+                @endif
             </div>
         </div>
     </section>
@@ -436,6 +441,9 @@
         });
     </script>
     @include('partials.pricing-countdown-init')
+    @if (! empty($personalityQuizAvailable))
+        @include('partials.personality-quiz-home')
+    @endif
     <!-- 脚本 -->
     @stack('scripts')
 </body>
