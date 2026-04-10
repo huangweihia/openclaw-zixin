@@ -61,6 +61,10 @@ fi
 echo "[4/4] run migrate (no data reset) + refresh laravel caches..."
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan migrate --force
 
+echo "seed personality quiz if empty..."
+# Safe: the seeder exits early when data already exists.
+docker compose -f "$COMPOSE_FILE" exec -T php php artisan db:seed --class=PersonalityQuizSeeder --force || true
+
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan optimize:clear
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan config:cache
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan route:cache

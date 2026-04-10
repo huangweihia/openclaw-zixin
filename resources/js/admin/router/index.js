@@ -39,6 +39,7 @@ import AuditLogsIndex from '../pages/AuditLogsIndex.vue';
 import PublishAuditsIndex from '../pages/PublishAuditsIndex.vue';
 import SharedComponentsShowcase from '../pages/SharedComponentsShowcase.vue';
 import OpenclawTaskLogsIndex from '../pages/OpenclawTaskLogsIndex.vue';
+import PersonalityQuizOps from '../pages/PersonalityQuizOps.vue';
 
 const auth = (title) => ({ auth: true, title });
 
@@ -131,6 +132,7 @@ export function createAdminRouter(base) {
                 component: SharedComponentsShowcase,
                 meta: auth('公共组件'),
             },
+            { path: '/personality-quiz', name: 'personality-quiz', component: PersonalityQuizOps, meta: auth('趣味人格测试') },
         ],
     });
 
