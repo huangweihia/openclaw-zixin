@@ -63,7 +63,8 @@
         payload: null,
         index: 0,
         answers: {},
-        guestToken: null
+        guestToken: null,
+        quizToken: null
     };
 
     function esc(s) {
@@ -153,6 +154,13 @@
             btnNext.disabled = true;
             btnBack.classList.add('hidden');
             var submitBody = { answers: state.answers };
+            if (!state.quizToken) {
+                state.step = 'error';
+                state.errMsg = '题目会话已失效，请关闭后重新开始。';
+                render();
+                return;
+            }
+            submitBody.quiz_token = state.quizToken;
             if (!isLoggedIn()) {
                 if (!state.guestToken) {
                     state.step = 'error';
@@ -268,6 +276,7 @@
             index: 0,
             answers: {},
             guestToken: gt,
+            quizToken: null,
             errRegisterUrl: null
         };
         render();
@@ -288,6 +297,7 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 state.payload = data;
+                state.quizToken = data && data.quiz_token ? String(data.quiz_token) : null;
                 state.step = 'intro';
                 render();
             }).catch(function () {

@@ -59,6 +59,16 @@ final class PersonalityQuizScoringService
      */
     public function score(array $answers): array
     {
+        return $this->scoreByQuestionIds($answers, null);
+    }
+
+    /**
+     * @param  array<int|string, int>  $answers
+     * @param  list<int>|null  $questionIds
+     * @return array<string, mixed>
+     */
+    public function scoreByQuestionIds(array $answers, ?array $questionIds): array
+    {
         $dimensions = PersonalityDimension::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
@@ -71,9 +81,17 @@ final class PersonalityQuizScoringService
             throw new InvalidArgumentException('题库未配置');
         }
 
+        $selected = null;
+        if (is_array($questionIds)) {
+            $selected = array_fill_keys(array_map('intval', $questionIds), true);
+        }
+
         $allowedByQuestion = [];
         foreach ($dimensions as $dim) {
             foreach ($dim->questions as $q) {
+                if ($selected !== null && ! isset($selected[$q->id])) {
+                    continue;
+                }
                 $allowed = $q->options->pluck('value')->map(fn ($v) => (int) $v)->unique()->sort()->values()->all();
                 $allowedByQuestion[$q->id] = $allowed;
             }
@@ -83,7 +101,12 @@ final class PersonalityQuizScoringService
         $levels = [];
         foreach ($dimensions as $dim) {
             $sum = 0;
+            $questionCount = 0;
             foreach ($dim->questions as $q) {
+                if ($selected !== null && ! isset($selected[$q->id])) {
+                    continue;
+                }
+                $questionCount++;
                 if (! array_key_exists($q->id, $answers) && ! array_key_exists((string) $q->id, $answers)) {
                     throw new InvalidArgumentException('题目未完成：#'.$q->id);
                 }
@@ -94,8 +117,11 @@ final class PersonalityQuizScoringService
                 }
                 $sum += $val;
             }
+            if ($questionCount <= 0) {
+                throw new InvalidArgumentException('维度题目不足，请刷新重试');
+            }
             $rawScores[$dim->id] = $sum;
-            $levels[$dim->id] = $this->sumToLevel($sum);
+            $levels[$dim->id] = $this->sumToLevel($sum, $questionCount);
         }
 
         $dimensionOrder = $dimensions->pluck('id')->all();
@@ -197,8 +223,19 @@ final class PersonalityQuizScoringService
         ];
     }
 
-    private function sumToLevel(int $score): string
+    private function sumToLevel(int $score, int $questionCount): string
     {
+        if ($questionCount <= 1) {
+            if ($score <= 1) {
+                return 'L';
+            }
+            if ($score === 2) {
+                return 'M';
+            }
+
+            return 'H';
+        }
+
         if ($score <= 3) {
             return 'L';
         }

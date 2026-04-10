@@ -7,6 +7,7 @@ use App\Models\PersonalityQuizPlay;
 use App\Services\PersonalityQuizScoringService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -20,6 +21,13 @@ class PersonalityQuizController extends Controller
     public function show(Request $request): JsonResponse
     {
         $payload = $this->scoring->buildPublicPayload();
+        $picked = $this->pickRandomQuestions($payload);
+        $questionIds = array_values(array_map(static fn ($q) => (int) $q['id'], $picked));
+        $quizToken = (string) Str::uuid();
+        Cache::put($this->quizCacheKey($quizToken), $questionIds, now()->addMinutes(30));
+
+        $payload['quiz_token'] = $quizToken;
+        $payload['questions'] = $picked;
         $payload['guest_play'] = $this->guestPlayMeta($request);
 
         return response()->json($payload);
@@ -30,28 +38,34 @@ class PersonalityQuizController extends Controller
         $baseRules = [
             'answers' => ['required', 'array'],
             'answers.*' => ['required', 'integer', 'min:1', 'max:9'],
+            'quiz_token' => ['required', 'uuid'],
         ];
 
         if ($request->user()) {
             $data = $request->validate($baseRules);
 
-            return $this->completeSubmitForMember($data['answers']);
+            return $this->completeSubmitForMember($data['answers'], $data['quiz_token']);
         }
 
         $data = $request->validate($baseRules + [
             'guest_token' => ['required', 'uuid'],
         ]);
 
-        return $this->completeSubmitForGuest($data['guest_token'], $data['answers']);
+        return $this->completeSubmitForGuest($data['guest_token'], $data['answers'], $data['quiz_token']);
     }
 
     /**
      * @param  array<int|string, int>  $answers
      */
-    private function completeSubmitForMember(array $answers): JsonResponse
+    private function completeSubmitForMember(array $answers, string $quizToken): JsonResponse
     {
+        $questionIds = $this->loadQuestionIdsByToken($quizToken);
+        if ($questionIds === null) {
+            return response()->json(['message' => '题目会话已过期，请重新开始测试。'], 422);
+        }
+
         try {
-            $result = $this->scoring->score($answers);
+            $result = $this->scoring->scoreByQuestionIds($answers, $questionIds);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
@@ -62,10 +76,15 @@ class PersonalityQuizController extends Controller
     /**
      * @param  array<int|string, int>  $answers
      */
-    private function completeSubmitForGuest(string $guestToken, array $answers): JsonResponse
+    private function completeSubmitForGuest(string $guestToken, array $answers, string $quizToken): JsonResponse
     {
+        $questionIds = $this->loadQuestionIdsByToken($quizToken);
+        if ($questionIds === null) {
+            return response()->json(['message' => '题目会话已过期，请重新开始测试。'], 422);
+        }
+
         try {
-            return DB::transaction(function () use ($guestToken, $answers) {
+            return DB::transaction(function () use ($guestToken, $answers, $questionIds) {
                 $exists = PersonalityQuizPlay::query()
                     ->where('guest_token', $guestToken)
                     ->lockForUpdate()
@@ -80,7 +99,7 @@ class PersonalityQuizController extends Controller
                 }
 
                 try {
-                    $result = $this->scoring->score($answers);
+                    $result = $this->scoring->scoreByQuestionIds($answers, $questionIds);
                 } catch (InvalidArgumentException $e) {
                     return response()->json(['message' => $e->getMessage()], 422);
                 }
@@ -135,5 +154,47 @@ class PersonalityQuizController extends Controller
             'message' => $used ? '每位游客仅可完整体验一次，注册账号后可再次参与。' : null,
             'register_url' => $registerUrl,
         ];
+    }
+
+    private function quizCacheKey(string $quizToken): string
+    {
+        return 'personality_quiz:quiz:'.$quizToken;
+    }
+
+    /**
+     * @return list<int>|null
+     */
+    private function loadQuestionIdsByToken(string $quizToken): ?array
+    {
+        $ids = Cache::pull($this->quizCacheKey($quizToken));
+        if (! is_array($ids) || $ids === []) {
+            return null;
+        }
+
+        return array_values(array_map('intval', $ids));
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return list<array<string, mixed>>
+     */
+    private function pickRandomQuestions(array $payload): array
+    {
+        $questions = collect($payload['questions'] ?? []);
+        $dims = collect($payload['dimensions'] ?? [])->pluck('id')->map(fn ($v) => (int) $v)->all();
+        $picked = [];
+        foreach ($dims as $dimId) {
+            $bag = $questions->where('dimension_id', $dimId)->values();
+            if ($bag->isEmpty()) {
+                continue;
+            }
+            $take = min(2, $bag->count());
+            $sample = $bag->shuffle()->take($take)->sortBy('id')->values()->all();
+            foreach ($sample as $row) {
+                $picked[] = $row;
+            }
+        }
+
+        return array_values($picked);
     }
 }

@@ -14,10 +14,6 @@ class PersonalityQuizSeeder extends Seeder
 {
     public function run(): void
     {
-        if (PersonalityDimension::query()->exists()) {
-            return;
-        }
-
         DB::transaction(function () {
             PersonalityQuizSetting::query()->updateOrCreate(
                 ['key' => 'low_match_threshold'],
@@ -60,8 +56,19 @@ class PersonalityQuizSeeder extends Seeder
             foreach ($groups as $groupName => $items) {
                 foreach ($items as $meta) {
                     $sort++;
-                    $dim = PersonalityDimension::query()->create([
-                        'code' => $meta['code'],
+                    $dim = PersonalityDimension::query()->firstOrCreate(
+                        ['code' => $meta['code']],
+                        [
+                            'name' => $meta['name'],
+                            'model_group' => $groupName,
+                            'sort_order' => $sort,
+                            'explanation_l' => $meta['l'],
+                            'explanation_m' => $meta['m'],
+                            'explanation_h' => $meta['h'],
+                            'is_active' => true,
+                        ]
+                    );
+                    $dim->fill([
                         'name' => $meta['name'],
                         'model_group' => $groupName,
                         'sort_order' => $sort,
@@ -69,28 +76,57 @@ class PersonalityQuizSeeder extends Seeder
                         'explanation_m' => $meta['m'],
                         'explanation_h' => $meta['h'],
                         'is_active' => true,
-                    ]);
+                    ])->save();
 
-                    foreach ([1, 2] as $qi) {
+                    $questionBodies = [
+                        '周末安排你会优先考虑这件事：'.$dim->name.'相关的选择。',
+                        '当你和朋友讨论计划时，你在「'.$dim->name.'」上通常更接近：',
+                        '如果今天状态一般，你在「'.$dim->name.'」上更可能表现为：',
+                        '最近一次做决定时，你在「'.$dim->name.'」上的第一反应是：',
+                    ];
+                    $optionSets = [
+                        [
+                            ['几乎不会这样', 1],
+                            ['看情况会这样', 2],
+                            ['基本就是我', 3],
+                        ],
+                        [
+                            ['我通常不这么做', 1],
+                            ['偶尔会这样', 2],
+                            ['我很常这样', 3],
+                        ],
+                        [
+                            ['不太符合我', 1],
+                            ['一半一半', 2],
+                            ['非常符合我', 3],
+                        ],
+                        [
+                            ['更偏向左侧描述', 1],
+                            ['中间状态', 2],
+                            ['更偏向右侧描述', 3],
+                        ],
+                    ];
+
+                    $existingCount = PersonalityQuestion::query()
+                        ->where('personality_dimension_id', $dim->id)
+                        ->count();
+                    foreach ($questionBodies as $qi => $body) {
+                        if ($qi < $existingCount) {
+                            continue;
+                        }
                         $q = PersonalityQuestion::query()->create([
                             'personality_dimension_id' => $dim->id,
-                            'body' => $dim->name.' · 情景 '.$qi.'：以下哪句更像你？',
-                            'sort_order' => $qi,
+                            'body' => $body,
+                            'sort_order' => $qi + 1,
                             'is_active' => true,
                         ]);
-                        $opts = [
-                            ['不太像', 1],
-                            ['有点像', 2],
-                            ['很像我', 3],
-                        ];
-                        $os = 0;
-                        foreach ($opts as [$label, $val]) {
-                            $os++;
+                        $opts = $optionSets[$qi] ?? $optionSets[0];
+                        foreach ($opts as $os => $pair) {
                             PersonalityQuestionOption::query()->create([
                                 'personality_question_id' => $q->id,
-                                'label' => $label,
-                                'value' => $val,
-                                'sort_order' => $os,
+                                'label' => $pair[0],
+                                'value' => $pair[1],
+                                'sort_order' => $os + 1,
                             ]);
                         }
                     }
@@ -108,17 +144,19 @@ class PersonalityQuizSeeder extends Seeder
             ];
 
             foreach ($types as $t) {
-                PersonalityType::query()->create([
-                    'code' => $t['code'],
-                    'cn_name' => $t['cn_name'],
-                    'intro' => $t['intro'],
-                    'description' => '这是站点内置的示例解读，可在后台改成自己的文案。维度得分仅用于娱乐向展示。',
-                    'image_url' => $t['img'] ?? null,
-                    'pattern' => $t['pattern'],
-                    'is_fallback' => ! empty($t['fallback']),
-                    'is_active' => true,
-                    'sort_order' => $t['sort'],
-                ]);
+                PersonalityType::query()->updateOrCreate(
+                    ['code' => $t['code']],
+                    [
+                        'cn_name' => $t['cn_name'],
+                        'intro' => $t['intro'],
+                        'description' => '这是站点内置的示例解读，可在后台改成自己的文案。维度得分仅用于娱乐向展示。',
+                        'image_url' => $t['img'] ?? null,
+                        'pattern' => $t['pattern'],
+                        'is_fallback' => ! empty($t['fallback']),
+                        'is_active' => true,
+                        'sort_order' => $t['sort'],
+                    ]
+                );
             }
         });
     }
