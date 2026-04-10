@@ -12,6 +12,8 @@ set -euo pipefail
 #   bash /opt/openclaw-zixin/scripts/server-update.sh
 #   ./scripts/server-update.sh
 #
+# Git：默认 fetch 后 reset --hard 到 origin/main。若只想快进合并：DEPLOY_GIT_STRATEGY=merge ./scripts/server-update.sh
+#
 # Auto detect repository root:
 # 1) REPO_DIR env (if provided)
 # 2) parent directory of this script
@@ -44,8 +46,16 @@ echo "[1/4] pull latest code..."
 git config --local protocol.version 2 >/dev/null 2>&1 || true
 git fetch --prune --no-tags --filter="$FILTER" --depth="$DEPTH" "$REMOTE" "$BRANCH"
 
-echo "git fast-forward merge..."
-git merge --ff-only FETCH_HEAD
+# 默认与远程完全一致，避免 merge --ff-only 在「无关历史 / 强推 / 分叉」时失败，导致代码从未更新却继续 build。
+# 仅快进合并：  DEPLOY_GIT_STRATEGY=merge bash scripts/server-update.sh
+DEPLOY_GIT_STRATEGY="${DEPLOY_GIT_STRATEGY:-reset}"
+if [ "$DEPLOY_GIT_STRATEGY" = "merge" ]; then
+  echo "git fast-forward merge (DEPLOY_GIT_STRATEGY=merge)..."
+  git merge --ff-only FETCH_HEAD
+else
+  echo "git reset --hard ${REMOTE}/${BRANCH} (丢弃服务器上未推送的本地提交，与 GitHub 一致)..."
+  git reset --hard "${REMOTE}/${BRANCH}"
+fi
 
 echo "[2/4] install PHP deps (composer)..."
 docker compose -f "$COMPOSE_FILE" exec -T php composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
