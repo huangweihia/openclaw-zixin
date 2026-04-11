@@ -12,12 +12,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libicu-dev \
     $PHPIZE_DEPS \
     && docker-php-ext-install \
     pdo_mysql \
     mbstring \
     zip \
     gd \
+    intl \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*

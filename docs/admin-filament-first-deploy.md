@@ -38,3 +38,13 @@
 | `scripts/server-composer-filament-once.sh` | **按需**：首次引入 Filament / lock 与 json 不一致导致 `install` 失败，或升级 Filament 大版本后需要 `filament:upgrade` 时。 |
 
 **说明**：没有单独的「Composer 容器」。`docker/php/Dockerfile` 已把 Composer 装进 **php** 镜像，因此用 `docker compose exec php composer …` 即可（对应你面板里的 `openclaw-zixin-php-1` 这类容器，服务名是 `php`）。
+
+## Composer 报「requirements could not be resolved」且列出大量 Filament 版本
+
+常见原因是 **PHP 缺少 `intl` 扩展**（Filament 依赖链需要）。镜像已包含 `ext-intl`；若你仍在用旧镜像，请**重建 php 服务**后再跑 Composer：
+
+```bash
+docker compose -f docker-compose.server.yml build php --no-cache
+docker compose -f docker-compose.server.yml up -d
+bash scripts/server-composer-filament-once.sh
+```
