@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Models\ViewHistory;
 use App\Filament\Resources\ViewHistoryResource\Pages;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms;
 use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
@@ -26,7 +27,6 @@ class ViewHistoryResource extends BaseAdminResource
 
     protected static ?string $pluralModelLabel = '浏览记录';
 
-
     public static function canCreate(): bool
     {
         return static::canViewAny() && false;
@@ -42,13 +42,18 @@ class ViewHistoryResource extends BaseAdminResource
         return static::canViewAny() && false;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['user']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
             Forms\Components\TextInput::make('user_id')->numeric(),
-                Forms\Components\TextInput::make('viewable_type')->maxLength(65535),
-                Forms\Components\TextInput::make('viewable_id')->numeric(),
-                Forms\Components\DateTimePicker::make('viewed_at')
+            Forms\Components\TextInput::make('viewable_type')->maxLength(65535),
+            Forms\Components\TextInput::make('viewable_id')->numeric(),
+            Forms\Components\DateTimePicker::make('viewed_at'),
         ]);
     }
 
@@ -57,14 +62,20 @@ class ViewHistoryResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('user_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('viewable_type')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('viewable_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('viewed_at')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('用户')
+                    ->searchable()
+                    ->placeholder('—'),
+                Tables\Columns\TextColumn::make('viewable_type')
+                    ->label('类型')
+                    ->formatStateUsing(fn (?string $state): string => $state ? class_basename($state) : '—')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('viewable_id')->label('对象 ID')->toggleable(),
+                Tables\Columns\TextColumn::make('viewed_at')->dateTime()->sortable()->toggleable(),
             ])
+            ->defaultSort('viewed_at', 'desc')
             ->actions([
-                Tables\Actions\ViewAction::make()
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([]);
     }
@@ -72,15 +83,24 @@ class ViewHistoryResource extends BaseAdminResource
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist->schema([
-            Infolists\Components\TextEntry::make('id')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('user_id')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('viewable_type')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('viewable_id')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('viewed_at')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('created_at')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('updated_at')->columnSpanFull()
+            Infolists\Components\Section::make('浏览信息')
+                ->icon('heroicon-o-eye')
+                ->columns(2)
+                ->schema([
+                    Infolists\Components\TextEntry::make('id')->label('记录 ID'),
+                    Infolists\Components\TextEntry::make('user.name')
+                        ->label('用户')
+                        ->placeholder('未登录 / 无'),
+                    Infolists\Components\TextEntry::make('viewable_type')
+                        ->label('资源类型')
+                        ->formatStateUsing(fn (?string $state): string => $state ? class_basename($state) : '—')
+                        ->description(fn (ViewHistory $record): string => 'Morph：'.((string) ($record->viewable_type ?? ''))),
+                    Infolists\Components\TextEntry::make('viewable_id')->label('资源 ID'),
+                    Infolists\Components\TextEntry::make('viewed_at')->label('浏览时间')->dateTime()->columnSpanFull(),
+                ]),
         ]);
     }
+
     public static function getPages(): array
     {
         return [

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Models\PersonalityQuizPlay;
 use App\Filament\Resources\PersonalityQuizPlayResource\Pages;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms;
 use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
@@ -26,7 +27,6 @@ class PersonalityQuizPlayResource extends BaseAdminResource
 
     protected static ?string $pluralModelLabel = '测评记录';
 
-
     public static function canCreate(): bool
     {
         return static::canViewAny() && false;
@@ -42,12 +42,22 @@ class PersonalityQuizPlayResource extends BaseAdminResource
         return static::canViewAny() && false;
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['user']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
             Forms\Components\TextInput::make('guest_token')->maxLength(65535),
-                Forms\Components\TextInput::make('user_id')->numeric(),
-                Forms\Components\DateTimePicker::make('completed_at')
+            Forms\Components\TextInput::make('user_id')->numeric(),
+            Forms\Components\DateTimePicker::make('completed_at'),
         ]);
     }
 
@@ -56,13 +66,21 @@ class PersonalityQuizPlayResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('guest_token')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('user_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('completed_at')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
+                Tables\Columns\TextColumn::make('guest_token')
+                    ->label('游客标识')
+                    ->limit(20)
+                    ->copyable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('登录用户')
+                    ->searchable()
+                    ->placeholder('—'),
+                Tables\Columns\TextColumn::make('completed_at')->dateTime()->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('completed_at', 'desc')
             ->actions([
-                Tables\Actions\ViewAction::make()
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([]);
     }
@@ -70,14 +88,34 @@ class PersonalityQuizPlayResource extends BaseAdminResource
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist->schema([
-            Infolists\Components\TextEntry::make('id')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('guest_token')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('user_id')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('completed_at')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('created_at')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('updated_at')->columnSpanFull()
+            Infolists\Components\Section::make('测评会话')
+                ->icon('heroicon-o-sparkles')
+                ->columns(2)
+                ->schema([
+                    Infolists\Components\TextEntry::make('id')->label('记录 ID'),
+                    Infolists\Components\TextEntry::make('guest_token')
+                        ->label('游客 Token')
+                        ->copyable()
+                        ->placeholder('—')
+                        ->columnSpanFull(),
+                    Infolists\Components\TextEntry::make('user.name')
+                        ->label('登录用户')
+                        ->placeholder('游客或未登录'),
+                    Infolists\Components\TextEntry::make('completed_at')
+                        ->label('完成时间')
+                        ->dateTime(),
+                ]),
+            Infolists\Components\Section::make('系统记录')
+                ->icon('heroicon-o-clock')
+                ->collapsed()
+                ->columns(2)
+                ->schema([
+                    Infolists\Components\TextEntry::make('created_at')->label('创建时间')->dateTime(),
+                    Infolists\Components\TextEntry::make('updated_at')->label('更新时间')->dateTime(),
+                ]),
         ]);
     }
+
     public static function getPages(): array
     {
         return [

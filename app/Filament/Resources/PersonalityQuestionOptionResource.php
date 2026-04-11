@@ -39,13 +39,23 @@ class PersonalityQuestionOptionResource extends BaseAdminResource
         return static::canViewAny() && true;
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('personality_question_id')->numeric(),
-                Forms\Components\TextInput::make('label')->maxLength(65535),
-                Forms\Components\TextInput::make('value')->maxLength(65535),
-                Forms\Components\TextInput::make('sort_order')->maxLength(65535)
+            Forms\Components\Select::make('personality_question_id')
+                ->relationship('question', 'body', fn ($query) => $query->orderBy('sort_order'))
+                ->getOptionLabelFromRecordUsing(fn ($record): string => '#'.$record->getKey().' '.mb_strimwidth(strip_tags((string) $record->body), 0, 80, '…'))
+                ->searchable()
+                ->preload()
+                ->required(),
+            Forms\Components\TextInput::make('label')->maxLength(255)->required(),
+            Forms\Components\TextInput::make('value')->maxLength(64)->required(),
+            Forms\Components\TextInput::make('sort_order')->numeric()->default(0),
         ]);
     }
 
@@ -54,7 +64,11 @@ class PersonalityQuestionOptionResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('personality_question_id')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('question.body')
+                    ->label('所属题目')
+                    ->wrap()
+                    ->limit(60)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('label')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('value')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('sort_order')->limit(40)->toggleable(),

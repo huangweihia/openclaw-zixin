@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SkinConfig extends Model
 {
@@ -25,4 +26,9 @@ class SkinConfig extends Model
         'is_private' => 'boolean',
         'is_active' => 'boolean',
     ];
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_user_id');
+    }
 }

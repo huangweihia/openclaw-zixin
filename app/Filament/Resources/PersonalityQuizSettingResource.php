@@ -39,6 +39,11 @@ class PersonalityQuizSettingResource extends BaseAdminResource
         return static::canViewAny() && true;
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([

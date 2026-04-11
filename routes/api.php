@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\OpenClawDataController;
 use App\Http\Controllers\Api\OpenClawTaskLogController;
 use App\Http\Controllers\Api\PersonalityQuizAdminController;
 use App\Http\Controllers\Api\PersonalityQuizController;
+use App\Http\Controllers\Api\PublicArticleController;
+use App\Http\Controllers\Api\PublicBrowseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -50,6 +52,22 @@ Route::post('/openclaw/data', [OpenClawDataController::class, 'store']);
 
 // OpenClaw Task Logs - 接收定时任务执行日志
 Route::post('/openclaw/task-log', [OpenClawTaskLogController::class, 'store']);
+
+// 前台公开内容（小程序 / 第三方 JSON）
+Route::prefix('public')->middleware('throttle:120,1')->group(function () {
+    Route::get('categories', [PublicArticleController::class, 'categories']);
+    Route::get('articles', [PublicArticleController::class, 'index']);
+    Route::get('articles/{slug}', [PublicArticleController::class, 'show']);
+
+    Route::get('browse/projects', [PublicBrowseController::class, 'projectsIndex']);
+    Route::get('browse/projects/{project}', [PublicBrowseController::class, 'projectsShow']);
+    Route::get('browse/cases', [PublicBrowseController::class, 'casesIndex']);
+    Route::get('browse/cases/{slug}', [PublicBrowseController::class, 'casesShow']);
+    Route::get('browse/tools', [PublicBrowseController::class, 'toolsIndex']);
+    Route::get('browse/tools/{slug}', [PublicBrowseController::class, 'toolsShow']);
+    Route::get('browse/sops', [PublicBrowseController::class, 'sopsIndex']);
+    Route::get('browse/sops/{slug}', [PublicBrowseController::class, 'sopsShow']);
+});
 
 // SBTI（公开）
 Route::get('/personality-quiz', [PersonalityQuizController::class, 'show']);

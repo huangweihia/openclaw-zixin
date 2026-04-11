@@ -8,6 +8,8 @@
 .env
 .env.backup
 .env.production
+# 勿提交根目录误放的 env 副本（密钥）
+/env
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml

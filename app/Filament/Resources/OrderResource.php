@@ -42,16 +42,20 @@ class OrderResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
-                Forms\Components\TextInput::make('order_no')->maxLength(65535),
-                Forms\Components\TextInput::make('product_type')->maxLength(65535),
-                Forms\Components\TextInput::make('product_id')->numeric(),
-                Forms\Components\TextInput::make('amount')->numeric()->step(0.01),
-                Forms\Components\TextInput::make('status')->maxLength(65535),
-                Forms\Components\TextInput::make('payment_id')->numeric(),
-                Forms\Components\TextInput::make('payment_method')->maxLength(65535),
-                Forms\Components\DateTimePicker::make('paid_at'),
-                Forms\Components\TextInput::make('remark')->maxLength(65535)
+            Forms\Components\Select::make('user_id')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->nullable(),
+            Forms\Components\TextInput::make('order_no')->maxLength(65535),
+            Forms\Components\TextInput::make('product_type')->maxLength(65535),
+            Forms\Components\TextInput::make('product_id')->numeric(),
+            Forms\Components\TextInput::make('amount')->numeric()->step(0.01),
+            Forms\Components\TextInput::make('status')->maxLength(65535),
+            Forms\Components\TextInput::make('payment_id')->numeric(),
+            Forms\Components\TextInput::make('payment_method')->maxLength(65535),
+            Forms\Components\DateTimePicker::make('paid_at'),
+            Forms\Components\TextInput::make('remark')->maxLength(65535),
         ]);
     }
 
@@ -60,7 +64,11 @@ class OrderResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('user_id')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('用户')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('order_no')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('product_type')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('product_id')->limit(40)->toggleable(),

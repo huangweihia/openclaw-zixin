@@ -12,17 +12,7 @@ trait ManagesSkinCssRepeater
      */
     protected static function defaultCssVarRows(): array
     {
-        return [
-            ['k' => 'primary', 'v' => '#3b82f6'],
-            ['k' => 'primary-dark', 'v' => '#2563eb'],
-            ['k' => 'primary-light', 'v' => '#60a5fa'],
-            ['k' => 'secondary', 'v' => '#0ea5e9'],
-            ['k' => 'bg-primary', 'v' => '#f0f9ff'],
-            ['k' => 'bg-secondary', 'v' => '#ffffff'],
-            ['k' => 'text-primary', 'v' => '#0c4a6e'],
-            ['k' => 'text-secondary', 'v' => '#334155'],
-            ['k' => 'border-color', 'v' => '#bae6fd'],
-        ];
+        return SkinCssVariables::defaultCssVarRepeaterRows();
     }
 
     /**

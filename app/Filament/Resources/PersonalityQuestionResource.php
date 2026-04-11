@@ -39,13 +39,25 @@ class PersonalityQuestionResource extends BaseAdminResource
         return static::canViewAny() && true;
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('personality_dimension_id')->numeric(),
-                Forms\Components\TextInput::make('body')->maxLength(65535),
-                Forms\Components\TextInput::make('sort_order')->maxLength(65535),
-                Forms\Components\Toggle::make('is_active')
+            Forms\Components\Select::make('personality_dimension_id')
+                ->relationship('dimension', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Forms\Components\Textarea::make('body')
+                ->required()
+                ->columnSpanFull()
+                ->rows(4),
+            Forms\Components\TextInput::make('sort_order')->numeric()->default(0),
+            Forms\Components\Toggle::make('is_active')->default(true),
         ]);
     }
 
@@ -54,7 +66,11 @@ class PersonalityQuestionResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('personality_dimension_id')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('dimension.name')
+                    ->label('所属维度')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('body')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('sort_order')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('is_active')->limit(40)->toggleable(),

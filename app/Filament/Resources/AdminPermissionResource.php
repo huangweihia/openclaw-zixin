@@ -3,14 +3,16 @@
 namespace App\Filament\Resources;
 
 use App\Models\AdminPermission;
+use App\Support\AdminPermissionModuleZh;
 use App\Filament\Resources\AdminPermissionResource\Pages;
 use Filament\Forms;
 use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
-use Filament\Tables;
-use Filament\Tables\Table;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Tables;
+use Filament\Tables\Grouping\Group;
+use Filament\Tables\Table;
 
 class AdminPermissionResource extends BaseAdminResource
 {
@@ -25,7 +27,6 @@ class AdminPermissionResource extends BaseAdminResource
     protected static ?string $modelLabel = '权限字典';
 
     protected static ?string $pluralModelLabel = '权限字典';
-
 
     public static function canCreate(): bool
     {
@@ -46,9 +47,9 @@ class AdminPermissionResource extends BaseAdminResource
     {
         return $form->schema([
             Forms\Components\TextInput::make('module')->maxLength(65535),
-                Forms\Components\TextInput::make('action')->maxLength(65535),
-                Forms\Components\TextInput::make('key')->maxLength(65535),
-                Forms\Components\Textarea::make('description')->columnSpanFull()->rows(6)
+            Forms\Components\TextInput::make('action')->maxLength(65535),
+            Forms\Components\TextInput::make('key')->maxLength(65535),
+            Forms\Components\Textarea::make('description')->columnSpanFull()->rows(6),
         ]);
     }
 
@@ -57,14 +58,40 @@ class AdminPermissionResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('module')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('action')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('key')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('description')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
+                Tables\Columns\TextColumn::make('module')
+                    ->label('模块')
+                    ->formatStateUsing(fn (?string $state): string => AdminPermissionModuleZh::label($state))
+                    ->description(fn (AdminPermission $record): string => (string) ($record->module ?? ''))
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('action')
+                    ->label('操作')
+                    ->formatStateUsing(fn (?string $state): string => AdminPermissionModuleZh::actionLabel($state))
+                    ->badge()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('key')
+                    ->label('权限键')
+                    ->copyable()
+                    ->searchable()
+                    ->wrap(),
+                Tables\Columns\TextColumn::make('description')
+                    ->label('说明')
+                    ->wrap()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->groups([
+                Group::make('module')
+                    ->label('按模块分组')
+                    ->getTitleFromRecordUsing(fn (AdminPermission $record): string => AdminPermissionModuleZh::label($record->module))
+                    ->collapsible(),
+            ])
+            ->defaultGroup('module')
             ->actions([
-                Tables\Actions\ViewAction::make()
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([]);
     }
@@ -72,15 +99,36 @@ class AdminPermissionResource extends BaseAdminResource
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist->schema([
-            Infolists\Components\TextEntry::make('id')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('module')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('action')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('key')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('description')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('created_at')->columnSpanFull(),
-                Infolists\Components\TextEntry::make('updated_at')->columnSpanFull()
+            Infolists\Components\Section::make('权限说明')
+                ->columns(2)
+                ->schema([
+                    Infolists\Components\TextEntry::make('id')->label('编号'),
+                    Infolists\Components\TextEntry::make('key')
+                        ->label('权限键')
+                        ->copyable()
+                        ->columnSpanFull(),
+                    Infolists\Components\TextEntry::make('module')
+                        ->label('模块')
+                        ->formatStateUsing(fn (?string $state): string => AdminPermissionModuleZh::label($state))
+                        ->description(fn (AdminPermission $record): string => '技术标识：'.((string) ($record->module ?? '—'))),
+                    Infolists\Components\TextEntry::make('action')
+                        ->label('操作代码')
+                        ->badge()
+                        ->formatStateUsing(fn (?string $state): string => AdminPermissionModuleZh::actionLabel($state)),
+                    Infolists\Components\TextEntry::make('description')
+                        ->label('说明')
+                        ->columnSpanFull(),
+                ]),
+            Infolists\Components\Section::make('元数据')
+                ->collapsed()
+                ->columns(2)
+                ->schema([
+                    Infolists\Components\TextEntry::make('created_at')->label('创建时间')->dateTime(),
+                    Infolists\Components\TextEntry::make('updated_at')->label('更新时间')->dateTime(),
+                ]),
         ]);
     }
+
     public static function getPages(): array
     {
         return [

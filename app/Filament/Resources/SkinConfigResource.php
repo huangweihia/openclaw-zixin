@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Models\SkinConfig;
+use App\Support\SkinCssVariables;
 use App\Filament\Resources\SkinConfigResource\Pages;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -49,11 +50,16 @@ class SkinConfigResource extends BaseAdminResource
                 ->dehydrated()
                 ->visibleOn('edit')
                 ->helperText('创建时由系统根据名称生成。'),
-            Forms\Components\TextInput::make('owner_user_id')->numeric()->nullable(),
+            Forms\Components\Select::make('owner_user_id')
+                ->relationship('owner', 'name')
+                ->searchable()
+                ->preload()
+                ->nullable(),
             Forms\Components\Textarea::make('description')->columnSpanFull()->rows(4)->maxLength(500),
             Forms\Components\TextInput::make('preview_image')->maxLength(255)->nullable(),
             Forms\Components\Repeater::make('_css_var_rows')
                 ->label('主题色与 CSS 变量')
+                ->default(SkinCssVariables::defaultCssVarRepeaterRows())
                 ->helperText('必填变量：primary、secondary、bg-primary、text-primary。gradient-primary 保存时由主色/辅色自动生成。')
                 ->schema([
                     Forms\Components\TextInput::make('k')
@@ -91,7 +97,11 @@ class SkinConfigResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('id')->sortable(),
                 Tables\Columns\TextColumn::make('name')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('code')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('owner_user_id')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('owner.name')
+                    ->label('所属用户')
+                    ->placeholder('—')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('description')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('preview_image')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('css_variables')

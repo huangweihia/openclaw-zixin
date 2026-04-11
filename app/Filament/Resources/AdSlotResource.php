@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
+
 class AdSlotResource extends BaseAdminResource
 {
     protected static ?string $model = AdSlot::class;
@@ -23,6 +24,44 @@ class AdSlotResource extends BaseAdminResource
 
     protected static ?string $pluralModelLabel = '广告位';
 
+    /** @return array<string, string> */
+    public static function positionOptions(): array
+    {
+        return [
+            'top' => '顶部',
+            'bottom' => '底部',
+            'left' => '左侧',
+            'right' => '右侧',
+        ];
+    }
+
+    /** @return array<string, string> */
+    public static function typeOptions(): array
+    {
+        return [
+            'banner' => '横幅（图片）',
+            'banner_video' => '横幅（视频）',
+            'sidebar' => '侧栏',
+            'inline' => '信息流',
+            'popup' => '弹窗',
+            'float' => '浮动角标',
+        ];
+    }
+
+    /** @return array<string, string> */
+    public static function audienceOptions(): array
+    {
+        return [
+            'all' => '所有人',
+            'guest' => '仅游客',
+            'user' => '仅登录用户',
+            'vip' => 'VIP（含管理员）',
+            'svip' => 'SVIP（含管理员）',
+            'admin' => '仅管理员',
+            'member' => '会员（VIP/SVIP/管理员）',
+            'non_member' => '非会员（游客/普通用户）',
+        ];
+    }
 
     public static function canCreate(): bool
     {
@@ -42,20 +81,70 @@ class AdSlotResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('name')->maxLength(65535),
-                Forms\Components\TextInput::make('code')->maxLength(65535),
-                Forms\Components\TextInput::make('position')->maxLength(65535),
-                Forms\Components\TextInput::make('type')->maxLength(65535),
-                Forms\Components\TextInput::make('width')->maxLength(65535),
-                Forms\Components\TextInput::make('height')->maxLength(65535),
-                Forms\Components\Toggle::make('is_active'),
-                Forms\Components\TextInput::make('sort')->numeric(),
-                Forms\Components\TextInput::make('default_title')->maxLength(65535),
-                Forms\Components\TextInput::make('default_image_url')->maxLength(65535),
-                Forms\Components\TextInput::make('default_link_url')->maxLength(65535),
-                Forms\Components\Textarea::make('default_content')->columnSpanFull()->rows(6),
-                Forms\Components\Toggle::make('show_default_when_empty'),
-                Forms\Components\TextInput::make('audience')->maxLength(65535)
+            Forms\Components\Grid::make(2)->schema([
+                Forms\Components\TextInput::make('name')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('code')
+                    ->required()
+                    ->maxLength(128)
+                    ->unique(ignoreRecord: true),
+                Forms\Components\Select::make('position')
+                    ->options(static::positionOptions())
+                    ->required()
+                    ->native(false)
+                    ->default('top'),
+                Forms\Components\Select::make('type')
+                    ->options(static::typeOptions())
+                    ->required()
+                    ->native(false)
+                    ->default('banner'),
+                Forms\Components\TextInput::make('width')
+                    ->numeric()
+                    ->nullable()
+                    ->suffix('px'),
+                Forms\Components\TextInput::make('height')
+                    ->numeric()
+                    ->nullable()
+                    ->suffix('px'),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('启用'),
+                Forms\Components\TextInput::make('sort')
+                    ->numeric()
+                    ->default(0),
+                Forms\Components\Select::make('audience')
+                    ->options(static::audienceOptions())
+                    ->required()
+                    ->native(false)
+                    ->default('all'),
+            ]),
+            Forms\Components\TextInput::make('default_title')
+                ->maxLength(500)
+                ->columnSpanFull(),
+            Forms\Components\FileUpload::make('default_image_upload')
+                ->label('兜底图片（上传）')
+                ->image()
+                ->disk('public')
+                ->directory('ad-slots/fallback')
+                ->visibility('public')
+                ->maxSize(5120)
+                ->nullable()
+                ->helperText('上传后保存为站内可访问地址；与下方外链二选一即可。'),
+            Forms\Components\TextInput::make('default_image_url_manual')
+                ->label('兜底图片（外链）')
+                ->url()
+                ->maxLength(500)
+                ->nullable()
+                ->helperText('若图片托管在外部 CDN，可只填此处，无需上传。'),
+            Forms\Components\TextInput::make('default_link_url')
+                ->url()
+                ->maxLength(500)
+                ->nullable(),
+            Forms\Components\Textarea::make('default_content')
+                ->columnSpanFull()
+                ->rows(6),
+            Forms\Components\Toggle::make('show_default_when_empty')
+                ->default(true),
         ]);
     }
 
@@ -66,20 +155,31 @@ class AdSlotResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('id')->sortable(),
                 Tables\Columns\TextColumn::make('name')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('code')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('position')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('type')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('width')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('height')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
+                Tables\Columns\TextColumn::make('position')
+                    ->formatStateUsing(fn (?string $state): string => static::positionOptions()[$state ?? ''] ?? ($state ?? '—'))
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->formatStateUsing(fn (?string $state): string => static::typeOptions()[$state ?? ''] ?? ($state ?? '—'))
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('width')->toggleable(),
+                Tables\Columns\TextColumn::make('height')->toggleable(),
+                Tables\Columns\IconColumn::make('is_active')->boolean()->toggleable(),
+                Tables\Columns\ImageColumn::make('default_image_url')
+                    ->label('兜底图')
+                    ->square()
+                    ->height(40)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
+
     public static function getPages(): array
     {
         return [
