@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 class UserSkinResource extends BaseAdminResource
 {
     protected static ?string $model = UserSkin::class;
@@ -39,6 +41,11 @@ class UserSkinResource extends BaseAdminResource
         return static::canViewAny() && true;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['user', 'skinConfig']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -53,8 +60,14 @@ class UserSkinResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('user_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('skin_id')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('用户')
+                    ->placeholder('—')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('skinConfig.name')
+                    ->label('皮肤')
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('activated_at')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
             ])

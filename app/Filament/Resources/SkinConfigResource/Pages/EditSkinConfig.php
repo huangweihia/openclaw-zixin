@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\SkinConfigResource\Pages;
 
+use App\Filament\Resources\Pages\Concerns\RedirectsToIndexAfterSave;
+
 use App\Filament\Resources\SkinConfigResource;
 use App\Filament\Resources\SkinConfigResource\Pages\Concerns\ManagesSkinCssRepeater;
 use Filament\Notifications\Notification;
@@ -9,6 +11,8 @@ use Filament\Resources\Pages\EditRecord;
 
 class EditSkinConfig extends EditRecord
 {
+    use RedirectsToIndexAfterSave;
+
     use ManagesSkinCssRepeater;
 
     protected static string $resource = SkinConfigResource::class;

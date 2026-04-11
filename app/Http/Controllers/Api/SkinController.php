@@ -104,12 +104,29 @@ class SkinController extends Controller
         }
 
         $request->validate([
-            'skin_code' => 'required|string|exists:skin_configs,code',
+            'skin_code' => ['nullable', 'string', 'exists:skin_configs,code'],
+            'skin_id' => ['nullable', 'integer', 'exists:skin_configs,id'],
         ]);
 
-        $skinConfig = SkinConfig::where('code', $request->skin_code)
-            ->where('is_active', true)
-            ->first();
+        if (! $request->filled('skin_code') && ! $request->filled('skin_id')) {
+            return response()->json([
+                'success' => false,
+                'message' => '请提供 skin_code 或 skin_id',
+            ], 422);
+        }
+
+        $skinConfig = null;
+        if ($request->filled('skin_id')) {
+            $skinConfig = SkinConfig::query()
+                ->where('id', $request->integer('skin_id'))
+                ->where('is_active', true)
+                ->first();
+        } else {
+            $skinConfig = SkinConfig::query()
+                ->where('code', $request->string('skin_code')->toString())
+                ->where('is_active', true)
+                ->first();
+        }
 
         if (!$skinConfig) {
             return response()->json([

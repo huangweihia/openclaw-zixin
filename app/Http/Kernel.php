@@ -67,5 +67,6 @@ class Kernel extends HttpKernel
         'admin' => \App\Http\Middleware\EnsureAdmin::class,
         'perm' => \App\Http\Middleware\EnsureAdminPermission::class,
         'personality.quiz.admin' => \App\Http\Middleware\EnsurePersonalityQuizAdminToken::class,
+        'sanctum.optional' => \App\Http\Middleware\OptionalSanctumBearer::class,
     ];
 }

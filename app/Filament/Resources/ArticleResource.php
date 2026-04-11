@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 class ArticleResource extends BaseAdminResource
 {
     protected static ?string $model = Article::class;
@@ -39,6 +41,11 @@ class ArticleResource extends BaseAdminResource
         return static::canViewAny() && true;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with('category');
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -65,7 +72,10 @@ class ArticleResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('category_id')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('category.name')
+                    ->label('分类')
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('title')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('slug')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('summary')->limit(40)->toggleable(),

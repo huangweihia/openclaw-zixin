@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Models\AdSlot;
 use App\Filament\Resources\AdSlotResource\Pages;
+use Filament\Notifications\Notification;
 use Filament\Forms;
 use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
@@ -172,6 +173,21 @@ class AdSlotResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
+                Tables\Actions\Action::make('setActive')
+                    ->label('设为启用')
+                    ->icon('heroicon-o-play-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('启用当前广告位')
+                    ->modalDescription('全站仅允许一个广告位处于启用状态；确认后其余广告位将自动关闭。')
+                    ->visible(fn (AdSlot $record): bool => ! $record->is_active)
+                    ->action(function (AdSlot $record): void {
+                        $record->update(['is_active' => true]);
+                        Notification::make()
+                            ->success()
+                            ->title('已设为当前启用的广告位')
+                            ->send();
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

@@ -2,10 +2,14 @@
 
 namespace App\Filament\Resources\SvipSubscriptionResource\Pages;
 
+use App\Filament\Resources\Pages\Concerns\RedirectsToIndexAfterSave;
+
 use App\Filament\Resources\SvipSubscriptionResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateSvipSubscription extends CreateRecord
 {
+    use RedirectsToIndexAfterSave;
+
     protected static string $resource = SvipSubscriptionResource::class;
 }

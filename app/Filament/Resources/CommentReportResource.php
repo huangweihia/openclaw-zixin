@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 class CommentReportResource extends BaseAdminResource
 {
     protected static ?string $model = CommentReport::class;
@@ -22,7 +24,6 @@ class CommentReportResource extends BaseAdminResource
     protected static ?string $modelLabel = '评论举报';
 
     protected static ?string $pluralModelLabel = '评论举报';
-
 
     public static function canCreate(): bool
     {
@@ -39,17 +40,22 @@ class CommentReportResource extends BaseAdminResource
         return static::canViewAny() && true;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['user', 'comment', 'processor']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
             Forms\Components\TextInput::make('user_id')->numeric(),
-                Forms\Components\TextInput::make('comment_id')->numeric(),
-                Forms\Components\Textarea::make('reason')->columnSpanFull()->rows(6),
-                Forms\Components\Textarea::make('description')->columnSpanFull()->rows(6),
-                Forms\Components\TextInput::make('status')->maxLength(65535),
-                Forms\Components\Textarea::make('admin_note')->columnSpanFull()->rows(6),
-                Forms\Components\TextInput::make('processed_by')->maxLength(65535),
-                Forms\Components\DateTimePicker::make('processed_at')
+            Forms\Components\TextInput::make('comment_id')->numeric(),
+            Forms\Components\Textarea::make('reason')->columnSpanFull()->rows(6),
+            Forms\Components\Textarea::make('description')->columnSpanFull()->rows(6),
+            Forms\Components\TextInput::make('status')->maxLength(65535),
+            Forms\Components\Textarea::make('admin_note')->columnSpanFull()->rows(6),
+            Forms\Components\TextInput::make('processed_by')->maxLength(65535),
+            Forms\Components\DateTimePicker::make('processed_at'),
         ]);
     }
 
@@ -58,27 +64,52 @@ class CommentReportResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('user_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('comment_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('reason')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('description')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('status')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('admin_note')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('举报人')
+                    ->placeholder('—')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('comment.content')
+                    ->label('被举报评论')
+                    ->limit(40)
+                    ->placeholder('—')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('reason')
+                    ->label('原因')
+                    ->limit(40)
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->label('说明')
+                    ->limit(40)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('状态')
+                    ->limit(40)
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('processor.name')
+                    ->label('处理人')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('创建时间')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
+
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Resources\CommentReportResource\Pages\ListCommentReports::route('/'),
-            'edit' => \App\Filament\Resources\CommentReportResource\Pages\EditCommentReport::route('/{record}/edit'),
+            'index' => Pages\ListCommentReports::route('/'),
+            'edit' => Pages\EditCommentReport::route('/{record}/edit'),
         ];
     }
 }

@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 class SvipSubscriptionResource extends BaseAdminResource
 {
     protected static ?string $model = SvipSubscription::class;
@@ -39,6 +41,11 @@ class SvipSubscriptionResource extends BaseAdminResource
         return static::canViewAny() && true;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with('user');
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -60,7 +67,10 @@ class SvipSubscriptionResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('user_id')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('用户')
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('name')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('keywords')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('exclude_keywords')->limit(40)->toggleable(),

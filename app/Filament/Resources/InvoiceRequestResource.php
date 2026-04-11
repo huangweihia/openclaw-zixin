@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 class InvoiceRequestResource extends BaseAdminResource
 {
     protected static ?string $model = InvoiceRequest::class;
@@ -22,7 +24,6 @@ class InvoiceRequestResource extends BaseAdminResource
     protected static ?string $modelLabel = '发票申请';
 
     protected static ?string $pluralModelLabel = '发票申请';
-
 
     public static function canCreate(): bool
     {
@@ -39,19 +40,53 @@ class InvoiceRequestResource extends BaseAdminResource
         return static::canViewAny() && true;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['user', 'order']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
-                Forms\Components\TextInput::make('order_id')->numeric(),
-                Forms\Components\TextInput::make('invoice_type')->maxLength(65535),
-                Forms\Components\TextInput::make('company_name')->maxLength(65535),
-                Forms\Components\TextInput::make('tax_id')->numeric(),
-                Forms\Components\TextInput::make('email')->maxLength(65535),
-                Forms\Components\TextInput::make('status')->maxLength(65535),
-                Forms\Components\TextInput::make('invoice_file')->maxLength(65535),
-                Forms\Components\Textarea::make('admin_note')->columnSpanFull()->rows(6),
-                Forms\Components\DateTimePicker::make('processed_at')
+            Forms\Components\Select::make('user_id')
+                ->label('用户')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->required()
+                ->disabled(fn (?InvoiceRequest $record): bool => $record !== null),
+            Forms\Components\Select::make('order_id')
+                ->label('订单')
+                ->relationship('order', 'order_no')
+                ->searchable()
+                ->preload()
+                ->required()
+                ->disabled(fn (?InvoiceRequest $record): bool => $record !== null),
+            Forms\Components\TextInput::make('invoice_type')
+                ->label('发票类型')
+                ->maxLength(65535),
+            Forms\Components\TextInput::make('company_name')
+                ->label('抬头/公司名')
+                ->maxLength(65535),
+            Forms\Components\TextInput::make('tax_id')
+                ->label('税号')
+                ->maxLength(64),
+            Forms\Components\TextInput::make('email')
+                ->label('接收邮箱')
+                ->email()
+                ->maxLength(65535),
+            Forms\Components\TextInput::make('status')
+                ->label('状态')
+                ->maxLength(65535),
+            Forms\Components\TextInput::make('invoice_file')
+                ->label('发票文件')
+                ->maxLength(65535),
+            Forms\Components\Textarea::make('admin_note')
+                ->label('管理员备注')
+                ->columnSpanFull()
+                ->rows(4),
+            Forms\Components\DateTimePicker::make('processed_at')
+                ->label('处理时间'),
         ]);
     }
 
@@ -60,27 +95,49 @@ class InvoiceRequestResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('user_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('order_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('invoice_type')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('company_name')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('tax_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('email')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('用户')
+                    ->placeholder('—')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('order.order_no')
+                    ->label('订单号')
+                    ->placeholder('—')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('invoice_type')
+                    ->label('发票类型')
+                    ->limit(40)
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('company_name')
+                    ->label('抬头')
+                    ->limit(40)
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('tax_id')
+                    ->label('税号')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('email')
+                    ->label('邮箱')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('创建时间')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
+
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Resources\InvoiceRequestResource\Pages\ListInvoiceRequests::route('/'),
-            'edit' => \App\Filament\Resources\InvoiceRequestResource\Pages\EditInvoiceRequest::route('/{record}/edit'),
+            'index' => Pages\ListInvoiceRequests::route('/'),
+            'edit' => Pages\EditInvoiceRequest::route('/{record}/edit'),
         ];
     }
 }

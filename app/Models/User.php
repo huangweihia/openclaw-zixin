@@ -38,6 +38,8 @@ class User extends Authenticatable implements FilamentUser
         'points_balance',
         'last_login_at',
         'last_login_ip',
+        'wechat_mini_openid',
+        'wechat_unionid',
     ];
 
     /**
@@ -48,6 +50,8 @@ class User extends Authenticatable implements FilamentUser
     protected $hidden = [
         'password',
         'remember_token',
+        'wechat_mini_openid',
+        'wechat_unionid',
     ];
 
     /**

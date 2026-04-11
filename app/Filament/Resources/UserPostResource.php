@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 class UserPostResource extends BaseAdminResource
 {
     protected static ?string $model = UserPost::class;
@@ -39,6 +41,11 @@ class UserPostResource extends BaseAdminResource
         return static::canViewAny() && true;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with('author');
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -67,7 +74,10 @@ class UserPostResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('user_id')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('author.name')
+                    ->label('作者')
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('type')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('title')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('content')->limit(40)->toggleable(),

@@ -2,12 +2,16 @@
 
 namespace App\Filament\Resources\AdminUserResource\Pages;
 
+use App\Filament\Resources\Pages\Concerns\RedirectsToIndexAfterSave;
+
 use App\Filament\Resources\AdminUserResource;
 use App\Models\User;
 use Filament\Resources\Pages\EditRecord;
 
 class EditAdminUser extends EditRecord
 {
+    use RedirectsToIndexAfterSave;
+
     protected static string $resource = AdminUserResource::class;
 
     /**

@@ -42,15 +42,37 @@ class SiteTestimonialResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('display_name')->maxLength(65535),
-                Forms\Components\TextInput::make('caption')->maxLength(65535),
-                Forms\Components\TextInput::make('body')->maxLength(65535),
-                Forms\Components\TextInput::make('rating')->numeric(),
-                Forms\Components\TextInput::make('avatar_initial')->maxLength(65535),
-                Forms\Components\TextInput::make('gradient_from')->maxLength(65535),
-                Forms\Components\TextInput::make('gradient_to')->maxLength(65535),
-                Forms\Components\TextInput::make('sort_order')->numeric(),
-                Forms\Components\Toggle::make('is_published')
+            Forms\Components\TextInput::make('display_name')
+                ->label('显示名')
+                ->maxLength(65535),
+            Forms\Components\TextInput::make('caption')
+                ->label('副标题/说明标签')
+                ->maxLength(65535),
+            Forms\Components\Textarea::make('body')
+                ->label('题干/正文')
+                ->columnSpanFull()
+                ->rows(6),
+            Forms\Components\TextInput::make('rating')
+                ->label('星级评分')
+                ->numeric()
+                ->minValue(1)
+                ->maxValue(5),
+            Forms\Components\TextInput::make('avatar_initial')
+                ->label('头像首字')
+                ->maxLength(8),
+            Forms\Components\TextInput::make('gradient_from')
+                ->label('渐变起始（Tailwind 类名）')
+                ->maxLength(65535)
+                ->helperText('例如 from-blue-400'),
+            Forms\Components\TextInput::make('gradient_to')
+                ->label('渐变结束（Tailwind 类名）')
+                ->maxLength(65535)
+                ->helperText('例如 to-blue-600'),
+            Forms\Components\TextInput::make('sort_order')
+                ->label('排序')
+                ->numeric(),
+            Forms\Components\Toggle::make('is_published')
+                ->label('已发布'),
         ]);
     }
 
@@ -59,13 +81,13 @@ class SiteTestimonialResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('display_name')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('caption')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('body')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('rating')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('avatar_initial')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('gradient_from')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
+                Tables\Columns\TextColumn::make('display_name')->label('显示名')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('caption')->label('副标题/说明')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('body')->label('正文摘要')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('rating')->label('星级')->toggleable(),
+                Tables\Columns\TextColumn::make('avatar_initial')->label('头像首字')->toggleable(),
+                Tables\Columns\TextColumn::make('gradient_from')->label('渐变起始')->limit(24)->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('created_at')->label('创建时间')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

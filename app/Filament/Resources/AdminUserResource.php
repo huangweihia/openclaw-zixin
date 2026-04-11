@@ -10,6 +10,8 @@ use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 class AdminUserResource extends BaseAdminResource
 {
     protected static ?string $model = AdminUser::class;
@@ -40,6 +42,11 @@ class AdminUserResource extends BaseAdminResource
         return static::canViewAny() && true;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with('user');
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -67,7 +74,10 @@ class AdminUserResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('user_id')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('登录账号')
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('display_name')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('is_active')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('is_super')->limit(40)->toggleable(),

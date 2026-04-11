@@ -2,10 +2,14 @@
 
 namespace App\Filament\Resources\PersonalityQuizSettingResource\Pages;
 
+use App\Filament\Resources\Pages\Concerns\RedirectsToIndexAfterSave;
+
 use App\Filament\Resources\PersonalityQuizSettingResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreatePersonalityQuizSetting extends CreateRecord
 {
+    use RedirectsToIndexAfterSave;
+
     protected static string $resource = PersonalityQuizSettingResource::class;
 }

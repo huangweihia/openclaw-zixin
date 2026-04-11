@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\SkinConfigResource\Pages;
 
+use App\Filament\Resources\Pages\Concerns\RedirectsToIndexAfterSave;
+
 use App\Filament\Resources\SkinConfigResource;
 use App\Filament\Resources\SkinConfigResource\Pages\Concerns\ManagesSkinCssRepeater;
 use App\Models\SkinConfig;
@@ -11,6 +13,8 @@ use Filament\Resources\Pages\CreateRecord;
 
 class CreateSkinConfig extends CreateRecord
 {
+    use RedirectsToIndexAfterSave;
+
     use ManagesSkinCssRepeater;
 
     protected static string $resource = SkinConfigResource::class;

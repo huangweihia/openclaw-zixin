@@ -109,8 +109,12 @@ class AdminPermissionResource extends BaseAdminResource
                         ->columnSpanFull(),
                     Infolists\Components\TextEntry::make('module')
                         ->label('模块')
-                        ->formatStateUsing(fn (?string $state): string => AdminPermissionModuleZh::label($state))
-                        ->description(fn (AdminPermission $record): string => '技术标识：'.((string) ($record->module ?? '—'))),
+                        ->formatStateUsing(function (?string $state, AdminPermission $record): string {
+                            $zh = AdminPermissionModuleZh::label($state);
+                            $slug = (string) ($record->module ?? '—');
+
+                            return $zh.'（技术标识：'.$slug.'）';
+                        }),
                     Infolists\Components\TextEntry::make('action')
                         ->label('操作代码')
                         ->badge()

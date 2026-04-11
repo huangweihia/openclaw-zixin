@@ -2,10 +2,14 @@
 
 namespace App\Filament\Resources\PersonalityDimensionResource\Pages;
 
+use App\Filament\Resources\Pages\Concerns\RedirectsToIndexAfterSave;
+
 use App\Filament\Resources\PersonalityDimensionResource;
 use Filament\Resources\Pages\EditRecord;
 
 class EditPersonalityDimension extends EditRecord
 {
+    use RedirectsToIndexAfterSave;
+
     protected static string $resource = PersonalityDimensionResource::class;
 }

@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 class AdminNavItemResource extends BaseAdminResource
 {
     protected static ?string $model = AdminNavItem::class;
@@ -37,6 +39,11 @@ class AdminNavItemResource extends BaseAdminResource
     public static function canDelete($record): bool
     {
         return static::canViewAny() && true;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with('section');
     }
 
     public static function form(Form $form): Form
@@ -82,7 +89,10 @@ class AdminNavItemResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('admin_nav_section_id')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('section.title')
+                    ->label('导航分区')
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('menu_key')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('label')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('path')->limit(40)->toggleable(),

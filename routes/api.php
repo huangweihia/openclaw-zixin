@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PersonalityQuizAdminController;
 use App\Http\Controllers\Api\PersonalityQuizController;
 use App\Http\Controllers\Api\PublicArticleController;
 use App\Http\Controllers\Api\PublicBrowseController;
+use App\Http\Controllers\Api\WeChatMiniAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -22,18 +23,36 @@ use Illuminate\Support\Facades\Route;
 | routes are loaded by the RouteServiceProvider and all of them will
 | be assigned to the "api" middleware group. Make something great!
 |
+| 部署后若 /api/public/* 返回 404：请在服务器执行 php artisan route:clear
+| 并确认 Web 根目录指向 public/，且已发布含 PublicBrowseController 的代码。
+|
 */
+
+/** 健康检查：浏览器访问 GET /api/ping 应返回 JSON，用于确认路由与 Laravel 生效 */
+Route::get('/ping', static fn () => response()->json([
+    'ok' => true,
+    'service' => 'openclaw-zixin',
+    'time' => now()->toIso8601String(),
+]));
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+// 微信小程序：code 换 Sanctum Token（限流）
+Route::post('/wechat/mini/login', [WeChatMiniAuthController::class, 'login'])
+    ->middleware('throttle:30,1');
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/wechat/mini/me', [WeChatMiniAuthController::class, 'me']);
+    Route::post('/wechat/mini/logout', [WeChatMiniAuthController::class, 'logout']);
 });
 
 Route::post('/email-subscriptions', [PublicEmailSubscriptionController::class, 'store']);
 Route::get('/email-unsubscribe/{token}', [PublicEmailSubscriptionController::class, 'unsubscribe'])
     ->where('token', '[A-Za-z0-9]+');
 
-// 皮肤 API
-Route::prefix('skins')->group(function () {
+// 皮肤 API（GET 支持可选 Bearer，以便登录用户看到私有皮肤等）
+Route::prefix('skins')->middleware('sanctum.optional')->group(function () {
     Route::get('/', [SkinController::class, 'index']);           // GET /api/skins - 获取所有皮肤
     Route::get('/current', [SkinController::class, 'show']);     // GET /api/skins/current - 获取当前用户皮肤
     Route::put('/current', [SkinController::class, 'update'])->middleware('auth:sanctum'); // PUT /api/skins/current - 更新用户皮肤

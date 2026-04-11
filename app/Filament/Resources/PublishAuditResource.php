@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 class PublishAuditResource extends BaseAdminResource
 {
     protected static ?string $model = PublishAudit::class;
@@ -22,7 +24,6 @@ class PublishAuditResource extends BaseAdminResource
     protected static ?string $modelLabel = '发布审计';
 
     protected static ?string $pluralModelLabel = '发布审计';
-
 
     public static function canCreate(): bool
     {
@@ -39,17 +40,54 @@ class PublishAuditResource extends BaseAdminResource
         return static::canViewAny() && true;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['userPost', 'user', 'auditor']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('publish_id')->numeric(),
-                Forms\Components\TextInput::make('user_id')->numeric(),
-                Forms\Components\TextInput::make('auditor_id')->numeric(),
-                Forms\Components\TextInput::make('status')->maxLength(65535),
-                Forms\Components\TextInput::make('reject_reason')->maxLength(65535),
-                Forms\Components\TextInput::make('suggest')->maxLength(65535),
-                Forms\Components\TextInput::make('priority')->numeric(),
-                Forms\Components\DateTimePicker::make('audited_at')
+            Forms\Components\Select::make('publish_id')
+                ->label('关联动态')
+                ->relationship('userPost', 'title')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Forms\Components\Select::make('user_id')
+                ->label('用户')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Forms\Components\Select::make('auditor_id')
+                ->label('审核人')
+                ->relationship('auditor', 'name')
+                ->searchable()
+                ->preload()
+                ->nullable(),
+            Forms\Components\Select::make('status')
+                ->options([
+                    'pending' => '待审核',
+                    'approved' => '已通过',
+                    'rejected' => '已驳回',
+                ])
+                ->required(),
+            Forms\Components\Textarea::make('reject_reason')
+                ->label('驳回原因')
+                ->rows(3)
+                ->columnSpanFull(),
+            Forms\Components\Textarea::make('suggest')
+                ->label('修改建议')
+                ->rows(3)
+                ->columnSpanFull(),
+            Forms\Components\TextInput::make('priority')
+                ->label('优先级')
+                ->numeric()
+                ->default(0),
+            Forms\Components\DateTimePicker::make('audited_at')
+                ->label('审核时间'),
         ]);
     }
 
@@ -58,27 +96,75 @@ class PublishAuditResource extends BaseAdminResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('publish_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('user_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('auditor_id')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('status')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('reject_reason')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('suggest')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
+                Tables\Columns\TextColumn::make('userPost.title')
+                    ->label('动态标题')
+                    ->limit(40)
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('userPost', fn ($q) => $q->where('title', 'like', "%{$search}%"));
+                    })
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('用户')
+                    ->placeholder('—')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('auditor.name')
+                    ->label('审核人')
+                    ->placeholder('—')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('状态')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'pending' => '待审核',
+                        'approved' => '已通过',
+                        'rejected' => '已驳回',
+                        default => (string) $state,
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'approved' => 'success',
+                        'rejected' => 'danger',
+                        default => 'gray',
+                    })
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('reject_reason')
+                    ->label('驳回原因')
+                    ->limit(40)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('suggest')
+                    ->label('修改建议')
+                    ->limit(40)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('priority')
+                    ->label('优先级')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('audited_at')
+                    ->label('审核时间')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('创建时间')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
+
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Resources\PublishAuditResource\Pages\ListPublishAudits::route('/'),
-            'edit' => \App\Filament\Resources\PublishAuditResource\Pages\EditPublishAudit::route('/{record}/edit'),
+            'index' => Pages\ListPublishAudits::route('/'),
+            'edit' => Pages\EditPublishAudit::route('/{record}/edit'),
         ];
     }
 }
