@@ -140,7 +140,7 @@ class ManageSiteSettingsPage extends Page implements HasForms
                             ->columnSpanFull(),
                     ]),
                 Forms\Components\Section::make('注册与会员')
-                    ->description('新用户邮箱注册成功后，若开启赠送：将角色设为 VIP/SVIP 并写入 subscription_ends_at。')
+                    ->description('新用户邮箱注册或微信小程序首次注册成功后，若开启赠送：将角色设为 VIP/SVIP 并写入 subscription_ends_at；注册积分写入 points 流水。')
                     ->columns(2)
                     ->schema([
                         Forms\Components\Select::make('register_gift_enabled')

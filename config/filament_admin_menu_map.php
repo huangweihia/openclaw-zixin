@@ -39,4 +39,13 @@ return [
     \App\Filament\Resources\PublishAuditResource::class => 'publish-audits',
     \App\Filament\Resources\AdminRoleResource::class => 'admin-roles',
     \App\Filament\Resources\AdminNavItemResource::class => 'nav-menus',
+
+    // —— 与 Vue/Filament 差异文档对齐：侧栏走 AdminNavItem + RBAC ——
+    \App\Filament\Resources\AdminPermissionResource::class => 'admin-permissions',
+    \App\Filament\Resources\AdminUserResource::class => 'admin-users',
+    \App\Filament\Resources\AdminNavSectionResource::class => 'admin-nav-sections',
+    \App\Filament\Resources\UserSkinResource::class => 'user-skins',
+    \App\Filament\Resources\SvipSubscriptionResource::class => 'svip-subscriptions',
+
+    // 测评子表侧栏已关闭（shouldRegisterNavigation=false），仍不写入 menu_map，避免 canViewAny 意外收紧为单一 perm。
 ];

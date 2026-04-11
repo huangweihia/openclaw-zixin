@@ -45,6 +45,10 @@ Route::post('/wechat/mini/login', [WeChatMiniAuthController::class, 'login'])
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/wechat/mini/me', [WeChatMiniAuthController::class, 'me']);
     Route::post('/wechat/mini/logout', [WeChatMiniAuthController::class, 'logout']);
+    Route::post('/wechat/mini/bind-email/send-code', [WeChatMiniAuthController::class, 'bindEmailSendCode'])
+        ->middleware('throttle:8,1');
+    Route::post('/wechat/mini/bind-email/verify', [WeChatMiniAuthController::class, 'bindEmailVerify'])
+        ->middleware('throttle:20,1');
 });
 
 Route::post('/email-subscriptions', [PublicEmailSubscriptionController::class, 'store']);

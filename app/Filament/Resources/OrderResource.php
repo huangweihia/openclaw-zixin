@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 class OrderResource extends BaseAdminResource
 {
     protected static ?string $model = Order::class;
@@ -37,6 +39,11 @@ class OrderResource extends BaseAdminResource
     public static function canDelete($record): bool
     {
         return static::canViewAny() && true;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with('user');
     }
 
     public static function form(Form $form): Form
@@ -71,7 +78,22 @@ class OrderResource extends BaseAdminResource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('order_no')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('product_type')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('product_id')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('product_display')
+                    ->label('商品')
+                    ->getStateUsing(function (Order $record): string {
+                        $plan = $record->planKeyFromProduct();
+                        $planLabel = match ($plan) {
+                            'vip' => 'VIP',
+                            'svip' => 'SVIP',
+                            default => null,
+                        };
+                        $type = (string) ($record->product_type ?? '');
+                        $id = (int) ($record->product_id ?? 0);
+                        $tail = $planLabel !== null ? $planLabel.' (#'.$id.')' : (($id > 0 ? 'ID '.$id : '—'));
+
+                        return trim(($type !== '' ? $type.' · ' : '').$tail);
+                    })
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('amount')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('status')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)

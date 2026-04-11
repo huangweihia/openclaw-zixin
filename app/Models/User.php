@@ -39,6 +39,7 @@ class User extends Authenticatable implements FilamentUser
         'last_login_at',
         'last_login_ip',
         'wechat_mini_openid',
+        'wechat_openid',
         'wechat_unionid',
     ];
 
@@ -51,6 +52,7 @@ class User extends Authenticatable implements FilamentUser
         'password',
         'remember_token',
         'wechat_mini_openid',
+        'wechat_openid',
         'wechat_unionid',
     ];
 

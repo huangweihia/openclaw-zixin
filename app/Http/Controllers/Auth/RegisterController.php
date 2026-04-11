@@ -4,9 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\EmailTemplate;
-use App\Models\SiteSetting;
 use App\Models\User;
-use App\Services\PointsService;
+use App\Services\UserRegistrationRewards;
 use App\Support\EmailLogWriter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -109,8 +108,8 @@ class RegisterController extends Controller
             'email_verified_at' => now(),
         ]);
 
-        $this->applyRegisterGift($user);
-        $this->applyRegisterPoints($user);
+        UserRegistrationRewards::applyRegisterGift($user);
+        UserRegistrationRewards::applyRegisterPoints($user);
 
         Cache::forget($cacheKey);
 
@@ -159,35 +158,5 @@ class RegisterController extends Controller
         }
     }
 
-    /**
-     * 按后台「系统与站点」中的 register_gift_* 配置赠送会员天数（闭环）。
-     */
-    private function applyRegisterGift(User $user): void
-    {
-        if (SiteSetting::getValue('register_gift_enabled', '0') !== '1') {
-            return;
-        }
-        $days = max(0, (int) SiteSetting::getValue('register_gift_days', '0'));
-        $role = (string) SiteSetting::getValue('register_gift_role', 'vip');
-        if ($days <= 0 || ! in_array($role, ['vip', 'svip'], true)) {
-            return;
-        }
-        $user->forceFill([
-            'role' => $role,
-            'subscription_ends_at' => now()->addDays($days),
-        ])->save();
-    }
-
-    /**
-     * 注册赠送积分（site_settings.register_points_bonus，与 points 流水表闭环）。
-     */
-    private function applyRegisterPoints(User $user): void
-    {
-        $bonus = max(0, (int) SiteSetting::getValue('register_points_bonus', '0'));
-        if ($bonus <= 0) {
-            return;
-        }
-        PointsService::earn($user, $bonus, 'register', '新用户注册奖励');
-    }
 }
 
