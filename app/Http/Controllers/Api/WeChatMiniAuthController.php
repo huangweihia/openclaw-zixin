@@ -142,6 +142,7 @@ class WeChatMiniAuthController extends Controller
             'token' => $plain,
             'token_type' => 'Bearer',
             'user' => $this->userPayload($user),
+            'stats' => WeChatMiniProfileController::statsFor($user),
         ]);
     }
 
@@ -152,6 +153,7 @@ class WeChatMiniAuthController extends Controller
 
         return response()->json([
             'user' => $this->userPayload($user),
+            'stats' => WeChatMiniProfileController::statsFor($user),
         ]);
     }
 
@@ -261,6 +263,7 @@ class WeChatMiniAuthController extends Controller
         return response()->json([
             'message' => '绑定成功',
             'user' => $this->userPayload($user),
+            'stats' => WeChatMiniProfileController::statsFor($user),
         ]);
     }
 

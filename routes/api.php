@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\PersonalityQuizController;
 use App\Http\Controllers\Api\PublicArticleController;
 use App\Http\Controllers\Api\PublicBrowseController;
 use App\Http\Controllers\Api\WeChatMiniAuthController;
+use App\Http\Controllers\Api\WeChatMiniProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -49,6 +50,10 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('throttle:8,1');
     Route::post('/wechat/mini/bind-email/verify', [WeChatMiniAuthController::class, 'bindEmailVerify'])
         ->middleware('throttle:20,1');
+    Route::get('/wechat/mini/stats', [WeChatMiniProfileController::class, 'stats']);
+    Route::get('/wechat/mini/orders', [WeChatMiniProfileController::class, 'orders']);
+    Route::get('/wechat/mini/favorites', [WeChatMiniProfileController::class, 'favorites']);
+    Route::get('/wechat/mini/posts', [WeChatMiniProfileController::class, 'posts']);
 });
 
 Route::post('/email-subscriptions', [PublicEmailSubscriptionController::class, 'store']);
