@@ -47,12 +47,25 @@
 
 适合「先让 Composer 跑通」，**容器被删重建后需重做**；长期仍建议方式 B 与 Dockerfile 一致。
 
+若 `apt-get update` 访问 `deb.debian.org` **极慢**（国内机房常见），先在容器内把 Debian 源换成国内镜像再装（下面示例用**阿里云**，也可改成清华 `mirrors.tuna.tsinghua.edu.cn` 等）：
+
 ```bash
-docker compose -f docker-compose.server.yml exec --user 0 php sh -lc \
-  'apt-get update && apt-get install -y --no-install-recommends libicu-dev $PHPIZE_DEPS && docker-php-ext-install intl'
+docker compose -f docker-compose.server.yml exec --user 0 php sh -lc '
+set -e
+replace_apt_mirrors() {
+  sed -i "s|deb.debian.org|mirrors.aliyun.com|g; s|security.debian.org/debian-security|mirrors.aliyun.com/debian-security|g" "$1"
+}
+[ -f /etc/apt/sources.list ] && replace_apt_mirrors /etc/apt/sources.list || true
+[ -f /etc/apt/sources.list.d/debian.sources ] && replace_apt_mirrors /etc/apt/sources.list.d/debian.sources || true
+apt-get update
+apt-get install -y --no-install-recommends libicu-dev $PHPIZE_DEPS
+docker-php-ext-install intl
+'
 docker compose -f docker-compose.server.yml restart php
 docker compose -f docker-compose.server.yml exec -T php php -m | grep intl
 ```
+
+不换源、网络又差时，**仅 `apt-get update` 就可能要十几分钟**，与是否 Docker 无关。
 
 ### 方式 B：用仓库里的 Dockerfile 重建镜像（日常不要加 `--no-cache`）
 
