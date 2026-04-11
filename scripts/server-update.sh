@@ -10,6 +10,8 @@ set -euo pipefail
 # 环境变量：
 #   DEPLOY_GIT_STRATEGY=merge   仅快进合并，不 reset --hard
 #   REMOTE / BRANCH             默认 origin / main
+#   DEPTH / FILTER              默认浅克隆 + partial clone（见 docs/admin-filament-first-deploy.md「git 慢」）
+#   HTTPS_PROXY / https_proxy   仅本次拉 GitHub 走 HTTP 代理，例：HTTPS_PROXY=http://127.0.0.1:7890 bash scripts/server-update.sh
 #
 # 若 composer install 因 lock 与 json 不一致失败：在仓库根目录执行一次
 #   bash scripts/server-composer-filament-once.sh

@@ -30,6 +30,26 @@
 
 `composer.lock` 已包含 Filament 后，**只跑 `server-update.sh`** 即可；其中只有 `composer install`，**不会**每次执行 `composer update` 或 `filament:upgrade`。
 
+## 服务器上 `git pull` / `git fetch` 很慢
+
+国内机房访问 **GitHub** 经常慢或抖动，和项目大小无关时也多半是网络问题。可按优先级尝试：
+
+1. **用脚本里已有的优化**（`server-update.sh` 已默认）：`git fetch` 使用 **`--depth=1`**（浅历史）+ **`--filter=blob:none`**（partial clone，少拉大文件），比完整 `git pull` 轻量。若你是多年前在服务器上 **完整克隆** 的仓库，可备份 `.env` 后 **重新浅克隆** 再拷回 `.env`：  
+   `git clone --depth 1 --branch main --single-branch https://github.com/你的用户/openclaw-zixin.git`
+
+2. **只对 Git 走 HTTP 代理**（服务器上若有 Clash 等）：  
+   `HTTPS_PROXY=http://127.0.0.1:7890 bash scripts/server-update.sh`  
+   或长期仅 GitHub：  
+   `git config --global http.https://github.com.proxy http://127.0.0.1:7890`
+
+3. **改用 SSH 远程**（`git@github.com:...`）：在部分网络下比 HTTPS 更稳；需配好服务器上的 **SSH key** 并加到 GitHub。
+
+4. **镜像仓**：把 GitHub 仓库同步到 **Gitee / 自建 Git**，服务器 `remote` 指向镜像（注意镜像延迟与权限）。
+
+5. **少用大对象**：避免把备份、大资源提交进 Git；否则即使用 partial clone，首次仍可能慢。
+
+不推荐依赖第三方「GitHub 加速 URL」改 remote 地址：易失效、有安全风险。
+
 ## 脚本分工
 
 | 脚本 | 何时用 |
