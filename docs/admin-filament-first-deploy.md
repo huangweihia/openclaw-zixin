@@ -41,10 +41,25 @@
 
 ## Composer 报「requirements could not be resolved」且列出大量 Filament 版本
 
-常见原因是 **PHP 缺少 `intl` 扩展**（Filament 依赖链需要）。镜像已包含 `ext-intl`；若你仍在用旧镜像，请**重建 php 服务**后再跑 Composer：
+常见原因是 **PHP 缺少 `intl` 扩展**（Filament 依赖链需要）。
+
+### 方式 A：当前容器里快速补上 intl（不等镜像构建）
+
+适合「先让 Composer 跑通」，**容器被删重建后需重做**；长期仍建议方式 B 与 Dockerfile 一致。
 
 ```bash
-docker compose -f docker-compose.server.yml build php --no-cache
+docker compose -f docker-compose.server.yml exec --user 0 php sh -lc \
+  'apt-get update && apt-get install -y --no-install-recommends libicu-dev $PHPIZE_DEPS && docker-php-ext-install intl'
+docker compose -f docker-compose.server.yml restart php
+docker compose -f docker-compose.server.yml exec -T php php -m | grep intl
+```
+
+### 方式 B：用仓库里的 Dockerfile 重建镜像（日常不要加 `--no-cache`）
+
+`git pull` 后执行（**默认不要** `--no-cache`，否则会强制整镜像重跑 apt，非常慢；仅怀疑构建缓存损坏时再临时加）：
+
+```bash
+docker compose -f docker-compose.server.yml build php
 docker compose -f docker-compose.server.yml up -d
 bash scripts/server-composer-filament-once.sh
 ```
