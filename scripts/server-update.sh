@@ -74,5 +74,6 @@ docker compose -f "$COMPOSE_FILE" exec -T php php artisan optimize:clear
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan config:cache
 # 勿用 route:cache：与 Filament/Livewire 并存时，易出现「登录 POST /admin/login → 405」（应用仅注册 GET，提交应由 Livewire 走 /livewire/update）
 docker compose -f "$COMPOSE_FILE" exec -T php php artisan route:clear
-docker compose -f "$COMPOSE_FILE" exec -T php php artisan view:cache
+# view:cache 易与 Filament/Livewire 动态 Blade 冲突，保持视图不预编译缓存
+docker compose -f "$COMPOSE_FILE" exec -T php php artisan view:clear
 echo "Done: code pulled, composer install, migrated, caches refreshed."

@@ -67,14 +67,6 @@ docker compose -f docker-compose.server.yml exec -T php php -m | grep intl
 
 不换源、网络又差时，**仅 `apt-get update` 就可能要十几分钟**，与是否 Docker 无关。
 
-## 登录页能打开，点登录报 405：POST admin/login 不允许
-
-Filament 登录由 **Livewire** 处理，正常提交应请求 **`/livewire/update`**，而不是传统表单 POST 到 `/admin/login`。若出现 405：
-
-1. 在服务器执行 **`php artisan route:clear`**（不要用 `route:cache`；本仓库 `server-update.sh` 已改为 `route:clear`）。
-2. 浏览器 **强制刷新**（Ctrl+F5）或清缓存；开发者工具 Network 里确认 **`livewire.js`**、**`livewire/update`** 无 404/被拦截。
-3. 若站点的 **HTTPS / 域名** 与 `.env` 里 `APP_URL` 不一致，修正后执行 `php artisan config:clear` 再试。
-
 ### 方式 B：用仓库里的 Dockerfile 重建镜像（日常不要加 `--no-cache`）
 
 `git pull` 后执行（**默认不要** `--no-cache`，否则会强制整镜像重跑 apt，非常慢；仅怀疑构建缓存损坏时再临时加）：
@@ -84,3 +76,15 @@ docker compose -f docker-compose.server.yml build php
 docker compose -f docker-compose.server.yml up -d
 bash scripts/server-composer-filament-once.sh
 ```
+
+## 登录页能打开，点登录报 405：POST admin/login 不允许
+
+Filament 登录由 **Livewire** 处理，正常提交应请求 **`/livewire/update`**，而不是传统表单 POST 到 `/admin/login`。出现 405 多半是 **Livewire 的 JS 没在浏览器里跑起来**（表单退化成整页 POST）。
+
+### 必查（HTTPS / 反代）
+
+1. **`.env` 里 `APP_URL`** 必须与浏览器地址一致，含 **`https://` 与正确域名**（不要用 `http://` 访问却配 `https`，或相反）。
+2. **`TrustProxies`**：仓库已默认 `protected $proxies = '*'`（Docker 内 Nginx→PHP 常见）。否则 Laravel 认不出 HTTPS，生成的脚本地址会变成 `http://`，浏览器拦截 **混合内容** → Livewire 不加载。
+3. **Nginx→PHP**：仓库 `docker/nginx/conf.d/00-forwarded-map.conf` + `fastcgi_param HTTP_X_FORWARDED_PROTO` 会把外层 **`X-Forwarded-Proto`** 传给 PHP；若你自建 Nginx，请对照补上。改完后 **`docker compose up -d --force-recreate nginx`**（或等价重启）。
+4. 服务器执行：`php artisan route:clear`、`php artisan config:clear`、`php artisan view:clear`。
+5. 浏览器 **强制刷新**；开发者工具 **Network** 看 **`livewire.js`** 是否 200、**Console** 是否无红色报错。
