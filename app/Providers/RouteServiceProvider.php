@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Controllers\Admin\AdminSpaController;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -25,8 +24,7 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
-            // 管理端 SPA 登录依赖 Session（/sanctum/csrf-cookie + Cookie 会话）。
-            // 若仅用 api 中间件会缺少 session store，导致「Session store not set on request」。
+            // 管理端 JSON API（Vue 时代遗留；Filament 上线后仍可过渡使用）
             Route::middleware([
                 'web',
                 \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
@@ -59,25 +57,13 @@ class RouteServiceProvider extends ServiceProvider
                     })->where('path', '.*');
                 });
 
-                Route::domain($adminDomain)->middleware('web')->group(function () {
-                    Route::get('/{any?}', [AdminSpaController::class, 'index'])
-                        ->where('any', '.*')
-                        ->name('admin.spa');
-                });
+                // 独立后台域名：仅由 Filament Panel（AdminPanelProvider ->domain()）注册路由，勿在此再挂 web.php，避免重复注册。
             } else {
                 if (is_string($adminDomain) && $adminDomain !== '') {
                     Log::warning('已配置 ADMIN_DOMAIN 但未设置 APP_FRONT_DOMAIN，已回退为路径前缀后台（/admin/*）。');
                 }
 
                 Route::middleware('web')->group(base_path('routes/web.php'));
-
-                Route::middleware('web')
-                    ->prefix(trim(config('admin.path_prefix', 'admin'), '/'))
-                    ->group(function () {
-                        Route::get('/{any?}', [AdminSpaController::class, 'index'])
-                            ->where('any', '.*')
-                            ->name('admin.spa');
-                    });
             }
         });
     }

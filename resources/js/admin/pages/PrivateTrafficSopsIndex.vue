@@ -1,10 +1,13 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
+import { ElMessageBox } from 'element-plus';
 import { enumLabel, enumOptions } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
 import AdminPageShell from '../components/AdminPageShell.vue';
 import AdminCard from '../components/AdminCard.vue';
+import AdminColumnPicker from '../components/AdminColumnPicker.vue';
+import { useAdminColumnVisibility } from '../composables/useAdminColumnVisibility.js';
 
 const ptPlatformOpts = enumOptions('privateTrafficPlatform');
 const ptCategoryOpts = enumOptions('privateTrafficCategory');
@@ -17,6 +20,7 @@ const total = ref(0);
 const query = ref('');
 const err = ref('');
 const msg = ref('');
+const loading = ref(false);
 const mode = ref('');
 const editing = ref(null);
 const form = ref({
@@ -34,6 +38,21 @@ const form = ref({
     vip_gate_engagement: false,
     visibility: 'vip',
 });
+
+const columnDefs = [
+    { key: 'id', label: 'ID', field: 'id' },
+    { key: 'title', label: '标题', field: 'title' },
+    { key: 'slug', label: 'slug', field: 'slug' },
+    { key: 'summary', label: '摘要', field: 'summary', default: false },
+    { key: 'platform', label: '平台', field: 'platform' },
+    { key: 'type', label: 'SOP 类型', field: 'type' },
+    { key: 'visibility', label: '可见性', field: 'visibility' },
+    { key: 'vip_gate_engagement', label: 'VIP 门槛', field: 'vip_gate_engagement', default: false },
+    { key: 'created_at', label: '创建时间', field: 'created_at', default: false },
+    { key: 'updated_at', label: '更新时间', field: 'updated_at', default: false },
+];
+
+const cols = useAdminColumnVisibility('admin:private-traffic-sops:list', columnDefs);
 
 function linesToArr(s) {
     return (s || '')
@@ -66,15 +85,21 @@ function reset() {
 
 async function load(page = 1) {
     err.value = '';
+    loading.value = true;
     try {
-        const { data } = await axios.get('/api/admin/private-traffic-sops', { params: { page, per_page: perPage.value, q: query.value || undefined } });
+        const { data } = await axios.get('/api/admin/private-traffic-sops', {
+            params: { page, per_page: perPage.value, q: query.value || undefined },
+        });
         rows.value = data.data ?? [];
         total.value = data.total ?? 0;
         meta.value = { current_page: data.current_page || 1, last_page: data.last_page || 1 };
     } catch {
         err.value = '加载失败';
+    } finally {
+        loading.value = false;
     }
 }
+
 function onPerPageChange(v) {
     perPage.value = Number(v) || 20;
     load(1);
@@ -115,6 +140,10 @@ function closeFormModal() {
     editing.value = null;
 }
 
+function onFormVisible(v) {
+    if (!v) closeFormModal();
+}
+
 function openCreate() {
     err.value = '';
     mode.value = 'create';
@@ -144,51 +173,71 @@ function openEdit(r) {
 }
 
 async function removeRow(r) {
-    if (!confirm(`删除「${r.title}」？`)) return;
+    try {
+        await ElMessageBox.confirm(`删除「${r.title}」？`, '删除', { type: 'warning' });
+    } catch {
+        return;
+    }
     await axios.delete(`/api/admin/private-traffic-sops/${r.id}`);
     msg.value = '已删除';
     await load(meta.value?.current_page || 1);
 }
 
-onMounted(load);
+onMounted(() => load(1));
 </script>
 
 <template>
-    <AdminPageShell title="私域 SOP" lead="数据表 private_traffic_sops。">
+    <AdminPageShell title="私域 SOP" lead="private_traffic_sops 表；列显示可自选。">
         <template #actions>
-            <button type="button" class="btn btn--pri" @click="openCreate">新建</button>
+            <el-button type="primary" @click="openCreate">新建</el-button>
         </template>
         <template #toolbar>
-            <div class="flt">
-                <input v-model.trim="query" type="text" placeholder="搜索标题/别名/摘要" @keyup.enter="load(1)" />
-                <button type="button" class="btn" @click="load(1)">搜索</button>
-            </div>
+            <el-input v-model.trim="query" clearable class="oc-toolbar-search" placeholder="搜索标题/别名/摘要" @keyup.enter="load(1)" />
+            <el-button @click="load(1)">搜索</el-button>
+            <AdminColumnPicker
+                v-model="cols.selectedKeys"
+                :definitions="cols.definitions"
+                @select-all="cols.selectAll"
+                @reset-default="cols.resetDefault"
+            />
         </template>
-        <p v-if="msg" class="ok">{{ msg }}</p>
-        <p v-if="err && !mode" class="bad">{{ err }}</p>
+        <el-alert v-if="msg" type="success" :closable="false" show-icon class="oc-alert" :title="msg" />
+        <el-alert v-if="err && !mode" type="error" :closable="false" show-icon class="oc-alert" :title="err" />
         <AdminCard>
-            <table class="tbl">
-                <thead>
-                    <tr>
-                        <th>标题</th>
-                        <th>别名</th>
-                        <th>平台</th>
-                        <th />
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="r in rows" :key="r.id">
-                        <td>{{ r.title }}</td>
-                        <td class="mono">{{ r.slug }}</td>
-                        <td>{{ enumLabel('privateTrafficPlatform', r.platform) }}</td>
-                        <td class="act">
-                            <button type="button" class="lnk" @click="openEdit(r)">编辑</button>
-                            <button type="button" class="lnk lnk--d" @click="removeRow(r)">删除</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="rows.length === 0" class="empty">暂无数据</p>
+            <el-table v-loading="loading" :data="rows" stripe border style="width: 100%" empty-text="暂无数据">
+                <el-table-column v-if="cols.show('id')" prop="id" label="ID" width="72" />
+                <el-table-column v-if="cols.show('title')" prop="title" label="标题" min-width="160" show-overflow-tooltip />
+                <el-table-column v-if="cols.show('slug')" label="别名" min-width="120" show-overflow-tooltip>
+                    <template #default="{ row }"><span class="mono">{{ row.slug }}</span></template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('summary')" label="摘要" min-width="140" show-overflow-tooltip>
+                    <template #default="{ row }">{{ row.summary || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('platform')" label="平台" width="100">
+                    <template #default="{ row }">{{ enumLabel('privateTrafficPlatform', row.platform) }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('type')" label="SOP 类型" width="120">
+                    <template #default="{ row }">{{ enumLabel('privateTrafficCategory', row.type) }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('visibility')" label="可见" width="100">
+                    <template #default="{ row }">{{ enumLabel('resourceVisibility', row.visibility) }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('vip_gate_engagement')" label="VIP 评论门槛" width="120">
+                    <template #default="{ row }">{{ row.vip_gate_engagement ? '是' : '否' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('created_at')" label="创建" width="168">
+                    <template #default="{ row }">{{ row.created_at?.replace('T', ' ')?.slice(0, 19) || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('updated_at')" label="更新" width="168">
+                    <template #default="{ row }">{{ row.updated_at?.replace('T', ' ')?.slice(0, 19) || '—' }}</template>
+                </el-table-column>
+                <el-table-column label="操作" width="140" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+                        <el-button link type="danger" @click="removeRow(row)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -196,216 +245,86 @@ onMounted(load);
             :last-page="meta.last_page"
             :total="total"
             :per-page="perPage"
+            :loading="loading"
             @update:page="load"
             @update:per-page="onPerPageChange"
         />
-        <div v-if="mode" class="modal" @click.self="closeFormModal">
-            <div class="modal__box modal__box--lg" @click.stop>
-                <h2>{{ mode === 'create' ? '新建' : '编辑' }}</h2>
-                <p v-if="err" class="admin-modal-err">{{ err }}</p>
-                <label class="fld"><span>标题</span><input v-model="form.title" type="text" /></label>
-                <div v-if="mode === 'create'" class="fld fld--note">
-                    <span>URL 别名</span>
-                    <span class="fld-hint">保存后由系统根据标题自动生成。</span>
-                </div>
-                <label v-else class="fld">
-                    <span>URL 别名</span>
-                    <p class="fld-readonly mono">{{ form.slug }}</p>
-                </label>
-                <label class="fld"><span>摘要</span><input v-model="form.summary" type="text" /></label>
-                <label class="fld">
-                    <span>平台</span>
-                    <select v-model="form.platform">
-                        <option v-for="o in ptPlatformOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
-                    </select>
-                </label>
-                <label class="fld">
-                    <span>SOP 类型</span>
-                    <select v-model="form.type">
-                        <option v-for="o in ptCategoryOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
-                    </select>
-                </label>
-                <label class="fld">
-                    <span>可见性</span>
-                    <select v-model="form.visibility">
-                        <option v-for="o in ptVisibilityOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
-                    </select>
-                </label>
-                <label class="fld"><span>内容 Markdown</span><textarea v-model="form.content" rows="5" /></label>
-                <label class="fld"><span>联系方式（纯文本，前台展示）</span><textarea v-model="form.contact_note" rows="2" placeholder="微信 / 邮箱等" /></label>
-                <label class="chk"><input v-model="form.vip_gate_engagement" type="checkbox" /> 仅 VIP 可评论并查看联系方式</label>
-                <label class="fld"><span>检查清单（每行一条）</span><textarea v-model="form.checklist_lines" rows="3" placeholder="一行一项" /></label>
-                <label class="fld"><span>话术模板（每行一条）</span><textarea v-model="form.templates_lines" rows="3" /></label>
-                <label class="fld"><span>指标（每行一条）</span><textarea v-model="form.metrics_lines" rows="3" /></label>
-                <label class="fld"><span>工具（每行一条）</span><textarea v-model="form.tools_lines" rows="3" /></label>
-                <div class="modal__btns">
-                    <button type="button" class="btn" @click="closeFormModal">取消</button>
-                    <button type="button" class="btn btn--pri" @click="save">保存</button>
-                </div>
-            </div>
-        </div>
+
+        <el-dialog
+            :model-value="!!mode"
+            :title="mode === 'create' ? '新建' : '编辑'"
+            width="640px"
+            destroy-on-close
+            @update:model-value="onFormVisible"
+        >
+            <el-alert v-if="err && mode" type="error" :closable="false" show-icon class="oc-alert" :title="err" />
+            <el-form label-position="top">
+                <el-form-item label="标题">
+                    <el-input v-model="form.title" />
+                </el-form-item>
+                <el-form-item v-if="mode === 'create'" label="URL 别名">
+                    <el-text size="small" type="info">保存后由系统根据标题自动生成。</el-text>
+                </el-form-item>
+                <el-form-item v-else label="URL 别名">
+                    <el-input :model-value="form.slug" readonly class="mono" />
+                </el-form-item>
+                <el-form-item label="摘要">
+                    <el-input v-model="form.summary" />
+                </el-form-item>
+                <el-form-item label="平台">
+                    <el-select v-model="form.platform" style="width: 100%">
+                        <el-option v-for="o in ptPlatformOpts" :key="o.value" :label="o.label" :value="o.value" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="SOP 类型">
+                    <el-select v-model="form.type" style="width: 100%">
+                        <el-option v-for="o in ptCategoryOpts" :key="o.value" :label="o.label" :value="o.value" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="可见性">
+                    <el-select v-model="form.visibility" style="width: 100%">
+                        <el-option v-for="o in ptVisibilityOpts" :key="o.value" :label="o.label" :value="o.value" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="内容 Markdown">
+                    <el-input v-model="form.content" type="textarea" :rows="5" />
+                </el-form-item>
+                <el-form-item label="联系方式（纯文本）">
+                    <el-input v-model="form.contact_note" type="textarea" :rows="2" placeholder="微信 / 邮箱等" />
+                </el-form-item>
+                <el-form-item>
+                    <el-checkbox v-model="form.vip_gate_engagement">仅 VIP 可评论并查看联系方式</el-checkbox>
+                </el-form-item>
+                <el-form-item label="检查清单（每行一条）">
+                    <el-input v-model="form.checklist_lines" type="textarea" :rows="3" />
+                </el-form-item>
+                <el-form-item label="话术模板（每行一条）">
+                    <el-input v-model="form.templates_lines" type="textarea" :rows="3" />
+                </el-form-item>
+                <el-form-item label="指标（每行一条）">
+                    <el-input v-model="form.metrics_lines" type="textarea" :rows="3" />
+                </el-form-item>
+                <el-form-item label="工具（每行一条）">
+                    <el-input v-model="form.tools_lines" type="textarea" :rows="3" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="closeFormModal">取消</el-button>
+                <el-button type="primary" @click="save">保存</el-button>
+            </template>
+        </el-dialog>
     </AdminPageShell>
 </template>
 
 <style scoped>
-.pg__head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.35rem;
-}
-.pg__title {
-    margin: 0;
-    font-size: 1.5rem;
-}
-.pg__lead {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
-    color: #64748b;
-}
-.flt {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.8rem;
-}
-.flt input {
-    flex: 1;
+.oc-toolbar-search {
     max-width: 360px;
-    padding: 0.45rem 0.5rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
+    width: min(360px, 100%);
 }
-.ok {
-    color: #166534;
-}
-.bad {
-    color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    overflow: auto;
-}
-.tbl {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-}
-.tbl th,
-.tbl td {
-    padding: 0.5rem 0.65rem;
-    border-bottom: 1px solid #f1f5f9;
-    text-align: left;
-}
-.tbl th {
-    background: #f8fafc;
-    font-weight: 600;
+.oc-alert {
+    margin-bottom: 12px;
 }
 .mono {
     font-family: ui-monospace, monospace;
-    font-size: 0.78rem;
-}
-.act {
-    display: flex;
-    gap: 0.5rem;
-}
-.lnk {
-    border: none;
-    background: none;
-    color: #2563eb;
-    cursor: pointer;
-    padding: 0;
-}
-.lnk--d {
-    color: #b91c1c;
-}
-.empty {
-    padding: 1rem;
-    color: #94a3b8;
-    margin: 0;
-}
-.modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 80;
-    padding: 1rem;
-}
-.modal__box {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1.25rem;
-    width: 100%;
-    max-width: 640px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-.modal__box--lg {
-    max-width: 640px;
-}
-.fld {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    margin-bottom: 0.65rem;
-    font-size: 0.85rem;
-}
-.fld input,
-.fld select,
-.fld textarea {
-    padding: 0.45rem 0.5rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-}
-.chk {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    margin-bottom: 0.65rem;
-    font-size: 0.85rem;
-    line-height: 1.4;
-}
-.modal__btns {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-}
-.btn {
-    padding: 0.45rem 0.85rem;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-}
-.btn--pri {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
-}
-.fld--note {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-.fld-hint {
-    font-size: 0.78rem;
-    color: #64748b;
-    line-height: 1.45;
-}
-.fld-readonly {
-    margin: 0;
-    padding: 0.45rem 0.5rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    font-size: 0.82rem;
-    color: #0f172a;
 }
 </style>

@@ -81,6 +81,8 @@ class SideHustleCaseController extends Controller
             'status' => ['sometimes', Rule::in(['pending', 'approved', 'rejected'])],
             'audit_note' => ['nullable', 'string'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'resource_type' => ['sometimes', Rule::in(['article', 'video', 'disk', 'image'])],
+            'resource_url' => ['nullable', 'string', 'max:500'],
             'view_count' => ['sometimes', 'integer', 'min:0'],
             'like_count' => ['sometimes', 'integer', 'min:0'],
             'comment_count' => ['sometimes', 'integer', 'min:0'],

@@ -6,17 +6,42 @@ import { ElMessageBox } from 'element-plus';
 import AdminPagination from '../components/AdminPagination.vue';
 import AdminPageShell from '../components/AdminPageShell.vue';
 import AdminCard from '../components/AdminCard.vue';
+import AdminColumnPicker from '../components/AdminColumnPicker.vue';
+import { useAdminColumnVisibility } from '../composables/useAdminColumnVisibility.js';
 
 const route = useRoute();
 const router = useRouter();
 const q = ref('');
 const rows = ref([]);
 const meta = ref(null);
+const total = ref(0);
 const perPage = ref(20);
 const err = ref('');
 let searchT;
 
 const publishedFilter = ref('');
+
+const columnDefs = [
+    { key: 'id', label: 'ID', field: 'id' },
+    { key: 'title', label: '标题', field: 'title' },
+    { key: 'slug', label: 'URL 标识', field: 'slug' },
+    { key: 'summary', label: '摘要', field: 'summary', default: false },
+    { key: 'category', label: '分类', field: 'category_id' },
+    { key: 'author', label: '作者', field: 'author_id → users', default: false },
+    { key: 'cover_image', label: '封面图', field: 'cover_image', default: false },
+    { key: 'view_count', label: '浏览', field: 'view_count', default: false },
+    { key: 'like_count', label: '点赞', field: 'like_count', default: false },
+    { key: 'is_published', label: '已发布', field: 'is_published' },
+    { key: 'is_vip', label: '会员专享', field: 'is_vip' },
+    { key: 'published_at', label: '发布时间', field: 'published_at', default: false },
+    { key: 'source_url', label: '来源 URL', field: 'source_url', default: false },
+    { key: 'meta_keywords', label: '关键词', field: 'meta_keywords', default: false },
+    { key: 'meta_description', label: 'SEO 描述', field: 'meta_description', default: false },
+    { key: 'created_at', label: '创建时间', field: 'created_at', default: false },
+    { key: 'updated_at', label: '更新时间', field: 'updated_at', default: false },
+];
+
+const cols = useAdminColumnVisibility('admin:articles:list', columnDefs);
 
 function syncFilterFromRoute() {
     const p = route.query.published;
@@ -32,6 +57,7 @@ async function load(page = 1) {
         }
         const { data } = await axios.get('/api/admin/articles', { params });
         rows.value = data.data ?? [];
+        total.value = data.total ?? 0;
         meta.value = { current_page: data.current_page, last_page: data.last_page };
     } catch {
         err.value = '加载失败';
@@ -58,7 +84,7 @@ watch(
     () => {
         syncFilterFromRoute();
         load(1);
-    }
+    },
 );
 
 function onSearch() {
@@ -91,7 +117,7 @@ function onPerPageChange(next) {
 </script>
 
 <template>
-    <AdminPageShell title="文章管理" lead="支持草稿/已发布筛选，支持搜索与分页。">
+    <AdminPageShell title="文章管理" lead="草稿/已发布筛选、搜索、分页；列显示对应 articles 表字段。">
         <template #actions>
             <el-button type="primary" @click="router.push({ name: 'article-create' })">新建文章</el-button>
         </template>
@@ -108,28 +134,62 @@ function onPerPageChange(next) {
                 style="width: min(360px, 100%)"
                 @input="onSearch"
             />
+            <AdminColumnPicker
+                v-model="cols.selectedKeys"
+                :definitions="cols.definitions"
+                @select-all="cols.selectAll"
+                @reset-default="cols.resetDefault"
+            />
         </template>
         <el-alert v-if="err" type="error" :closable="false" show-icon class="oc-a-alert" :title="err" />
         <AdminCard>
             <el-table :data="rows" stripe border style="width: 100%" empty-text="暂无数据">
-                <el-table-column prop="id" label="ID" width="72" />
-                <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
-                <el-table-column label="分类" width="120" show-overflow-tooltip>
+                <el-table-column v-if="cols.show('id')" prop="id" label="ID" width="72" />
+                <el-table-column v-if="cols.show('title')" prop="title" label="标题" min-width="200" show-overflow-tooltip />
+                <el-table-column v-if="cols.show('slug')" prop="slug" label="slug" min-width="140" show-overflow-tooltip />
+                <el-table-column v-if="cols.show('summary')" label="摘要" min-width="180" show-overflow-tooltip>
+                    <template #default="{ row }">{{ row.summary || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('category')" label="分类" width="120" show-overflow-tooltip>
+                    <template #default="{ row }">{{ row.category?.name || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('author')" label="作者" min-width="140" show-overflow-tooltip>
                     <template #default="{ row }">
-                        {{ row.category?.name || '—' }}
+                        {{ row.author ? `${row.author.name} (${row.author.email})` : '—' }}
                     </template>
                 </el-table-column>
-                <el-table-column label="发布" width="88">
+                <el-table-column v-if="cols.show('cover_image')" label="封面图" min-width="120" show-overflow-tooltip>
+                    <template #default="{ row }">{{ row.cover_image || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('view_count')" prop="view_count" label="浏览" width="80" />
+                <el-table-column v-if="cols.show('like_count')" prop="like_count" label="点赞" width="80" />
+                <el-table-column v-if="cols.show('is_published')" label="已发布" width="88">
                     <template #default="{ row }">
                         <el-tag :type="row.is_published ? 'success' : 'info'" size="small">
                             {{ row.is_published ? '是' : '否' }}
                         </el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="会员专享" width="100">
-                    <template #default="{ row }">
-                        {{ row.is_vip ? '是' : '否' }}
-                    </template>
+                <el-table-column v-if="cols.show('is_vip')" label="会员专享" width="100">
+                    <template #default="{ row }">{{ row.is_vip ? '是' : '否' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('published_at')" label="发布时间" width="168">
+                    <template #default="{ row }">{{ row.published_at?.replace('T', ' ')?.slice(0, 19) || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('source_url')" label="来源" min-width="140" show-overflow-tooltip>
+                    <template #default="{ row }">{{ row.source_url || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('meta_keywords')" label="关键词" min-width="120" show-overflow-tooltip>
+                    <template #default="{ row }">{{ row.meta_keywords || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('meta_description')" label="SEO 描述" min-width="160" show-overflow-tooltip>
+                    <template #default="{ row }">{{ row.meta_description || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('created_at')" label="创建时间" width="168">
+                    <template #default="{ row }">{{ row.created_at?.replace('T', ' ')?.slice(0, 19) || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('updated_at')" label="更新时间" width="168">
+                    <template #default="{ row }">{{ row.updated_at?.replace('T', ' ')?.slice(0, 19) || '—' }}</template>
                 </el-table-column>
                 <el-table-column label="操作" width="200" fixed="right">
                     <template #default="{ row }">
@@ -146,6 +206,7 @@ function onPerPageChange(next) {
             v-if="meta"
             :current-page="meta.current_page"
             :last-page="meta.last_page"
+            :total="total"
             :per-page="perPage"
             @update:page="load"
             @update:per-page="onPerPageChange"

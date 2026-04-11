@@ -9,6 +9,7 @@ import AdminPagination from '../components/AdminPagination.vue';
 const rows = ref([]);
 const meta = ref(null);
 const err = ref('');
+const loading = ref(false);
 const filterUserId = ref('');
 const filterQuery = ref('');
 const filterSuggestions = ref([]);
@@ -27,13 +28,13 @@ async function searchUsers(q) {
 function scheduleFilterSearch() {
     clearTimeout(filterTimer);
     filterTimer = setTimeout(async () => {
-        const q = filterQuery.value.trim();
-        if (q.length < 1) {
+        const qv = filterQuery.value.trim();
+        if (qv.length < 1) {
             filterSuggestions.value = [];
             return;
         }
         try {
-            filterSuggestions.value = await searchUsers(q);
+            filterSuggestions.value = await searchUsers(qv);
         } catch {
             filterSuggestions.value = [];
         }
@@ -56,6 +57,7 @@ function clearFilterUser() {
 
 async function load(page = 1) {
     err.value = '';
+    loading.value = true;
     try {
         const { data } = await axios.get('/api/admin/svip-custom-subscriptions', {
             params: {
@@ -71,6 +73,8 @@ async function load(page = 1) {
         meta.value = { current_page: data.current_page, last_page: data.last_page };
     } catch {
         err.value = '加载失败';
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -80,19 +84,23 @@ function onPerPageChange(next) {
     perPage.value = Number(next) || 20;
     load(1);
 }
+
+function onFilter() {
+    load(1);
+}
 </script>
 
 <template>
     <AdminPageShell title="SVIP 定制订阅" lead="对齐功能清单 24：只读列表，数据表 svip_custom_subscriptions。">
         <template #toolbar>
             <div class="user-sel">
-                <input
+                <el-input
                     v-model="filterQuery"
-                    type="search"
-                    class="search user-sel__input"
+                    clearable
                     placeholder="按用户搜索（昵称或邮箱）"
-                    autocomplete="off"
+                    class="user-sel__input"
                     @input="scheduleFilterSearch"
+                    @clear="clearFilterUser"
                 />
                 <ul v-if="filterSuggestions.length" class="user-sel__dd">
                     <li v-for="u in filterSuggestions" :key="'f-' + u.id" @click="pickFilterUser(u)">
@@ -100,46 +108,40 @@ function onPerPageChange(next) {
                     </li>
                 </ul>
             </div>
-            <button v-if="filterUserId" type="button" class="btn btn-clear" @click="clearFilterUser">清除用户</button>
-            <select v-model="status" class="search" @change="load(1)">
-                <option v-for="o in statusOptions" :key="'st-' + (o.value || 'all')" :value="o.value">
-                    {{ o.label }}
-                </option>
-            </select>
-            <button type="button" class="btn" @click="load(1)">筛选</button>
+            <el-button v-if="filterUserId" @click="clearFilterUser">清除用户</el-button>
+            <el-select v-model="status" placeholder="状态" style="width: 160px" @change="load(1)">
+                <el-option v-for="o in statusOptions" :key="'st-' + (o.value || 'all')" :label="o.label" :value="o.value" />
+            </el-select>
+            <el-button type="primary" @click="onFilter">筛选</el-button>
         </template>
-        <p v-if="err" class="err">{{ err }}</p>
+        <el-alert v-if="err" type="error" :closable="false" show-icon class="oc-c-alert" :title="err" />
         <AdminCard>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>用户</th>
-                        <th>方案名</th>
-                        <th>金额</th>
-                        <th>服务天数</th>
-                        <th>状态</th>
-                        <th>到期</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="r in rows" :key="r.id">
-                        <td>{{ r.id }}</td>
-                        <td>
-                            <template v-if="r.user">
-                                {{ r.user.name }}（{{ r.user.email }}）· {{ enumLabel('userRole', r.user.role) }}
-                            </template>
-                            <template v-else>—</template>
-                        </td>
-                        <td>{{ r.plan_name }}</td>
-                        <td>{{ Number(r.amount) > 0 ? r.amount : '—' }}</td>
-                        <td>{{ Number(r.duration_days) > 0 ? r.duration_days : '—' }}</td>
-                        <td>{{ enumLabel('svipCustomSubscriptionStatus', r.status) }}</td>
-                        <td class="muted">{{ r.expires_at?.slice(0, 10) || '—' }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="rows.length === 0" class="empty">暂无记录（表可为空）</p>
+            <el-table v-loading="loading" :data="rows" stripe border style="width: 100%" empty-text="暂无记录（表可为空）">
+                <el-table-column prop="id" label="ID" width="72" />
+                <el-table-column label="用户" min-width="220" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <template v-if="row.user">
+                            {{ row.user.name }}（{{ row.user.email }}）· {{ enumLabel('userRole', row.user.role) }}
+                        </template>
+                        <template v-else>—</template>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="plan_name" label="方案名" min-width="120" show-overflow-tooltip />
+                <el-table-column label="金额" width="100">
+                    <template #default="{ row }">{{ Number(row.amount) > 0 ? row.amount : '—' }}</template>
+                </el-table-column>
+                <el-table-column label="服务天数" width="100">
+                    <template #default="{ row }">{{ Number(row.duration_days) > 0 ? row.duration_days : '—' }}</template>
+                </el-table-column>
+                <el-table-column label="状态" width="120">
+                    <template #default="{ row }">{{ enumLabel('svipCustomSubscriptionStatus', row.status) }}</template>
+                </el-table-column>
+                <el-table-column label="到期" width="120">
+                    <template #default="{ row }">
+                        <span class="muted">{{ row.expires_at?.slice(0, 10) || '—' }}</span>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -147,6 +149,7 @@ function onPerPageChange(next) {
             :last-page="meta.last_page"
             :total="total"
             :per-page="perPage"
+            :loading="loading"
             @update:page="load"
             @update:per-page="onPerPageChange"
         />
@@ -154,12 +157,6 @@ function onPerPageChange(next) {
 </template>
 
 <style scoped>
-.search {
-    padding: 0.45rem 0.55rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    min-width: 140px;
-}
 .user-sel {
     position: relative;
     min-width: 200px;
@@ -168,83 +165,39 @@ function onPerPageChange(next) {
 }
 .user-sel__input {
     width: 100%;
-    box-sizing: border-box;
 }
 .user-sel__dd {
     list-style: none;
-    margin: 0.2rem 0 0;
-    padding: 0.2rem 0;
+    margin: 4px 0 0;
+    padding: 4px 0;
     position: absolute;
     left: 0;
     right: 0;
-    z-index: 5;
+    z-index: 10;
     max-height: 200px;
     overflow: auto;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+    background: var(--el-bg-color-overlay);
+    border: 1px solid var(--el-border-color-light);
+    border-radius: var(--el-border-radius-base);
+    box-shadow: var(--el-box-shadow-light);
 }
 .user-sel__dd li {
-    padding: 0.35rem 0.55rem;
+    padding: 6px 10px;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 12px;
 }
 .user-sel__dd li:hover {
-    background: #f1f5f9;
+    background: var(--el-fill-color-light);
 }
 .user-sel__dd .uid {
-    color: #94a3b8;
-    font-size: 0.72rem;
+    color: var(--el-text-color-secondary);
+    font-size: 11px;
 }
-.btn-clear {
-    font-size: 0.78rem;
-    color: #475569;
-}
-.btn {
-    padding: 0.45rem 0.75rem;
-    border-radius: 6px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-}
-.err {
-    color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    overflow: auto;
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.82rem;
-}
-.table th,
-.table td {
-    padding: 0.5rem 0.65rem;
-    text-align: left;
-    border-bottom: 1px solid #f1f5f9;
-}
-.table th {
-    background: #f8fafc;
-    font-weight: 600;
+.oc-c-alert {
+    margin-bottom: 12px;
 }
 .muted {
-    color: #64748b;
+    color: var(--el-text-color-secondary);
     white-space: nowrap;
-}
-.empty {
-    padding: 1rem;
-    color: #94a3b8;
-    margin: 0;
-}
-.pager {
-    margin-top: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
 }
 </style>

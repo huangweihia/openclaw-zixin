@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
+import { ElMessageBox } from 'element-plus';
 import AdminPageShell from '../components/AdminPageShell.vue';
 import AdminCard from '../components/AdminCard.vue';
 
@@ -81,6 +82,12 @@ function close() {
     editing.value = null;
 }
 
+function onFormVisible(v) {
+    if (!v) {
+        close();
+    }
+}
+
 function applyPreset(p) {
     form.value.gradient_from = p.from;
     form.value.gradient_to = p.to;
@@ -121,7 +128,15 @@ async function save() {
 }
 
 async function remove(row) {
-    if (!confirm('确定删除该条评价？')) return;
+    try {
+        await ElMessageBox.confirm('确定删除该条评价？', '删除评价', {
+            type: 'warning',
+            confirmButtonText: '删除',
+            cancelButtonText: '取消',
+        });
+    } catch {
+        return;
+    }
     err.value = '';
     try {
         await axios.delete(`/api/admin/site-testimonials/${row.id}`);
@@ -139,260 +154,106 @@ async function remove(row) {
         lead="site_testimonials：前台首页读取已发布记录（最多 6 条）；无数据时首页会自动写入演示数据。"
     >
         <template #toolbar>
-            <div class="toolbar">
-                <button type="button" class="btn primary" @click="openCreate">新建评价</button>
-                <button type="button" class="btn" @click="load">刷新</button>
-            </div>
+            <el-button type="primary" @click="openCreate">新建评价</el-button>
+            <el-button @click="load">刷新</el-button>
         </template>
-        <p v-if="msg" class="ok">{{ msg }}</p>
-        <p v-if="err" class="err">{{ err }}</p>
+        <el-alert v-if="msg" type="success" :closable="false" show-icon class="oc-c-alert" :title="msg" />
+        <el-alert v-if="err && !mode" type="error" :closable="false" show-icon class="oc-c-alert" :title="err" />
         <AdminCard>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>排序</th>
-                        <th>昵称</th>
-                        <th>副标题</th>
-                        <th>正文</th>
-                        <th>星</th>
-                        <th>发布</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="r in rows" :key="r.id">
-                        <td>{{ r.sort_order }}</td>
-                        <td>{{ r.display_name }}</td>
-                        <td class="muted">{{ r.caption || '—' }}</td>
-                        <td class="clip">{{ r.body }}</td>
-                        <td>{{ r.rating }}</td>
-                        <td>{{ r.is_published ? '是' : '否' }}</td>
-                        <td class="actions">
-                            <button type="button" class="link" @click="openEdit(r)">编辑</button>
-                            <button type="button" class="link danger" @click="remove(r)">删除</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="rows.length === 0" class="empty">暂无记录</p>
+            <el-table :data="rows" stripe border style="width: 100%" empty-text="暂无记录">
+                <el-table-column prop="sort_order" label="排序" width="72" />
+                <el-table-column prop="display_name" label="昵称" min-width="100" show-overflow-tooltip />
+                <el-table-column label="副标题" min-width="120" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <span class="muted">{{ row.caption || '—' }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="正文" min-width="200" show-overflow-tooltip>
+                    <template #default="{ row }">{{ row.body }}</template>
+                </el-table-column>
+                <el-table-column prop="rating" label="星" width="56" />
+                <el-table-column label="发布" width="72">
+                    <template #default="{ row }">
+                        <el-tag :type="row.is_published ? 'success' : 'info'" size="small">
+                            {{ row.is_published ? '是' : '否' }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="140" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+                        <el-button link type="danger" @click="remove(row)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
 
-        <div v-if="mode" class="modal">
-            <div class="modal__box">
-                <h2 class="modal__title">{{ mode === 'create' ? '新建' : '编辑' }}</h2>
-                <label class="field">
-                    <span>显示昵称</span>
-                    <input v-model="form.display_name" type="text" maxlength="120" />
-                </label>
-                <label class="field">
-                    <span>副标题（如 VIP 会员 · 3 个月）</span>
-                    <input v-model="form.caption" type="text" maxlength="255" />
-                </label>
-                <label class="field">
-                    <span>评价正文</span>
-                    <textarea v-model="form.body" rows="4" maxlength="5000"></textarea>
-                </label>
-                <label class="field">
-                    <span>星级 1–5</span>
-                    <input v-model.number="form.rating" type="number" min="1" max="5" />
-                </label>
-                <label class="field">
-                    <span>头像一字</span>
-                    <input v-model="form.avatar_initial" type="text" maxlength="8" />
-                </label>
-                <div class="field">
-                    <span>头像渐变（Tailwind 类名）</span>
+        <el-dialog
+            :model-value="!!mode"
+            :title="mode === 'create' ? '新建' : '编辑'"
+            width="520px"
+            destroy-on-close
+            @update:model-value="onFormVisible"
+        >
+            <el-alert v-if="err && mode" type="error" :closable="false" show-icon class="oc-c-alert" :title="err" />
+            <el-form label-position="top" size="default">
+                <el-form-item label="显示昵称">
+                    <el-input v-model="form.display_name" maxlength="120" show-word-limit />
+                </el-form-item>
+                <el-form-item label="副标题（如 VIP 会员 · 3 个月）">
+                    <el-input v-model="form.caption" maxlength="255" show-word-limit />
+                </el-form-item>
+                <el-form-item label="评价正文">
+                    <el-input v-model="form.body" type="textarea" :rows="4" maxlength="5000" show-word-limit />
+                </el-form-item>
+                <el-form-item label="星级 1–5">
+                    <el-input-number v-model="form.rating" :min="1" :max="5" />
+                </el-form-item>
+                <el-form-item label="头像一字">
+                    <el-input v-model="form.avatar_initial" maxlength="8" />
+                </el-form-item>
+                <el-form-item label="头像渐变（Tailwind 类名）">
                     <div class="preset-row">
-                        <button
-                            v-for="p in gradientPresets"
-                            :key="p.label"
-                            type="button"
-                            class="preset"
-                            @click="applyPreset(p)"
-                        >
+                        <el-button v-for="p in gradientPresets" :key="p.label" size="small" @click="applyPreset(p)">
                             {{ p.label }}
-                        </button>
+                        </el-button>
                     </div>
                     <div class="row2">
-                        <input v-model="form.gradient_from" type="text" placeholder="from-blue-400" />
-                        <input v-model="form.gradient_to" type="text" placeholder="to-blue-600" />
+                        <el-input v-model="form.gradient_from" placeholder="from-blue-400" />
+                        <el-input v-model="form.gradient_to" placeholder="to-blue-600" />
                     </div>
-                </div>
-                <label class="field">
-                    <span>排序（大靠前）</span>
-                    <input v-model.number="form.sort_order" type="number" min="0" />
-                </label>
-                <label class="check">
-                    <input v-model="form.is_published" type="checkbox" />
-                    前台展示
-                </label>
-                <div class="modal__actions">
-                    <button type="button" class="btn" @click="close">取消</button>
-                    <button type="button" class="btn primary" @click="save">保存</button>
-                </div>
-            </div>
-        </div>
+                </el-form-item>
+                <el-form-item label="排序（大靠前）">
+                    <el-input-number v-model="form.sort_order" :min="0" />
+                </el-form-item>
+                <el-form-item>
+                    <el-checkbox v-model="form.is_published">前台展示</el-checkbox>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="close">取消</el-button>
+                <el-button type="primary" @click="save">保存</el-button>
+            </template>
+        </el-dialog>
     </AdminPageShell>
 </template>
 
 <style scoped>
-.page-title {
-    margin: 0 0 0.35rem;
-    font-size: 1.5rem;
-}
-.lead {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
-    color: #64748b;
-    line-height: 1.5;
-}
-.lead code {
-    font-size: 0.8em;
-    background: #e2e8f0;
-    padding: 0.1rem 0.35rem;
-    border-radius: 4px;
-}
-.ok {
-    color: #166534;
-}
-.err {
-    color: #b91c1c;
-}
-.toolbar {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-}
-.btn {
-    padding: 0.45rem 0.75rem;
-    border-radius: 6px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-    font-size: 0.85rem;
-}
-.btn.primary {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
-}
-.card {
-    background: #fff;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    overflow: auto;
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.82rem;
-}
-.table th,
-.table td {
-    padding: 0.5rem 0.65rem;
-    text-align: left;
-    border-bottom: 1px solid #f1f5f9;
-    vertical-align: top;
-}
-.table th {
-    background: #f8fafc;
-    font-weight: 600;
+.oc-c-alert {
+    margin-bottom: 12px;
 }
 .muted {
-    color: #64748b;
-}
-.clip {
-    max-width: 280px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.actions {
-    white-space: nowrap;
-}
-.link {
-    background: none;
-    border: none;
-    color: #2563eb;
-    cursor: pointer;
-    font-size: 0.82rem;
-    margin-right: 0.5rem;
-}
-.link.danger {
-    color: #b91c1c;
-}
-.empty {
-    padding: 1rem;
-    color: #94a3b8;
-    margin: 0;
-}
-.modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 80;
-    padding: 1rem;
-}
-.modal__box {
-    background: #fff;
-    border-radius: 12px;
-    max-width: 520px;
-    width: 100%;
-    max-height: 90vh;
-    overflow: auto;
-    padding: 1.25rem;
-    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
-}
-.modal__title {
-    margin: 0 0 1rem;
-    font-size: 1.1rem;
-}
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.85rem;
-}
-.field input,
-.field textarea {
-    padding: 0.45rem 0.55rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
+    color: var(--el-text-color-secondary);
 }
 .preset-row {
     display: flex;
-    gap: 0.35rem;
+    gap: 6px;
     flex-wrap: wrap;
-    margin-bottom: 0.35rem;
-}
-.preset {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 6px;
-    border: 1px solid #cbd5e1;
-    background: #f8fafc;
-    cursor: pointer;
+    margin-bottom: 8px;
 }
 .row2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-}
-.check {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    font-size: 0.85rem;
-}
-.modal__actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    gap: 8px;
 }
 </style>

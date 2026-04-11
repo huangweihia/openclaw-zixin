@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -102,6 +104,32 @@ class User extends Authenticatable
     public function adminUser(): HasOne
     {
         return $this->hasOne(AdminUser::class, 'user_id');
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        if ($panel->getId() !== 'admin') {
+            return false;
+        }
+
+        if ($this->role !== 'admin' || $this->is_banned) {
+            return false;
+        }
+
+        $profile = $this->relationLoaded('adminUser') ? $this->adminUser : $this->adminUser()->first();
+
+        if (! $profile) {
+            AdminUser::query()->create([
+                'user_id' => $this->id,
+                'display_name' => $this->name ?: null,
+                'is_active' => true,
+                'is_super' => false,
+            ]);
+            $this->unsetRelation('adminUser');
+            $profile = $this->adminUser()->first();
+        }
+
+        return $profile !== null && $profile->is_active;
     }
 
     public function adminPermissions(): array

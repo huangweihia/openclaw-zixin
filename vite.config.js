@@ -16,7 +16,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'resources/js/admin/main.js',
+                // 管理后台已迁 Filament（Livewire）；旧 Vue 入口保留在 backup/pre-filament-admin-*
                 'resources/js/frontend/main.js',
                 'resources/js/blade-skin-mount.js',
             ],

@@ -1,10 +1,13 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
+import { ElMessageBox } from 'element-plus';
 import { enumLabel, enumOptions } from '../constants/labels';
 import AdminPagination from '../components/AdminPagination.vue';
 import AdminPageShell from '../components/AdminPageShell.vue';
 import AdminCard from '../components/AdminCard.vue';
+import AdminColumnPicker from '../components/AdminColumnPicker.vue';
+import { useAdminColumnVisibility } from '../composables/useAdminColumnVisibility.js';
 
 const aiCategoryOpts = enumOptions('aiToolCategory');
 const aiPricingOpts = enumOptions('aiToolMonetization');
@@ -17,6 +20,7 @@ const total = ref(0);
 const query = ref('');
 const err = ref('');
 const msg = ref('');
+const loading = ref(false);
 const mode = ref('');
 const editing = ref(null);
 const form = ref({
@@ -34,6 +38,21 @@ const form = ref({
     delivery_standards_lines: '',
     visibility: 'public',
 });
+
+const columnDefs = [
+    { key: 'id', label: 'ID', field: 'id' },
+    { key: 'tool_name', label: '工具名', field: 'tool_name' },
+    { key: 'slug', label: 'slug', field: 'slug' },
+    { key: 'tool_url', label: '工具链接', field: 'tool_url', default: false },
+    { key: 'category', label: '分类', field: 'category' },
+    { key: 'pricing_model', label: '定价', field: 'pricing_model' },
+    { key: 'available_in_china', label: '国内可用', field: 'available_in_china', default: false },
+    { key: 'visibility', label: '可见性', field: 'visibility' },
+    { key: 'created_at', label: '创建时间', field: 'created_at', default: false },
+    { key: 'updated_at', label: '更新时间', field: 'updated_at', default: false },
+];
+
+const cols = useAdminColumnVisibility('admin:ai-tool-monetization:list', columnDefs);
 
 function linesToArr(s) {
     return (s || '')
@@ -66,13 +85,18 @@ function reset() {
 
 async function load(page = 1) {
     err.value = '';
+    loading.value = true;
     try {
-        const { data } = await axios.get('/api/admin/ai-tool-monetization', { params: { page, per_page: perPage.value, q: query.value || undefined } });
+        const { data } = await axios.get('/api/admin/ai-tool-monetization', {
+            params: { page, per_page: perPage.value, q: query.value || undefined },
+        });
         rows.value = data.data ?? [];
         total.value = data.total ?? 0;
         meta.value = { current_page: data.current_page || 1, last_page: data.last_page || 1 };
     } catch {
         err.value = '加载失败';
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -116,6 +140,10 @@ function closeFormModal() {
     editing.value = null;
 }
 
+function onFormVisible(v) {
+    if (!v) closeFormModal();
+}
+
 function openCreate() {
     err.value = '';
     mode.value = 'create';
@@ -145,51 +173,71 @@ function openEdit(r) {
 }
 
 async function removeRow(r) {
-    if (!confirm(`删除「${r.tool_name}」？`)) return;
+    try {
+        await ElMessageBox.confirm(`删除「${r.tool_name}」？`, '删除', { type: 'warning' });
+    } catch {
+        return;
+    }
     await axios.delete(`/api/admin/ai-tool-monetization/${r.id}`);
     msg.value = '已删除';
     await load(meta.value?.current_page || 1);
 }
 
-onMounted(load);
+onMounted(() => load(1));
 </script>
 
 <template>
-    <AdminPageShell title="AI 工具变现" lead="数据表 ai_tool_monetization。">
+    <AdminPageShell title="AI 工具变现" lead="ai_tool_monetization 表；列显示可自选。">
         <template #actions>
-            <button type="button" class="btn btn--pri" @click="openCreate">新建</button>
+            <el-button type="primary" @click="openCreate">新建</el-button>
         </template>
         <template #toolbar>
-            <div class="flt">
-                <input v-model.trim="query" type="text" placeholder="搜索工具名/别名/链接" @keyup.enter="load(1)" />
-                <button type="button" class="btn" @click="load(1)">搜索</button>
-            </div>
+            <el-input v-model.trim="query" clearable class="oc-toolbar-search" placeholder="搜索工具名/别名/链接" @keyup.enter="load(1)" />
+            <el-button @click="load(1)">搜索</el-button>
+            <AdminColumnPicker
+                v-model="cols.selectedKeys"
+                :definitions="cols.definitions"
+                @select-all="cols.selectAll"
+                @reset-default="cols.resetDefault"
+            />
         </template>
-        <p v-if="msg" class="ok">{{ msg }}</p>
-        <p v-if="err && !mode" class="bad">{{ err }}</p>
+        <el-alert v-if="msg" type="success" :closable="false" show-icon class="oc-alert" :title="msg" />
+        <el-alert v-if="err && !mode" type="error" :closable="false" show-icon class="oc-alert" :title="err" />
         <AdminCard>
-            <table class="tbl">
-                <thead>
-                    <tr>
-                        <th>工具</th>
-                        <th>别名</th>
-                        <th>分类</th>
-                        <th />
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="r in rows" :key="r.id">
-                        <td>{{ r.tool_name }}</td>
-                        <td class="mono">{{ r.slug }}</td>
-                        <td>{{ enumLabel('aiToolCategory', r.category) }}</td>
-                        <td class="act">
-                            <button type="button" class="lnk" @click="openEdit(r)">编辑</button>
-                            <button type="button" class="lnk lnk--d" @click="removeRow(r)">删除</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="rows.length === 0" class="empty">暂无数据</p>
+            <el-table v-loading="loading" :data="rows" stripe border style="width: 100%" empty-text="暂无数据">
+                <el-table-column v-if="cols.show('id')" prop="id" label="ID" width="72" />
+                <el-table-column v-if="cols.show('tool_name')" prop="tool_name" label="工具" min-width="140" show-overflow-tooltip />
+                <el-table-column v-if="cols.show('slug')" label="别名" min-width="120" show-overflow-tooltip>
+                    <template #default="{ row }"><span class="mono">{{ row.slug }}</span></template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('tool_url')" label="链接" min-width="140" show-overflow-tooltip>
+                    <template #default="{ row }">{{ row.tool_url || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('category')" label="分类" width="100">
+                    <template #default="{ row }">{{ enumLabel('aiToolCategory', row.category) }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('pricing_model')" label="定价" width="120">
+                    <template #default="{ row }">{{ enumLabel('aiToolMonetization', row.pricing_model) }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('available_in_china')" label="国内" width="72">
+                    <template #default="{ row }">{{ row.available_in_china ? '是' : '否' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('visibility')" label="可见" width="100">
+                    <template #default="{ row }">{{ enumLabel('resourceVisibility', row.visibility) }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('created_at')" label="创建" width="168">
+                    <template #default="{ row }">{{ row.created_at?.replace('T', ' ')?.slice(0, 19) || '—' }}</template>
+                </el-table-column>
+                <el-table-column v-if="cols.show('updated_at')" label="更新" width="168">
+                    <template #default="{ row }">{{ row.updated_at?.replace('T', ' ')?.slice(0, 19) || '—' }}</template>
+                </el-table-column>
+                <el-table-column label="操作" width="140" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+                        <el-button link type="danger" @click="removeRow(row)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -197,215 +245,86 @@ onMounted(load);
             :last-page="meta.last_page"
             :total="total"
             :per-page="perPage"
+            :loading="loading"
             @update:page="load"
             @update:per-page="onPerPageChange"
         />
-        <div v-if="mode" class="modal" @click.self="closeFormModal">
-            <div class="modal__box modal__box--lg" @click.stop>
-                <h2>{{ mode === 'create' ? '新建' : '编辑' }}</h2>
-                <p v-if="err" class="admin-modal-err">{{ err }}</p>
-                <label class="fld"><span>工具名称</span><input v-model="form.tool_name" type="text" /></label>
-                <div v-if="mode === 'create'" class="fld fld--note">
-                    <span>URL 别名</span>
-                    <span class="fld-hint">保存后由系统根据工具名称自动生成。</span>
-                </div>
-                <label v-else class="fld">
-                    <span>URL 别名</span>
-                    <p class="fld-readonly mono">{{ form.slug }}</p>
-                </label>
-                <label class="fld"><span>工具链接</span><input v-model="form.tool_url" type="text" /></label>
-                <label class="fld">
-                    <span>分类</span>
-                    <select v-model="form.category">
-                        <option v-for="o in aiCategoryOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
-                    </select>
-                </label>
-                <label class="fld">
-                    <span>定价模式</span>
-                    <select v-model="form.pricing_model">
-                        <option v-for="o in aiPricingOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
-                    </select>
-                </label>
-                <label class="fld">
-                    <span>可见性</span>
-                    <select v-model="form.visibility">
-                        <option v-for="o in aiVisibilityOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
-                    </select>
-                </label>
-                <label class="chk"><input v-model="form.available_in_china" type="checkbox" /> 国内可用</label>
-                <label class="fld"><span>变现指南 HTML</span><textarea v-model="form.content" rows="5" /></label>
-                <label class="fld"><span>变现场景（每行一条，可选）</span><textarea v-model="form.monetization_scenes_lines" rows="3" /></label>
-                <label class="fld"><span>提示词模板（每行一条，可选）</span><textarea v-model="form.prompt_templates_lines" rows="3" /></label>
-                <label class="fld"><span>定价参考（每行一条，可选）</span><textarea v-model="form.pricing_reference_lines" rows="3" /></label>
-                <label class="fld"><span>渠道（每行一条，可选）</span><textarea v-model="form.channels_lines" rows="3" /></label>
-                <label class="fld"><span>交付标准（每行一条，可选）</span><textarea v-model="form.delivery_standards_lines" rows="3" /></label>
-                <div class="modal__btns">
-                    <button type="button" class="btn" @click="closeFormModal">取消</button>
-                    <button type="button" class="btn btn--pri" @click="save">保存</button>
-                </div>
-            </div>
-        </div>
+
+        <el-dialog
+            :model-value="!!mode"
+            :title="mode === 'create' ? '新建' : '编辑'"
+            width="640px"
+            destroy-on-close
+            @update:model-value="onFormVisible"
+        >
+            <el-alert v-if="err && mode" type="error" :closable="false" show-icon class="oc-alert" :title="err" />
+            <el-form label-position="top">
+                <el-form-item label="工具名称">
+                    <el-input v-model="form.tool_name" />
+                </el-form-item>
+                <el-form-item v-if="mode === 'create'" label="URL 别名">
+                    <el-text size="small" type="info">保存后由系统根据工具名称自动生成。</el-text>
+                </el-form-item>
+                <el-form-item v-else label="URL 别名">
+                    <el-input :model-value="form.slug" readonly class="mono" />
+                </el-form-item>
+                <el-form-item label="工具链接">
+                    <el-input v-model="form.tool_url" />
+                </el-form-item>
+                <el-form-item label="分类">
+                    <el-select v-model="form.category" style="width: 100%">
+                        <el-option v-for="o in aiCategoryOpts" :key="o.value" :label="o.label" :value="o.value" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="定价模式">
+                    <el-select v-model="form.pricing_model" style="width: 100%">
+                        <el-option v-for="o in aiPricingOpts" :key="o.value" :label="o.label" :value="o.value" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="可见性">
+                    <el-select v-model="form.visibility" style="width: 100%">
+                        <el-option v-for="o in aiVisibilityOpts" :key="o.value" :label="o.label" :value="o.value" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
+                    <el-checkbox v-model="form.available_in_china">国内可用</el-checkbox>
+                </el-form-item>
+                <el-form-item label="变现指南 HTML">
+                    <el-input v-model="form.content" type="textarea" :rows="5" />
+                </el-form-item>
+                <el-form-item label="变现场景（每行一条）">
+                    <el-input v-model="form.monetization_scenes_lines" type="textarea" :rows="3" />
+                </el-form-item>
+                <el-form-item label="提示词模板（每行一条）">
+                    <el-input v-model="form.prompt_templates_lines" type="textarea" :rows="3" />
+                </el-form-item>
+                <el-form-item label="定价参考（每行一条）">
+                    <el-input v-model="form.pricing_reference_lines" type="textarea" :rows="3" />
+                </el-form-item>
+                <el-form-item label="渠道（每行一条）">
+                    <el-input v-model="form.channels_lines" type="textarea" :rows="3" />
+                </el-form-item>
+                <el-form-item label="交付标准（每行一条）">
+                    <el-input v-model="form.delivery_standards_lines" type="textarea" :rows="3" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="closeFormModal">取消</el-button>
+                <el-button type="primary" @click="save">保存</el-button>
+            </template>
+        </el-dialog>
     </AdminPageShell>
 </template>
 
 <style scoped>
-.pg__head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.35rem;
-}
-.pg__title {
-    margin: 0;
-    font-size: 1.5rem;
-}
-.pg__lead {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
-    color: #64748b;
-}
-.flt {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.8rem;
-}
-.flt input {
-    flex: 1;
+.oc-toolbar-search {
     max-width: 360px;
-    padding: 0.45rem 0.5rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
+    width: min(360px, 100%);
 }
-.ok {
-    color: #166534;
-}
-.bad {
-    color: #b91c1c;
-}
-.chk {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-bottom: 0.65rem;
-    font-size: 0.85rem;
-}
-.card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    overflow: auto;
-}
-.tbl {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-}
-.tbl th,
-.tbl td {
-    padding: 0.5rem 0.65rem;
-    border-bottom: 1px solid #f1f5f9;
-    text-align: left;
-}
-.tbl th {
-    background: #f8fafc;
-    font-weight: 600;
+.oc-alert {
+    margin-bottom: 12px;
 }
 .mono {
     font-family: ui-monospace, monospace;
-    font-size: 0.78rem;
-}
-.act {
-    display: flex;
-    gap: 0.5rem;
-}
-.lnk {
-    border: none;
-    background: none;
-    color: #2563eb;
-    cursor: pointer;
-    padding: 0;
-}
-.lnk--d {
-    color: #b91c1c;
-}
-.empty {
-    padding: 1rem;
-    color: #94a3b8;
-    margin: 0;
-}
-.modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 80;
-    padding: 1rem;
-}
-.modal__box {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1.25rem;
-    width: 100%;
-    max-width: 640px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-.modal__box--lg {
-    max-width: 640px;
-}
-.fld {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    margin-bottom: 0.65rem;
-    font-size: 0.85rem;
-}
-.fld input,
-.fld select,
-.fld textarea {
-    padding: 0.45rem 0.5rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-}
-.modal__btns {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-}
-.btn {
-    padding: 0.45rem 0.85rem;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-}
-.btn--pri {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
-}
-.fld--note {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-.fld-hint {
-    font-size: 0.78rem;
-    color: #64748b;
-    line-height: 1.45;
-}
-.fld-readonly {
-    margin: 0;
-    padding: 0.45rem 0.5rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    font-size: 0.82rem;
-    color: #0f172a;
 }
 </style>

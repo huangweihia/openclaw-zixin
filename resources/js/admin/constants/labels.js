@@ -150,6 +150,13 @@ export const ENUM_LABELS = {
         approved: '已发布',
         rejected: '已拒绝',
     },
+    /** side_hustle_cases.resource_type */
+    sideHustleResourceType: {
+        article: '文章',
+        video: '视频',
+        disk: '网盘',
+        image: '图片',
+    },
     /** user_posts.type */
     userPostType: {
         case: '案例',
