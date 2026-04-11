@@ -108,3 +108,4 @@ Filament 登录由 **Livewire** 处理，正常提交应请求 **`/livewire/upda
 3. **Nginx→PHP**：仓库 `docker/nginx/conf.d/00-forwarded-map.conf` + `fastcgi_param HTTP_X_FORWARDED_PROTO` 会把外层 **`X-Forwarded-Proto`** 传给 PHP；若你自建 Nginx，请对照补上。改完后 **`docker compose up -d --force-recreate nginx`**（或等价重启）。
 4. 服务器执行：`php artisan route:clear`、`php artisan config:clear`、`php artisan view:clear`。
 5. 浏览器 **强制刷新**；开发者工具 **Network** 看 **`livewire.js`** 是否 200、**Console** 是否无红色报错。
+6. 若 **`/livewire/livewire.js` 为 404**：多为 Nginx 把 `*.js` 配成 `try_files $uri =404`，未交给 Laravel。仓库内 `docker/nginx/conf.d/*.conf` 已加 `location ^~ /livewire/`；改后需 **`docker compose ... up -d --force-recreate nginx`**。
