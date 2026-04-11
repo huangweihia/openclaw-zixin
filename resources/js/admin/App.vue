@@ -337,7 +337,7 @@ async function logout() {
 }
 
 .admin-main__inner {
-    max-width: 1180px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 </style>

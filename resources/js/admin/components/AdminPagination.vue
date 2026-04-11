@@ -1,9 +1,11 @@
 <script setup>
+import { computed } from 'vue';
+
 /**
  * 与 Laravel 分页 JSON 对齐：current_page、last_page、total、per_page（可选）。
  * @event update:page 页码变更（1-based）
  */
-defineProps({
+const props = defineProps({
     currentPage: { type: Number, required: true },
     lastPage: { type: Number, required: true },
     total: { type: Number, default: null },
@@ -14,81 +16,45 @@ defineProps({
 
 const emit = defineEmits(['update:page', 'update:per-page']);
 
-function go(p) {
+const displayTotal = computed(() => {
+    if (props.total != null && Number.isFinite(props.total)) {
+        return props.total;
+    }
+    if (props.lastPage > 0 && props.perPage > 0) {
+        return props.lastPage * props.perPage;
+    }
+    return 0;
+});
+
+function onPageChange(p) {
     emit('update:page', p);
 }
 
-function onPerPageChange(e) {
-    const next = Number(e?.target?.value ?? 20);
-    emit('update:per-page', Number.isFinite(next) && next > 0 ? next : 20);
+function onSizeChange(s) {
+    emit('update:per-page', s);
 }
 </script>
 
 <template>
-    <div v-if="lastPage > 1" class="oc-admin-pager">
-        <button type="button" class="oc-admin-pager__btn" :disabled="loading || currentPage <= 1" @click="go(currentPage - 1)">
-            上一页
-        </button>
-        <span class="oc-admin-pager__meta">
-            第 {{ currentPage }} / {{ lastPage }} 页
-            <template v-if="total != null"> · 共 {{ total }} 条</template>
-        </span>
-        <label class="oc-admin-pager__size">
-            每页
-            <select class="oc-admin-pager__select" :value="perPage" :disabled="loading" @change="onPerPageChange">
-                <option v-for="n in pageSizeOptions" :key="`ps-${n}`" :value="n">{{ n }}</option>
-            </select>
-            条
-        </label>
-        <button
-            type="button"
-            class="oc-admin-pager__btn"
-            :disabled="loading || currentPage >= lastPage"
-            @click="go(currentPage + 1)"
-        >
-            下一页
-        </button>
-    </div>
+    <el-pagination
+        v-if="lastPage > 1 || (total != null && total > perPage)"
+        class="oc-admin-pagination"
+        background
+        layout="total, sizes, prev, pager, next, jumper"
+        :page-sizes="pageSizeOptions"
+        :current-page="currentPage"
+        :page-size="perPage"
+        :total="displayTotal"
+        :disabled="loading"
+        @current-change="onPageChange"
+        @size-change="onSizeChange"
+    />
 </template>
+
 <style scoped>
-.oc-admin-pager {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.oc-admin-pagination {
+    width: 100%;
     flex-wrap: wrap;
-    gap: 0.75rem 1rem;
-    margin-top: 1rem;
-    font-size: 0.88rem;
-    color: #475569;
-}
-.oc-admin-pager__btn {
-    padding: 0.4rem 0.85rem;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-    font-size: inherit;
-}
-.oc-admin-pager__btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-.oc-admin-pager__meta {
-    white-space: nowrap;
-}
-.oc-admin-pager__size {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.85rem;
-    color: #475569;
-}
-.oc-admin-pager__select {
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    background: #fff;
-    padding: 0.22rem 0.45rem;
-    font-size: 0.84rem;
+    row-gap: 8px;
 }
 </style>
-

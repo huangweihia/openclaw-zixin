@@ -1,14 +1,14 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import AdminPageShell from '../components/AdminPageShell.vue';
 import AdminCard from '../components/AdminCard.vue';
 
 const rows = ref([]);
 const err = ref('');
-const msg = ref('');
 const editing = ref(null);
-const form = ref({ name: '', slug: '', description: '', sort: 0, is_premium: false }); // slug 仅编辑展示
+const form = ref({ name: '', slug: '', description: '', sort: 0, is_premium: false });
 
 async function load() {
     err.value = '';
@@ -26,7 +26,6 @@ function openCreate() {
     err.value = '';
     editing.value = 'new';
     form.value = { name: '', slug: '', description: '', sort: 0, is_premium: false };
-    // slug 新建不填，由后端生成
 }
 
 function openEdit(c) {
@@ -47,16 +46,15 @@ function closeModal() {
 }
 
 async function save() {
-    msg.value = '';
     err.value = '';
     const { slug: _slug, ...payload } = form.value;
     try {
         if (editing.value === 'new') {
             await axios.post('/api/admin/categories', payload);
-            msg.value = '已创建';
+            ElMessage.success('已创建');
         } else {
             await axios.put(`/api/admin/categories/${editing.value}`, payload);
-            msg.value = '已更新';
+            ElMessage.success('已更新');
         }
         closeModal();
         await load();
@@ -66,14 +64,22 @@ async function save() {
 }
 
 async function removeRow(id) {
-    if (!confirm('确定删除？关联文章/项目分类将置空。')) {
+    try {
+        await ElMessageBox.confirm('确定删除？关联文章/项目分类将置空。', '删除分类', {
+            type: 'warning',
+            confirmButtonText: '删除',
+            cancelButtonText: '取消',
+        });
+    } catch {
         return;
     }
     try {
         await axios.delete(`/api/admin/categories/${id}`);
+        ElMessage.success('已删除');
         await load();
     } catch {
         err.value = '删除失败';
+        ElMessage.error('删除失败');
     }
 }
 </script>
@@ -81,177 +87,93 @@ async function removeRow(id) {
 <template>
     <AdminPageShell title="分类管理" lead="用于文章/项目等内容的分类维护。">
         <template #actions>
-            <button type="button" class="btn primary" @click="openCreate">新建分类</button>
+            <el-button type="primary" @click="openCreate">新建分类</el-button>
         </template>
-        <p v-if="msg" class="ok">{{ msg }}</p>
-        <p v-if="err && !editing" class="err">{{ err }}</p>
+
+        <el-alert v-if="err && editing === null" type="error" :closable="false" show-icon class="oc-cat-alert" :title="err" />
+
         <AdminCard>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>名称</th>
-                        <th>短标识</th>
-                        <th>排序</th>
-                        <th>付费</th>
-                        <th />
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="c in rows" :key="c.id">
-                        <td>{{ c.id }}</td>
-                        <td>{{ c.name }}</td>
-                        <td class="mono">{{ c.slug }}</td>
-                        <td>{{ c.sort }}</td>
-                        <td>{{ c.is_premium ? '是' : '否' }}</td>
-                        <td class="actions">
-                            <button type="button" class="link" @click="openEdit(c)">编辑</button>
-                            <button type="button" class="link danger" @click="removeRow(c.id)">删除</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="rows.length === 0" class="empty">暂无分类</p>
+            <el-table :data="rows" stripe border style="width: 100%" empty-text="暂无分类">
+                <el-table-column prop="id" label="ID" width="72" />
+                <el-table-column prop="name" label="名称" min-width="140" show-overflow-tooltip />
+                <el-table-column prop="slug" label="短标识" min-width="120">
+                    <template #default="{ row }">
+                        <span class="mono">{{ row.slug }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="sort" label="排序" width="88" />
+                <el-table-column label="付费" width="88">
+                    <template #default="{ row }">
+                        <el-tag :type="row.is_premium ? 'warning' : 'info'" size="small">
+                            {{ row.is_premium ? '是' : '否' }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="160" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+                        <el-button link type="danger" @click="removeRow(row.id)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
 
-        <div v-if="editing !== null" class="modal" @click.self="closeModal">
-            <div class="modal__box" @click.stop>
-                <h2>{{ editing === 'new' ? '新建分类' : '编辑分类' }}</h2>
-                <p v-if="err" class="admin-modal-err">{{ err }}</p>
-                <label class="field">
-                    <span>名称 *</span>
-                    <input v-model="form.name" type="text" />
-                </label>
-                <div v-if="editing === 'new'" class="field field--note">
-                    <span>短标识</span>
-                    <span class="field-hint">保存后由系统根据名称自动生成（用于 URL），创建后不可改。</span>
-                </div>
-                <label v-else class="field">
-                    <span>短标识</span>
-                    <span class="field-hint">仅展示，不可修改。</span>
-                    <p class="slug-readonly mono">{{ form.slug }}</p>
-                </label>
-                <label class="field">
-                    <span>描述</span>
-                    <input v-model="form.description" type="text" />
-                </label>
-                <label class="field">
-                    <span>排序（越大越靠前）</span>
-                    <input v-model.number="form.sort" type="number" />
-                </label>
-                <label class="check">
-                    <input v-model="form.is_premium" type="checkbox" />
-                    付费分类
-                </label>
-                <div class="modal__btns">
-                    <button type="button" class="btn" @click="closeModal">取消</button>
-                    <button type="button" class="btn primary" @click="save">保存</button>
-                </div>
-            </div>
-        </div>
+        <el-dialog
+            :model-value="editing !== null"
+            :title="editing === 'new' ? '新建分类' : '编辑分类'"
+            width="520px"
+            destroy-on-close
+            align-center
+            @update:model-value="(v) => !v && closeModal()"
+        >
+            <el-alert v-if="err && editing !== null" type="error" :closable="false" show-icon class="mb-3" :title="err" />
+            <el-form label-position="top">
+                <el-form-item label="名称" required>
+                    <el-input v-model="form.name" placeholder="分类名称" clearable />
+                </el-form-item>
+                <el-form-item v-if="editing === 'new'" label="短标识">
+                    <el-text type="info" size="small">保存后由系统根据名称自动生成（用于 URL），创建后不可改。</el-text>
+                </el-form-item>
+                <el-form-item v-else label="短标识">
+                    <el-input v-model="form.slug" disabled class="mono" />
+                    <el-text type="info" size="small" class="mt-1 block">仅展示，不可修改。</el-text>
+                </el-form-item>
+                <el-form-item label="描述">
+                    <el-input v-model="form.description" placeholder="可选" clearable />
+                </el-form-item>
+                <el-form-item label="排序（越大越靠前）">
+                    <el-input-number v-model="form.sort" :min="0" :step="1" controls-position="right" class="w-full" />
+                </el-form-item>
+                <el-form-item label="">
+                    <el-checkbox v-model="form.is_premium">付费分类</el-checkbox>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="closeModal">取消</el-button>
+                <el-button type="primary" @click="save">保存</el-button>
+            </template>
+        </el-dialog>
     </AdminPageShell>
 </template>
 
 <style scoped>
-.ok {
-    color: #166534;
-}
-.err {
-    color: #b91c1c;
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.88rem;
-}
-.table th,
-.table td {
-    padding: 0.6rem 0.85rem;
-    text-align: left;
-    border-bottom: 1px solid #e2e8f0;
-}
-.table th {
-    background: #f8fafc;
-    font-weight: 600;
+.oc-cat-alert {
+    margin-bottom: 12px;
 }
 .mono {
-    font-family: ui-monospace, monospace;
-    font-size: 0.8rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
 }
-.actions {
-    display: flex;
-    gap: 0.5rem;
+.mb-3 {
+    margin-bottom: 12px;
 }
-.link {
-    background: none;
-    border: none;
-    color: #2563eb;
-    cursor: pointer;
-    padding: 0;
+.mt-1 {
+    margin-top: 4px;
 }
-.link.danger {
-    color: #b91c1c;
+.block {
+    display: block;
 }
-.empty {
-    padding: 1.25rem;
-    color: #64748b;
-    margin: 0;
-}
-.btn {
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-}
-.btn.primary {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
-}
-.modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    z-index: 100;
-}
-.modal__box {
-    background: #fff;
-    border-radius: 10px;
-    padding: 1.25rem;
+.w-full {
     width: 100%;
-    max-width: 420px;
-}
-.modal__box h2 {
-    margin: 0 0 1rem;
-    font-size: 1.1rem;
-}
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.88rem;
-}
-.field input {
-    padding: 0.45rem 0.55rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-}
-.check {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    font-size: 0.88rem;
-}
-.modal__btns {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
 }
 </style>

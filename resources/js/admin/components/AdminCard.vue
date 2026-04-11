@@ -5,20 +5,16 @@ defineProps({
 </script>
 
 <template>
-    <div class="oc-admin-card" :class="{ 'oc-admin-card--padded': padded }">
+    <el-card class="oc-admin-card" shadow="hover" :body-style="{ padding: padded ? '20px' : '0' }">
         <slot />
-    </div>
+    </el-card>
 </template>
 
 <style scoped>
 .oc-admin-card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
     border-radius: 12px;
-    overflow: auto;
 }
-.oc-admin-card--padded {
-    padding: 1rem;
+.oc-admin-card :deep(.el-card__body) {
+    overflow-x: auto;
 }
 </style>
-

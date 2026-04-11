@@ -18,3 +18,6 @@ yarn-error.log
 /.idea
 /.vscode
 .ace-tool/
+
+# 本地后台代码快照（回滚用，勿提交）
+/resources/js/admin_backup_*/

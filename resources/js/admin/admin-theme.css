@@ -1,0 +1,37 @@
+/**
+ * 管理后台 Element Plus 主题与版式微调（与 Ant Design 蓝系对齐，易读表格）
+ */
+#admin-app {
+    --el-color-primary: #1677ff;
+    --el-color-primary-light-3: #4096ff;
+    --el-color-primary-light-5: #69b1ff;
+    --el-color-primary-light-7: #91caff;
+    --el-color-primary-light-8: #bae0ff;
+    --el-color-primary-light-9: #e6f4ff;
+    --el-color-primary-dark-2: #0958d9;
+    --el-border-radius-base: 10px;
+    --el-font-family: 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+#admin-app .el-card {
+    --el-card-border-radius: 12px;
+}
+
+#admin-app .el-table {
+    --el-table-header-bg-color: var(--el-fill-color-light);
+}
+
+#admin-app .el-pagination {
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+#admin-app .el-dialog {
+    border-radius: 14px;
+}
+
+#admin-app .el-dialog__header {
+    margin-right: 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+}

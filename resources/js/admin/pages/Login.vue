@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
-import { toast } from '../../frontend/utils/toast';
+import { ElMessage } from 'element-plus';
 
 const route = useRoute();
 const router = useRouter();
@@ -23,7 +23,7 @@ async function submit() {
             password: password.value,
             remember: remember.value,
         });
-        toast.success('登录成功，正在进入控制台…', 1200);
+        ElMessage.success({ message: '登录成功，正在进入控制台…', duration: 1200 });
         const redir = typeof route.query.redirect === 'string' ? route.query.redirect : '/';
         setTimeout(() => {
             router.replace(redir || '/');
@@ -46,60 +46,53 @@ async function submit() {
         </div>
 
         <div class="login-page__content">
-            <div class="login-card">
-                <header class="login-card__head">
-                    <div class="login-brand" aria-hidden="true">
-                        <span class="login-brand__mark">◆</span>
-                        <div class="login-brand__text">
-                            <span class="login-brand__name">智信</span>
-                            <span class="login-brand__tag">Admin</span>
+            <el-card class="login-card" shadow="hover">
+                <template #header>
+                    <div class="login-card__head">
+                        <div class="login-brand" aria-hidden="true">
+                            <span class="login-brand__mark">◆</span>
+                            <div class="login-brand__text">
+                                <span class="login-brand__name">智信</span>
+                                <span class="login-brand__tag">Admin</span>
+                            </div>
                         </div>
+                        <h1 class="login-card__title">管理后台登录</h1>
+                        <el-text type="info" size="small">OpenClaw 智信 · 控制台</el-text>
                     </div>
-                    <h1 class="login-card__title">管理后台登录</h1>
-                    <p class="login-card__sub">OpenClaw 智信 · 控制台</p>
-                </header>
+                </template>
 
-                <form class="login-form" @submit.prevent="submit">
-                    <label class="login-field">
-                        <span class="login-field__label">邮箱</span>
-                        <input
+                <el-form class="login-form" label-position="top" @submit.prevent="submit">
+                    <el-form-item label="邮箱">
+                        <el-input
                             v-model="email"
-                            class="login-field__input"
                             type="email"
-                            required
-                            autocomplete="username"
+                            size="large"
+                            clearable
                             placeholder="name@company.com"
+                            autocomplete="username"
                         />
-                    </label>
-                    <label class="login-field">
-                        <span class="login-field__label">密码</span>
-                        <input
+                    </el-form-item>
+                    <el-form-item label="密码">
+                        <el-input
                             v-model="password"
-                            class="login-field__input"
                             type="password"
-                            required
-                            autocomplete="current-password"
+                            size="large"
+                            show-password
                             placeholder="请输入密码"
+                            autocomplete="current-password"
                         />
-                    </label>
-
-                    <div class="login-row">
-                        <label class="login-remember">
-                            <input v-model="remember" type="checkbox" class="login-remember__input" />
-                            <span>记住我</span>
-                        </label>
-                    </div>
-
-                    <div v-if="error" class="login-alert" role="alert">{{ error }}</div>
-
-                    <button type="submit" class="login-submit" :disabled="loading">
-                        <span v-if="loading" class="login-submit__spinner" aria-hidden="true" />
+                    </el-form-item>
+                    <el-form-item>
+                        <el-checkbox v-model="remember">记住我</el-checkbox>
+                    </el-form-item>
+                    <el-alert v-if="error" type="error" :title="error" :closable="false" show-icon class="login-alert" />
+                    <el-button type="primary" size="large" class="login-submit" native-type="submit" :loading="loading" block>
                         {{ loading ? '登录中…' : '登录' }}
-                    </button>
-                </form>
-            </div>
+                    </el-button>
+                </el-form>
+            </el-card>
 
-            <p class="login-page__hint">仅限授权人员访问 · 请妥善保管账号</p>
+            <el-text size="small" type="info" class="login-page__hint">仅限授权人员访问 · 请妥善保管账号</el-text>
         </div>
     </div>
 </template>
@@ -113,14 +106,7 @@ async function submit() {
     align-items: center;
     justify-content: center;
     padding: 1.5rem 1rem 2rem;
-    font-family:
-        'Segoe UI',
-        system-ui,
-        -apple-system,
-        'PingFang SC',
-        'Microsoft YaHei',
-        sans-serif;
-    color: #0f172a;
+    color: var(--el-text-color-primary);
     overflow-x: hidden;
 }
 
@@ -179,28 +165,30 @@ async function submit() {
 
 .login-card {
     width: 100%;
-    padding: 2rem 1.75rem 1.85rem;
-    background: rgba(255, 255, 255, 0.82);
+    border-radius: 16px !important;
+    --el-card-border-color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.88) !important;
     backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    box-shadow:
-        0 1px 2px rgba(15, 23, 42, 0.04),
-        0 24px 48px -12px rgba(15, 23, 42, 0.12),
-        0 0 0 1px rgba(15, 23, 42, 0.03);
+}
+
+.login-card :deep(.el-card__header) {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.login-card :deep(.el-card__body) {
+    padding-top: 8px;
 }
 
 .login-card__head {
     text-align: center;
-    margin-bottom: 1.65rem;
 }
 
 .login-brand {
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    margin-bottom: 1.1rem;
+    margin-bottom: 1rem;
     padding: 0.35rem 0.65rem 0.35rem 0.45rem;
     background: rgba(15, 23, 42, 0.06);
     border-radius: 999px;
@@ -251,173 +239,23 @@ async function submit() {
     color: #0f172a;
 }
 
-.login-card__sub {
-    margin: 0;
-    font-size: 0.8125rem;
-    color: #64748b;
-}
-
 .login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.login-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.login-field__label {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: #475569;
-}
-
-.login-field__input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 0.65rem 0.85rem;
-    font-size: 0.9375rem;
-    color: #0f172a;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    outline: none;
-    transition:
-        border-color 0.15s ease,
-        box-shadow 0.15s ease;
-}
-
-.login-field__input::placeholder {
-    color: #94a3b8;
-}
-
-.login-field__input:hover {
-    border-color: #cbd5e1;
-}
-
-.login-field__input:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-}
-
-.login-field__input:-webkit-autofill,
-.login-field__input:-webkit-autofill:hover,
-.login-field__input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #0f172a;
-    box-shadow: 0 0 0 1000px #fff inset;
-    transition: background-color 9999s ease-out;
-}
-
-.login-row {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    margin-top: -0.15rem;
-}
-
-.login-remember {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-size: 0.8125rem;
-    color: #475569;
-    cursor: pointer;
-    user-select: none;
-}
-
-.login-remember__input {
-    width: 1rem;
-    height: 1rem;
-    accent-color: #4f46e5;
-    border-radius: 4px;
-    cursor: pointer;
+    margin-top: 0.25rem;
 }
 
 .login-alert {
-    padding: 0.55rem 0.75rem;
-    font-size: 0.8125rem;
-    line-height: 1.45;
-    color: #991b1b;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 10px;
+    margin-bottom: 12px;
 }
 
 .login-submit {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
     width: 100%;
-    margin-top: 0.25rem;
-    padding: 0.75rem 1rem;
-    font-size: 0.9375rem;
+    margin-top: 0.5rem;
     font-weight: 600;
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    background: linear-gradient(135deg, #4f46e5 0%, #2563eb 50%, #1d4ed8 100%);
-    box-shadow:
-        0 1px 2px rgba(15, 23, 42, 0.08),
-        0 8px 20px -4px rgba(37, 99, 235, 0.45);
-    transition:
-        transform 0.12s ease,
-        box-shadow 0.12s ease,
-        opacity 0.12s ease;
-}
-
-.login-submit:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow:
-        0 2px 4px rgba(15, 23, 42, 0.1),
-        0 12px 28px -4px rgba(37, 99, 235, 0.5);
-}
-
-.login-submit:active:not(:disabled) {
-    transform: translateY(0);
-}
-
-.login-submit:disabled {
-    opacity: 0.72;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.login-submit__spinner {
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid rgba(255, 255, 255, 0.35);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: login-spin 0.65s linear infinite;
-}
-
-@keyframes login-spin {
-    to {
-        transform: rotate(360deg);
-    }
 }
 
 .login-page__hint {
-    margin: 0;
-    font-size: 0.75rem;
-    color: #64748b;
     text-align: center;
     max-width: 22rem;
     line-height: 1.5;
-}
-
-@media (max-width: 380px) {
-    .login-card {
-        padding: 1.5rem 1.25rem 1.4rem;
-    }
-
-    .login-card__title {
-        font-size: 1.25rem;
-    }
 }
 </style>

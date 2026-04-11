@@ -4,14 +4,16 @@ import App from './App.vue';
 import { createAdminRouter } from './router';
 import ElementPlus from 'element-plus';
 import { ElMessage } from 'element-plus';
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import 'element-plus/dist/index.css';
+import './admin-theme.css';
 
 const base = typeof window.__ADMIN_ROUTER_BASE__ === 'string' && window.__ADMIN_ROUTER_BASE__ !== ''
     ? window.__ADMIN_ROUTER_BASE__
     : '/admin/';
 
 const app = createApp(App);
-app.use(ElementPlus);
+app.use(ElementPlus, { locale: zhCn, size: 'default' });
 app.use(createAdminRouter(base));
 
 window.axios.interceptors.response.use(
