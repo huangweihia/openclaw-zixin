@@ -1,0 +1,11 @@
+<?php
+
+namespace App\Filament\Resources\PrivateTrafficSopResource\Pages;
+
+use App\Filament\Resources\PrivateTrafficSopResource;
+use Filament\Resources\Pages\EditRecord;
+
+class EditPrivateTrafficSop extends EditRecord
+{
+    protected static string $resource = PrivateTrafficSopResource::class;
+}

@@ -2,14 +2,18 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\SetFilamentLocale;
+use Filament\Forms\Components\Field;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Facades\Filament;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -21,6 +25,37 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
+    public function boot(): void
+    {
+        parent::boot();
+
+        Filament::serving(function (): void {
+            Field::configureUsing(function (Field $field): void {
+                $n = $field->getName();
+                $zh = config("filament_attribute_labels.{$n}");
+                if (is_string($zh) && $zh !== '') {
+                    $field->label($zh);
+                }
+            });
+
+            TextColumn::configureUsing(function (TextColumn $column): void {
+                $n = $column->getName();
+                $zh = config("filament_attribute_labels.{$n}");
+                if (is_string($zh) && $zh !== '') {
+                    $column->label($zh);
+                }
+            });
+
+            IconColumn::configureUsing(function (IconColumn $column): void {
+                $n = $column->getName();
+                $zh = config("filament_attribute_labels.{$n}");
+                if (is_string($zh) && $zh !== '') {
+                    $column->label($zh);
+                }
+            });
+        });
+    }
+
     public function panel(Panel $panel): Panel
     {
         $adminDomain = config('admin.domain');
@@ -42,7 +77,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([

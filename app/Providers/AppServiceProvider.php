@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\AdminNavItem;
+use App\Models\AdminNavSection;
 use App\Models\Announcement;
 use App\Models\InboxNotification;
+use App\Observers\AdminNavItemObserver;
+use App\Observers\AdminNavSectionObserver;
 use App\Services\AdPresentationService;
 use App\Support\SiteViewComposer;
 use Illuminate\Pagination\Paginator;
@@ -26,6 +30,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        AdminNavItem::observe(AdminNavItemObserver::class);
+        AdminNavSection::observe(AdminNavSectionObserver::class);
+
         // 站点前台分页：统一使用项目自定义样式，避免默认 Tailwind/Bootstrap 标记不匹配导致“很丑”
         Paginator::defaultView('partials.pagination');
         Paginator::defaultSimpleView('partials.pagination-simple');

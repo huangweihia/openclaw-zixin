@@ -6,11 +6,13 @@ namespace App\Models;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Support\AdminNavRegistry;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser
@@ -134,6 +136,15 @@ class User extends Authenticatable implements FilamentUser
 
     public function adminPermissions(): array
     {
+        $this->loadMissing('adminUser');
+        if ($this->adminUser?->is_super) {
+            return ['*'];
+        }
+
+        if (! Schema::hasTable('admin_user_roles')) {
+            return $this->role === 'admin' ? ['*'] : [];
+        }
+
         $roles = $this->adminRoles()->with('permissions')->get();
 
         $keys = [];
@@ -155,5 +166,53 @@ class User extends Authenticatable implements FilamentUser
         sort($keys);
 
         return $keys;
+    }
+
+    /**
+     * 是否可在侧边栏 / 路由层访问某 admin_nav_items.menu_key（权限 + 角色菜单白名单）。
+     */
+    public function allowsAdminMenuKey(string $menuKey): bool
+    {
+        if ($this->role !== 'admin' || $this->is_banned) {
+            return false;
+        }
+
+        $this->loadMissing('adminUser');
+        if ($this->adminUser?->is_super) {
+            return true;
+        }
+
+        $item = AdminNavRegistry::item($menuKey);
+        if ($item === null || ! $item->is_active) {
+            return false;
+        }
+
+        $perms = $this->adminPermissions();
+        $hasStar = in_array('*', $perms, true);
+        if (! $hasStar && ! in_array($item->perm_key, $perms, true)) {
+            return false;
+        }
+
+        if (! Schema::hasTable('admin_user_roles') || ! Schema::hasTable('admin_roles')) {
+            return true;
+        }
+
+        $roles = $this->adminRoles()->with('menuItems')->get();
+        if ($roles->isEmpty()) {
+            return true;
+        }
+
+        $anyInherit = $roles->contains(fn ($r) => ($r->menu_mode ?? 'inherit') !== 'whitelist');
+        if ($anyInherit) {
+            return true;
+        }
+
+        foreach ($roles as $role) {
+            if ($role->menuItems->contains(fn ($m) => $m->menu_key === $menuKey)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
