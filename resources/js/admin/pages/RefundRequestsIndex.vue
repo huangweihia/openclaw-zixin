@@ -13,7 +13,7 @@ const rows = ref([]);
 const meta = ref(null);
 const total = ref(0);
 const err = ref('');
-const msg = ref('');
+const dialogOpen = ref(false);
 const editing = ref(null);
 const form = ref({ status: 'pending', admin_note: '' });
 
@@ -42,6 +42,7 @@ async function load(page = 1) {
 watch(status, () => load(1));
 
 function closeEdit() {
+    dialogOpen.value = false;
     editing.value = null;
     err.value = '';
 }
@@ -50,14 +51,14 @@ function openEdit(r) {
     err.value = '';
     editing.value = r;
     form.value = { status: r.status, admin_note: r.admin_note || '' };
+    dialogOpen.value = true;
 }
 
 async function save() {
     err.value = '';
     try {
         await axios.put(`/api/admin/refund-requests/${editing.value.id}`, form.value);
-        msg.value = '已更新';
-        editing.value = null;
+        closeEdit();
         await load(meta.value?.current_page ?? 1);
     } catch {
         err.value = '保存失败';
@@ -70,34 +71,35 @@ onMounted(() => load(1));
 <template>
     <AdminPageShell title="退款申请" lead="表 refund_requests：处理状态与管理员备注。">
         <template #toolbar>
-            <el-tabs v-model="status" class="tabs" type="card">
-                <el-tab-pane v-for="t in tabs" :key="t.value || 'a'" :label="t.label" :name="t.value" />
+            <el-tabs v-model="status" class="oc-tabs" type="card">
+                <el-tab-pane v-for="t in tabs" :key="t.value || 'all'" :label="t.label" :name="t.value" />
             </el-tabs>
         </template>
-        <p v-if="msg" class="ok">{{ msg }}</p>
-        <p v-if="err && !editing" class="bad">{{ err }}</p>
+        <el-alert v-if="err && !dialogOpen" type="error" :closable="false" show-icon class="oc-alert" :title="err" />
         <AdminCard>
-            <table class="tbl">
-                <thead>
-                    <tr>
-                        <th>订单</th>
-                        <th>用户</th>
-                        <th>金额</th>
-                        <th>状态</th>
-                        <th />
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="r in rows" :key="r.id">
-                        <td class="mono">{{ r.order?.order_no }}</td>
-                        <td>{{ r.user?.name }}</td>
-                        <td>{{ r.refund_amount }}</td>
-                        <td>{{ enumLabel('refundStatus', r.status) }}</td>
-                        <td><button type="button" class="lnk" @click="openEdit(r)">处理</button></td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="rows.length === 0" class="empty">暂无</p>
+            <el-table :data="rows" stripe border style="width: 100%" empty-text="暂无">
+                <el-table-column label="订单" min-width="140" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <span class="mono">{{ row.order?.order_no }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="用户" width="120" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        {{ row.user?.name || '—' }}
+                    </template>
+                </el-table-column>
+                <el-table-column prop="refund_amount" label="金额" width="100" />
+                <el-table-column label="状态" width="120">
+                    <template #default="{ row }">
+                        {{ enumLabel('refundStatus', row.status) }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="100" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="openEdit(row)">处理</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -106,119 +108,58 @@ onMounted(() => load(1));
             :total="total"
             @update:page="load"
         />
-        <div v-if="editing" class="modal" @click.self="closeEdit">
-            <div class="modal__box" @click.stop>
-                <h2>退款 #{{ editing.id }}</h2>
-                <p v-if="err" class="admin-modal-err">{{ err }}</p>
-                <p class="hint">{{ editing.description }}</p>
-                <label class="fld">
-                    <span>状态</span>
-                    <select v-model="form.status">
-                        <option v-for="o in refundStatusOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
-                    </select>
-                </label>
-                <label class="fld"><span>管理员备注</span><textarea v-model="form.admin_note" rows="3" /></label>
-                <div class="modal__btns">
-                    <button type="button" class="btn" @click="closeEdit">取消</button>
-                    <button type="button" class="btn btn--pri" @click="save">保存</button>
-                </div>
-            </div>
-        </div>
+
+        <el-dialog
+            v-model="dialogOpen"
+            :title="editing ? `退款 #${editing.id}` : ''"
+            width="480px"
+            destroy-on-close
+            align-center
+            @closed="
+                () => {
+                    editing = null;
+                    err = '';
+                }
+            "
+        >
+            <el-alert v-if="err && dialogOpen" type="error" :closable="false" show-icon class="mb-3" :title="err" />
+            <el-text v-if="editing" type="info" size="small" class="mb-3 block">{{ editing.description }}</el-text>
+            <el-form v-if="editing" label-position="top">
+                <el-form-item label="状态">
+                    <el-select v-model="form.status" class="w-full" placeholder="状态">
+                        <el-option v-for="o in refundStatusOpts" :key="o.value" :label="o.label" :value="o.value" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="管理员备注">
+                    <el-input v-model="form.admin_note" type="textarea" :rows="3" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="closeEdit">取消</el-button>
+                <el-button type="primary" @click="save">保存</el-button>
+            </template>
+        </el-dialog>
     </AdminPageShell>
 </template>
 
 <style scoped>
-.tabs {
+.oc-tabs {
     margin-bottom: 0;
 }
-.ok {
-    color: #166534;
+.oc-alert {
+    margin-bottom: 12px;
 }
-.bad {
-    color: #b91c1c;
+.mb-3 {
+    margin-bottom: 12px;
 }
-.tbl {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-}
-.tbl th,
-.tbl td {
-    padding: 0.5rem 0.65rem;
-    border-bottom: 1px solid #f1f5f9;
-    text-align: left;
-}
-.tbl th {
-    background: #f8fafc;
-    font-weight: 600;
+.block {
+    display: block;
 }
 .mono {
-    font-family: ui-monospace, monospace;
-    font-size: 0.78rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
 }
-.lnk {
-    border: none;
-    background: none;
-    color: #2563eb;
-    cursor: pointer;
-    padding: 0;
-}
-.empty {
-    padding: 1rem;
-    color: #94a3b8;
-    margin: 0;
-}
-.modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 80;
-    padding: 1rem;
-}
-.modal__box {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1.25rem;
+.w-full {
     width: 100%;
-    max-width: 420px;
-}
-.hint {
-    font-size: 0.82rem;
-    color: #64748b;
-    margin: 0 0 0.75rem;
-}
-.fld {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    margin-bottom: 0.65rem;
-    font-size: 0.85rem;
-}
-.fld select,
-.fld textarea {
-    padding: 0.45rem 0.5rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-}
-.modal__btns {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-}
-.btn {
-    padding: 0.45rem 0.85rem;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-}
-.btn--pri {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
 }
 </style>

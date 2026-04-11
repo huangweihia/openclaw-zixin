@@ -18,7 +18,7 @@ const perPage = ref(25);
 const loading = ref(false);
 const loadErr = ref('');
 const formErr = ref('');
-const msg = ref('');
+const dialogOpen = ref(false);
 const editing = ref(null);
 const form = ref({
     status: 'pending',
@@ -52,10 +52,6 @@ onMounted(() => load(1));
 
 watch([status, perPage], () => load(1));
 
-function setTab(v) {
-    status.value = v;
-}
-
 let searchTimer;
 function onSearchInput() {
     clearTimeout(searchTimer);
@@ -68,7 +64,6 @@ function onPerPageChange(next) {
 }
 
 async function openEdit(o) {
-    msg.value = '';
     formErr.value = '';
     try {
         const { data } = await axios.get(`/api/admin/orders/${o.id}`);
@@ -81,12 +76,14 @@ async function openEdit(o) {
             payment_id: ord.payment_id || '',
             paid_at: ord.paid_at ? ord.paid_at.slice(0, 16) : '',
         };
+        dialogOpen.value = true;
     } catch {
         formErr.value = '加载订单失败';
     }
 }
 
 function closeEdit() {
+    dialogOpen.value = false;
     editing.value = null;
     formErr.value = '';
 }
@@ -101,7 +98,6 @@ async function saveOrder() {
             payment_id: form.value.payment_id || null,
             paid_at: form.value.paid_at || null,
         });
-        msg.value = '订单已更新';
         closeEdit();
         await load(meta.value?.current_page ?? 1);
     } catch {
@@ -113,61 +109,63 @@ async function saveOrder() {
 <template>
     <AdminPageShell title="订单管理" :loading="loading">
         <template #toolbar>
-            <input
+            <el-input
                 v-model="q"
-                type="search"
-                class="search"
+                clearable
                 placeholder="搜索订单号/用户邮箱"
-                autocomplete="off"
+                style="width: 280px"
                 @input="onSearchInput"
             />
         </template>
-        <nav class="tabs">
-            <button
-                v-for="t in orderTabs"
-                :key="t.value || 'all'"
-                type="button"
-                class="tab"
-                :class="{ 'is-active': status === t.value }"
-                @click="setTab(t.value)"
-            >
+        <el-radio-group v-model="status" size="default" class="oc-order-tabs">
+            <el-radio-button v-for="t in orderTabs" :key="t.value || 'all'" :value="t.value">
                 {{ t.label }}
-            </button>
-        </nav>
-        <p v-if="loadErr" class="msg-err">{{ loadErr }}</p>
-        <p v-if="formErr && !editing" class="msg-err">{{ formErr }}</p>
-        <p v-if="msg" class="msg-ok">{{ msg }}</p>
+            </el-radio-button>
+        </el-radio-group>
+        <el-alert v-if="loadErr" type="error" :closable="false" show-icon class="oc-o-alert" :title="loadErr" />
+        <el-alert
+            v-if="formErr && !dialogOpen"
+            type="error"
+            :closable="false"
+            show-icon
+            class="oc-o-alert"
+            :title="formErr"
+        />
         <AdminCard>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>订单号</th>
-                        <th>用户</th>
-                        <th>金额</th>
-                        <th>状态</th>
-                        <th>商品</th>
-                        <th>创建时间</th>
-                        <th />
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="o in orders" :key="o.id">
-                        <td class="mono">{{ o.order_no }}</td>
-                        <td>
-                            <span v-if="o.user">{{ o.user.name }}（{{ o.user.email }}）</span>
-                            <span v-else>—</span>
-                        </td>
-                        <td>{{ o.amount }}</td>
-                        <td>{{ enumLabel('orderStatus', o.status) }}</td>
-                        <td>{{ enumLabel('orderProductType', o.product_type) }} #{{ o.product_id }}</td>
-                        <td class="muted">{{ o.created_at?.slice(0, 16)?.replace('T', ' ') }}</td>
-                        <td>
-                            <button type="button" class="link" @click="openEdit(o)">编辑</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="orders.length === 0" class="empty">暂无订单</p>
+            <el-table :data="orders" stripe border style="width: 100%" empty-text="暂无订单">
+                <el-table-column label="订单号" min-width="160" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <span class="mono">{{ row.order_no }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="用户" min-width="180" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <span v-if="row.user">{{ row.user.name }}（{{ row.user.email }}）</span>
+                        <span v-else>—</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="amount" label="金额" width="100" />
+                <el-table-column label="状态" width="120">
+                    <template #default="{ row }">
+                        {{ enumLabel('orderStatus', row.status) }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="商品" min-width="140" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        {{ enumLabel('orderProductType', row.product_type) }} #{{ row.product_id }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="创建时间" width="160">
+                    <template #default="{ row }">
+                        <span class="muted">{{ row.created_at?.slice(0, 16)?.replace('T', ' ') }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="88" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -180,153 +178,73 @@ async function saveOrder() {
             @update:per-page="onPerPageChange"
         />
 
-        <div v-if="editing" class="modal" @click.self="closeEdit">
-            <div class="modal__box" @click.stop>
-                <h2>订单 {{ editing.order_no }}</h2>
-                <p v-if="formErr" class="admin-modal-err">{{ formErr }}</p>
-                <p class="muted">金额 {{ editing.amount }} · 用户 {{ editing.user?.name }}</p>
-                <label class="field">
-                    <span>状态</span>
-                    <select v-model="form.status">
-                        <option v-for="o in orderStatusOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
-                    </select>
-                </label>
-                <label class="field"><span>备注</span><textarea v-model="form.remark" rows="2" /></label>
-                <label class="field"><span>支付方式</span><input v-model="form.payment_method" type="text" /></label>
-                <label class="field"><span>支付 ID</span><input v-model="form.payment_id" type="text" /></label>
-                <label class="field"><span>支付时间</span><input v-model="form.paid_at" type="datetime-local" /></label>
-                <div class="modal__btns">
-                    <button type="button" class="btn" @click="closeEdit">取消</button>
-                    <button type="button" class="btn btn--pri" @click="saveOrder">保存</button>
-                </div>
-            </div>
-        </div>
+        <el-dialog
+            v-model="dialogOpen"
+            :title="editing ? `订单 ${editing.order_no}` : ''"
+            width="520px"
+            destroy-on-close
+            align-center
+            @closed="
+                () => {
+                    editing = null;
+                    formErr = '';
+                }
+            "
+        >
+            <el-alert v-if="formErr && dialogOpen" type="error" :closable="false" show-icon class="mb-3" :title="formErr" />
+            <el-text v-if="editing" type="info" size="small" class="mb-3 block">
+                金额 {{ editing.amount }} · 用户 {{ editing.user?.name }}
+            </el-text>
+            <el-form v-if="editing" label-position="top">
+                <el-form-item label="状态">
+                    <el-select v-model="form.status" class="w-full">
+                        <el-option v-for="o in orderStatusOpts" :key="o.value" :label="o.label" :value="o.value" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="备注">
+                    <el-input v-model="form.remark" type="textarea" :rows="2" />
+                </el-form-item>
+                <el-form-item label="支付方式">
+                    <el-input v-model="form.payment_method" clearable />
+                </el-form-item>
+                <el-form-item label="支付 ID">
+                    <el-input v-model="form.payment_id" clearable />
+                </el-form-item>
+                <el-form-item label="支付时间">
+                    <el-input v-model="form.paid_at" type="datetime-local" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="closeEdit">取消</el-button>
+                <el-button type="primary" @click="saveOrder">保存</el-button>
+            </template>
+        </el-dialog>
     </AdminPageShell>
 </template>
 
 <style scoped>
-.search {
-    width: 100%;
-    max-width: 320px;
-    padding: 0.5rem 0.65rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    font-size: 0.95rem;
-}
-.tabs {
-    display: flex;
+.oc-order-tabs {
     flex-wrap: wrap;
-    gap: 0.35rem;
-    margin-bottom: 1rem;
+    margin-bottom: 12px;
 }
-.tab {
-    padding: 0.4rem 0.85rem;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    border-radius: 999px;
-    cursor: pointer;
-    font-size: 0.85rem;
+.oc-o-alert {
+    margin-bottom: 12px;
 }
-.tab.is-active {
-    background: #1e293b;
-    color: #fff;
-    border-color: #1e293b;
+.mb-3 {
+    margin-bottom: 12px;
 }
-.msg-err {
-    color: #b91c1c;
-}
-.msg-ok {
-    color: #166534;
-    margin-bottom: 0.5rem;
-}
-.link {
-    border: none;
-    background: none;
-    color: #2563eb;
-    cursor: pointer;
-    padding: 0;
-    font-size: 0.85rem;
-}
-.modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 80;
-    padding: 1rem;
-}
-.modal__box {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1.25rem;
-    width: 100%;
-    max-width: 420px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    margin-bottom: 0.65rem;
-    font-size: 0.85rem;
-}
-.field input,
-.field select,
-.field textarea {
-    padding: 0.45rem 0.5rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-}
-.modal__btns {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-.btn {
-    padding: 0.45rem 0.85rem;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-}
-.btn--pri {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-}
-.table th,
-.table td {
-    padding: 0.6rem 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid #e2e8f0;
-    vertical-align: top;
-}
-.table th {
-    background: #f8fafc;
-    font-weight: 600;
-    color: #475569;
-    white-space: nowrap;
+.block {
+    display: block;
 }
 .mono {
-    font-family: ui-monospace, monospace;
-    font-size: 0.8rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
 }
 .muted {
-    color: #64748b;
-    white-space: nowrap;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
 }
-.empty {
-    padding: 1.5rem;
-    color: #64748b;
-    margin: 0;
+.w-full {
+    width: 100%;
 }
 </style>

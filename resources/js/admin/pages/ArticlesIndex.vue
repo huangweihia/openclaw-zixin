@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import { ElMessageBox } from 'element-plus';
 import AdminPagination from '../components/AdminPagination.vue';
 import AdminPageShell from '../components/AdminPageShell.vue';
 import AdminCard from '../components/AdminCard.vue';
@@ -66,7 +67,13 @@ function onSearch() {
 }
 
 async function removeRow(id) {
-    if (!confirm('确定删除该文章？')) {
+    try {
+        await ElMessageBox.confirm('确定删除该文章？', '删除文章', {
+            type: 'warning',
+            confirmButtonText: '删除',
+            cancelButtonText: '取消',
+        });
+    } catch {
         return;
     }
     try {
@@ -86,53 +93,54 @@ function onPerPageChange(next) {
 <template>
     <AdminPageShell title="文章管理" lead="支持草稿/已发布筛选，支持搜索与分页。">
         <template #actions>
-            <button type="button" class="btn primary" @click="router.push({ name: 'article-create' })">新建文章</button>
+            <el-button type="primary" @click="router.push({ name: 'article-create' })">新建文章</el-button>
         </template>
         <template #toolbar>
-            <nav class="tabs">
-                <button type="button" class="tab" :class="{ on: publishedFilter === '' }" @click="setPublishedFilter('')">
-                    全部
-                </button>
-                <button type="button" class="tab" :class="{ on: publishedFilter === '1' }" @click="setPublishedFilter('1')">
-                    已发布
-                </button>
-                <button type="button" class="tab" :class="{ on: publishedFilter === '0' }" @click="setPublishedFilter('0')">
-                    草稿
-                </button>
-            </nav>
-            <input v-model="q" class="search" type="search" placeholder="标题 / slug / 摘要" @input="onSearch" />
+            <el-radio-group :model-value="publishedFilter" size="default" @update:model-value="setPublishedFilter">
+                <el-radio-button value="">全部</el-radio-button>
+                <el-radio-button value="1">已发布</el-radio-button>
+                <el-radio-button value="0">草稿</el-radio-button>
+            </el-radio-group>
+            <el-input
+                v-model="q"
+                clearable
+                placeholder="标题 / slug / 摘要"
+                style="width: min(360px, 100%)"
+                @input="onSearch"
+            />
         </template>
-        <p v-if="err" class="err">{{ err }}</p>
+        <el-alert v-if="err" type="error" :closable="false" show-icon class="oc-a-alert" :title="err" />
         <AdminCard>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>标题</th>
-                        <th>分类</th>
-                        <th>发布</th>
-                        <th>会员专享</th>
-                        <th />
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="a in rows" :key="a.id">
-                        <td>{{ a.id }}</td>
-                        <td>{{ a.title }}</td>
-                        <td>{{ a.category?.name || '—' }}</td>
-                        <td>{{ a.is_published ? '是' : '否' }}</td>
-                        <td>{{ a.is_vip ? '是' : '否' }}</td>
-                        <td class="actions">
-                            <button type="button" class="link" @click="router.push({ name: 'article-edit', params: { id: a.id } })">
-                                编辑
-                            </button>
-                            <a class="link" :href="`/articles/${a.slug}`" target="_blank" rel="noopener">前台</a>
-                            <button type="button" class="link danger" @click="removeRow(a.id)">删除</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="rows.length === 0" class="empty">暂无数据</p>
+            <el-table :data="rows" stripe border style="width: 100%" empty-text="暂无数据">
+                <el-table-column prop="id" label="ID" width="72" />
+                <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
+                <el-table-column label="分类" width="120" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        {{ row.category?.name || '—' }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="发布" width="88">
+                    <template #default="{ row }">
+                        <el-tag :type="row.is_published ? 'success' : 'info'" size="small">
+                            {{ row.is_published ? '是' : '否' }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="会员专享" width="100">
+                    <template #default="{ row }">
+                        {{ row.is_vip ? '是' : '否' }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="200" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="router.push({ name: 'article-edit', params: { id: row.id } })">
+                            编辑
+                        </el-button>
+                        <el-link type="primary" :href="`/articles/${row.slug}`" target="_blank" rel="noopener">前台</el-link>
+                        <el-button link type="danger" @click="removeRow(row.id)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -146,84 +154,7 @@ function onPerPageChange(next) {
 </template>
 
 <style scoped>
-.tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    margin: 0;
-}
-.tab {
-    padding: 0.4rem 0.85rem;
-    border-radius: 999px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-    font-size: 0.82rem;
-}
-.tab.on {
-    background: #1e293b;
-    color: #fff;
-    border-color: #1e293b;
-}
-.search {
-    width: 100%;
-    max-width: 360px;
-    padding: 0.5rem 0.65rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-}
-.err {
-    color: #b91c1c;
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.88rem;
-}
-.table th,
-.table td {
-    padding: 0.6rem 0.85rem;
-    text-align: left;
-    border-bottom: 1px solid #e2e8f0;
-}
-.table th {
-    background: #f8fafc;
-    font-weight: 600;
-    color: #475569;
-}
-.actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-.link {
-    background: none;
-    border: none;
-    color: #2563eb;
-    cursor: pointer;
-    padding: 0;
-    font-size: inherit;
-    text-decoration: none;
-}
-.link.danger {
-    color: #b91c1c;
-}
-.empty {
-    padding: 1.25rem;
-    color: #64748b;
-    margin: 0;
-}
-.btn {
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-.btn.primary {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
+.oc-a-alert {
+    margin-bottom: 12px;
 }
 </style>

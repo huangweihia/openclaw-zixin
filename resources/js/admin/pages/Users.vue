@@ -63,68 +63,67 @@ function onPerPageChange(next) {
 </script>
 
 <template>
-    <AdminPageShell title="用户管理" lead="支持按角色/状态筛选，点击编辑进入详细配置页。">
+    <AdminPageShell title="用户管理" lead="支持按角色/状态筛选，点击编辑进入详细配置页。" :loading="loading">
         <template #toolbar>
-            <input
+            <el-input
                 v-model="q"
-                type="search"
-                class="search"
+                clearable
                 placeholder="按邮箱或昵称搜索"
-                autocomplete="off"
+                style="width: 220px"
                 @input="onSearchInput"
             />
-            <select v-model="role" class="search" @change="load(1)">
-                <option value="">全部角色</option>
-                <option value="user">普通用户</option>
-                <option value="vip">VIP</option>
-                <option value="svip">SVIP</option>
-                <option value="admin">管理员</option>
-            </select>
-            <select v-model="isBanned" class="search" @change="load(1)">
-                <option value="">全部状态</option>
-                <option :value="'0'">正常</option>
-                <option :value="'1'">已禁用</option>
-            </select>
+            <el-select v-model="role" placeholder="全部角色" clearable style="width: 140px" @change="load(1)">
+                <el-option label="全部角色" value="" />
+                <el-option label="普通用户" value="user" />
+                <el-option label="VIP" value="vip" />
+                <el-option label="SVIP" value="svip" />
+                <el-option label="管理员" value="admin" />
+            </el-select>
+            <el-select v-model="isBanned" placeholder="全部状态" clearable style="width: 130px" @change="load(1)">
+                <el-option label="全部状态" value="" />
+                <el-option label="正常" value="0" />
+                <el-option label="已禁用" value="1" />
+            </el-select>
         </template>
-        <p v-if="loadErr" class="msg-err">{{ loadErr }}</p>
-        <AdminCard class="table-wrap">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>昵称</th>
-                        <th>邮箱</th>
-                        <th>角色</th>
-                        <th>积分</th>
-                        <th>会员到期</th>
-                        <th>企微</th>
-                        <th>状态</th>
-                        <th />
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="u in users" :key="u.id">
-                        <td>{{ u.id }}</td>
-                        <td>{{ u.name }}</td>
-                        <td>{{ u.email }}</td>
-                        <td>{{ enumLabel('userRole', u.role) }}</td>
-                        <td>{{ Number(u.points_balance || 0) }}</td>
-                        <td>{{ u.subscription_ends_at ? u.subscription_ends_at.slice(0, 10) : '—' }}</td>
-                        <td>
-                            <span v-if="u.enterprise_wechat_id" class="tag tag--ok">已授权</span>
-                            <span v-else class="tag tag--muted">未授权</span>
-                        </td>
-                        <td>
-                            <span v-if="u.is_banned" class="tag tag--bad">已禁用</span>
-                            <span v-else class="tag tag--ok">正常</span>
-                        </td>
-                        <td>
-                            <button type="button" class="link-btn" @click="goEdit(u.id)">编辑</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="!loading && users.length === 0" class="empty">暂无用户</p>
+        <el-alert v-if="loadErr" type="error" :closable="false" show-icon class="oc-u-alert" :title="loadErr" />
+        <AdminCard>
+            <el-table v-loading="loading" :data="users" stripe border style="width: 100%" empty-text="暂无用户">
+                <el-table-column prop="id" label="ID" width="72" />
+                <el-table-column prop="name" label="昵称" min-width="100" show-overflow-tooltip />
+                <el-table-column prop="email" label="邮箱" min-width="180" show-overflow-tooltip />
+                <el-table-column label="角色" width="100">
+                    <template #default="{ row }">
+                        {{ enumLabel('userRole', row.role) }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="积分" width="88">
+                    <template #default="{ row }">
+                        {{ Number(row.points_balance || 0) }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="会员到期" width="120">
+                    <template #default="{ row }">
+                        {{ row.subscription_ends_at ? row.subscription_ends_at.slice(0, 10) : '—' }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="企微" width="100">
+                    <template #default="{ row }">
+                        <el-tag v-if="row.enterprise_wechat_id" type="success" size="small">已授权</el-tag>
+                        <el-tag v-else type="info" size="small">未授权</el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="状态" width="100">
+                    <template #default="{ row }">
+                        <el-tag v-if="row.is_banned" type="danger" size="small">已禁用</el-tag>
+                        <el-tag v-else type="success" size="small">正常</el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="88" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="goEdit(row.id)">编辑</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -140,66 +139,7 @@ function onPerPageChange(next) {
 </template>
 
 <style scoped>
-.search {
-    min-width: 160px;
-    padding: 0.5rem 0.65rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 0.95rem;
-}
-.msg-err {
-    color: #b91c1c;
-}
-.table-wrap {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
-    overflow: auto;
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-}
-.table th,
-.table td {
-    padding: 0.65rem 1rem;
-    text-align: left;
-    border-bottom: 1px solid #e2e8f0;
-}
-.table th {
-    background: #f8fafc;
-    font-weight: 600;
-    color: #475569;
-}
-.link-btn {
-    background: none;
-    border: none;
-    color: #2563eb;
-    cursor: pointer;
-    padding: 0;
-    font-size: inherit;
-}
-.tag {
-    font-size: 0.75rem;
-    padding: 0.15rem 0.45rem;
-    border-radius: 4px;
-}
-.tag--ok {
-    background: #dcfce7;
-    color: #166534;
-}
-.tag--bad {
-    background: #fee2e2;
-    color: #991b1b;
-}
-.tag--muted {
-    background: #f1f5f9;
-    color: #64748b;
-}
-.empty {
-    padding: 1.5rem;
-    color: #64748b;
-    margin: 0;
+.oc-u-alert {
+    margin-bottom: 12px;
 }
 </style>
