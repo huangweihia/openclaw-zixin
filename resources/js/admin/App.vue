@@ -2,7 +2,8 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
-import { ADMIN_MENU, isMenuItemActive } from './constants/menu';
+import { isMenuItemActive } from './constants/menu';
+import { resolveAdminNavIcon } from './utils/navIcons';
 import { setAdminUser } from './permissions';
 // 注意：菜单权限过滤必须依赖响应式状态，否则登录后不会触发重算
 
@@ -11,6 +12,8 @@ const router = useRouter();
 const isLoginPage = computed(() => route.name === 'login');
 
 const adminUser = ref(null);
+/** @type {import('vue').Ref<Array<{ section: string, section_id: number, items: Array<{ key: string, to: string, label: string, icon?: string|null, perm: string, match?: string|null, external_url?: string|null }> }>>} */
+const sidebarMenu = ref([]);
 
 const pageTitle = computed(() => {
     const t = route.meta?.title;
@@ -18,8 +21,8 @@ const pageTitle = computed(() => {
 });
 
 const activeMenuIndex = computed(() => {
-    for (const block of ADMIN_MENU) {
-        for (const item of block.items) {
+    for (const block of sidebarMenu.value) {
+        for (const item of block.items || []) {
             if (isMenuItemActive(route.path, item)) {
                 return item.to;
             }
@@ -29,8 +32,8 @@ const activeMenuIndex = computed(() => {
 });
 
 const breadcrumbItems = computed(() => {
-    for (const block of ADMIN_MENU) {
-        for (const item of block.items) {
+    for (const block of sidebarMenu.value) {
+        for (const item of block.items || []) {
             if (isMenuItemActive(route.path, item)) {
                 return [block.section, item.label];
             }
@@ -40,27 +43,15 @@ const breadcrumbItems = computed(() => {
 });
 
 const activeMenuSection = computed(() => {
-    for (const block of filteredMenu.value) {
-        for (const item of block.items) {
+    for (const block of sidebarMenu.value) {
+        for (const item of block.items || []) {
             if (isMenuItemActive(route.path, item)) {
-                return block.section;
+                return `s-${block.section_id}`;
             }
         }
     }
-    return filteredMenu.value[0]?.section ?? '总览';
-});
-
-const filteredMenu = computed(() => {
-    const perms = Array.isArray(adminUser.value?.admin_permissions) ? adminUser.value.admin_permissions : [];
-    const hasPerm = (permKey) => {
-        if (!permKey) return true;
-        return perms.includes('*') || perms.includes(permKey);
-    };
-
-    return ADMIN_MENU.map((block) => {
-        const items = (block.items || []).filter((it) => !it.perm || hasPerm(it.perm));
-        return { ...block, items };
-    }).filter((b) => (b.items || []).length > 0);
+    const first = sidebarMenu.value[0];
+    return first ? `s-${first.section_id}` : 's-0';
 });
 
 const adminInitial = computed(() => {
@@ -78,32 +69,55 @@ const adminRoleText = computed(() => {
 });
 
 function onMenuSelect(key) {
-    // key is an absolute path like "/articles" or "/"
     if (!key) return;
-    router.push({ path: key });
+    const k = String(key);
+    if (k.startsWith('__ext:')) {
+        for (const block of sidebarMenu.value) {
+            for (const item of block.items || []) {
+                if (item.to === k && item.external_url) {
+                    window.open(item.external_url, '_blank', 'noopener,noreferrer');
+                    return;
+                }
+            }
+        }
+        return;
+    }
+    router.push({ path: k });
+}
+
+async function loadSidebarMenu() {
+    if (isLoginPage.value) {
+        sidebarMenu.value = [];
+        return;
+    }
+    try {
+        const { data } = await axios.get('/api/admin/nav-menu');
+        sidebarMenu.value = Array.isArray(data.menu) ? data.menu : [];
+    } catch {
+        sidebarMenu.value = [];
+    }
 }
 
 async function refreshMe() {
     if (isLoginPage.value) {
         adminUser.value = null;
         setAdminUser(null);
+        sidebarMenu.value = [];
         return;
     }
     try {
         const { data } = await axios.get('/api/admin/me');
         adminUser.value = data.user ?? null;
         setAdminUser(adminUser.value);
+        await loadSidebarMenu();
     } catch {
         adminUser.value = null;
         setAdminUser(null);
+        sidebarMenu.value = [];
     }
 }
 
 watch(isLoginPage, () => refreshMe(), { immediate: true });
-
-function itemClass(item) {
-    return { 'is-active': isMenuItemActive(route.path, item) };
-}
 
 async function logout() {
     try {
@@ -115,6 +129,7 @@ async function logout() {
     }
     adminUser.value = null;
     setAdminUser(null);
+    sidebarMenu.value = [];
     router.replace({ name: 'login', query: { force: '1' } });
 }
 </script>
@@ -134,29 +149,33 @@ async function logout() {
             </div>
             <el-scrollbar class="admin-menu-scroll">
                 <el-menu
+                    :key="activeMenuSection"
                     class="admin-el-menu"
                     :default-active="activeMenuIndex"
                     :default-openeds="[activeMenuSection]"
                     unique-opened
-                    background-color="#001529"
+                    background-color="transparent"
                     text-color="#b4c0cc"
                     active-text-color="#ffffff"
                     @select="onMenuSelect"
                 >
                     <el-sub-menu
-                        v-for="block in filteredMenu"
-                        :key="block.section"
-                        :index="block.section"
+                        v-for="block in sidebarMenu"
+                        :key="'sec-' + block.section_id"
+                        :index="'s-' + block.section_id"
                     >
                         <template #title>
                             <span class="menu-block__title-text">{{ block.section }}</span>
                         </template>
                         <el-menu-item
                             v-for="item in block.items"
-                            :key="item.to + item.label"
+                            :key="item.key + '-' + item.to"
                             :index="item.to"
                         >
-                            <span class="menu-item__icon">{{ item.icon }}</span>
+                            <el-icon v-if="resolveAdminNavIcon(item.icon)" class="menu-item__icon-el">
+                                <component :is="resolveAdminNavIcon(item.icon)" />
+                            </el-icon>
+                            <span v-else class="menu-item__icon menu-item__icon--emoji">{{ item.icon || '·' }}</span>
                             <span class="menu-item__text">{{ item.label }}</span>
                         </el-menu-item>
                     </el-sub-menu>
@@ -258,8 +277,26 @@ async function logout() {
 
 .admin-el-menu {
     border-right: none;
-    background-color: #001529;
+    background-color: transparent !important;
     min-height: 100%;
+    --el-menu-bg-color: transparent;
+    --el-menu-hover-bg-color: rgba(255, 255, 255, 0.06);
+    --el-menu-active-color: #ffffff;
+}
+
+.menu-item__icon-el {
+    margin-right: 8px;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.menu-item__icon--emoji {
+    width: 22px;
+    margin-right: 8px;
+    display: inline-flex;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
 }
 
 .menu-block__title-text {

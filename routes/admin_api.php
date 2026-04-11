@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\AdminNavConfigController;
+use App\Http\Controllers\Api\Admin\AdminNavSidebarController;
+use App\Http\Controllers\Api\Admin\AdminRoleController;
 use App\Http\Controllers\Api\Admin\AdSlotController;
 use App\Http\Controllers\Api\Admin\AiToolMonetizationController;
 use App\Http\Controllers\Api\Admin\AnnouncementController;
@@ -42,6 +45,7 @@ Route::post('login', [AuthController::class, 'login']);
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('me', [AuthController::class, 'me']);
+    Route::get('nav-menu', AdminNavSidebarController::class);
     Route::get('dashboard/stats', [DashboardController::class, 'stats'])->middleware('perm:admin:dashboard:read');
     Route::post('uploads/image', [UploadController::class, 'image']);
     Route::middleware('perm:admin:moderation:read')->group(function () {
@@ -241,4 +245,27 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('subscriptions', [SubscriptionController::class, 'index'])->middleware('perm:admin:subscriptions:read');
     Route::get('view-histories', [ViewHistoryAdminController::class, 'index'])->middleware('perm:admin:view-histories:read');
     Route::get('svip-custom-subscriptions', [SvipCustomSubscriptionAdminController::class, 'index'])->middleware('perm:admin:svip-custom-subscriptions:read');
+
+    Route::middleware('perm:admin:roles:read')->group(function () {
+        Route::get('admin-roles', [AdminRoleController::class, 'index']);
+        Route::get('admin-roles/form-options', [AdminRoleController::class, 'formOptions']);
+        Route::get('admin-roles/{adminRole}', [AdminRoleController::class, 'show']);
+    });
+    Route::middleware('perm:admin:roles:write')->group(function () {
+        Route::post('admin-roles', [AdminRoleController::class, 'store']);
+        Route::put('admin-roles/{adminRole}', [AdminRoleController::class, 'update']);
+        Route::delete('admin-roles/{adminRole}', [AdminRoleController::class, 'destroy']);
+    });
+
+    Route::middleware('perm:admin:menus:read')->group(function () {
+        Route::get('nav-config', [AdminNavConfigController::class, 'index']);
+    });
+    Route::middleware('perm:admin:menus:write')->group(function () {
+        Route::post('nav-config/sections', [AdminNavConfigController::class, 'storeSection']);
+        Route::put('nav-config/sections/{adminNavSection}', [AdminNavConfigController::class, 'updateSection']);
+        Route::delete('nav-config/sections/{adminNavSection}', [AdminNavConfigController::class, 'destroySection']);
+        Route::post('nav-config/items', [AdminNavConfigController::class, 'storeItem']);
+        Route::put('nav-config/items/{adminNavItem}', [AdminNavConfigController::class, 'updateItem']);
+        Route::delete('nav-config/items/{adminNavItem}', [AdminNavConfigController::class, 'destroyItem']);
+    });
 });

@@ -13,7 +13,7 @@ const rows = ref([]);
 const meta = ref(null);
 const total = ref(0);
 const err = ref('');
-const msg = ref('');
+const dialogOpen = ref(false);
 const editing = ref(null);
 const form = ref({
     status: 'pending',
@@ -46,6 +46,7 @@ async function load(page = 1) {
 watch(status, () => load(1));
 
 function closeEdit() {
+    dialogOpen.value = false;
     editing.value = null;
     err.value = '';
 }
@@ -59,6 +60,7 @@ function openEdit(r) {
         suggest: r.suggest || '',
         priority: r.priority ?? 0,
     };
+    dialogOpen.value = true;
 }
 
 async function save() {
@@ -70,8 +72,7 @@ async function save() {
             suggest: form.value.suggest || null,
             priority: Number(form.value.priority) || 0,
         });
-        msg.value = '已更新';
-        editing.value = null;
+        closeEdit();
         await load(meta.value?.current_page ?? 1);
     } catch {
         err.value = '保存失败';
@@ -84,43 +85,37 @@ onMounted(() => load(1));
 <template>
     <AdminPageShell title="发布审核记录" lead="表 publish_audits（与投稿审核配合，可手工纠偏）。">
         <template #toolbar>
-            <nav class="tabs">
-                <button
-                    v-for="t in tabs"
-                    :key="t.value || 'a'"
-                    type="button"
-                    class="tab"
-                    :class="{ on: status === t.value }"
-                    @click="status = t.value"
-                >
+            <el-radio-group v-model="status" size="default">
+                <el-radio-button v-for="t in tabs" :key="t.value || 'all'" :value="t.value">
                     {{ t.label }}
-                </button>
-            </nav>
+                </el-radio-button>
+            </el-radio-group>
         </template>
-        <p v-if="msg" class="ok">{{ msg }}</p>
-        <p v-if="err && !editing" class="bad">{{ err }}</p>
+        <el-alert v-if="err && !dialogOpen" type="error" :closable="false" show-icon class="oc-pa-alert" :title="err" />
         <AdminCard>
-            <table class="tbl">
-                <thead>
-                    <tr>
-                        <th>投稿</th>
-                        <th>用户</th>
-                        <th>状态</th>
-                        <th>优先级</th>
-                        <th />
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="r in rows" :key="r.id">
-                        <td>{{ r.user_post?.title || `#${r.publish_id}` }}</td>
-                        <td>{{ r.user?.name }}</td>
-                        <td>{{ enumLabel('publishAuditStatus', r.status) }}</td>
-                        <td>{{ r.priority }}</td>
-                        <td><button type="button" class="lnk" @click="openEdit(r)">编辑</button></td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="rows.length === 0" class="empty">暂无</p>
+            <el-table :data="rows" stripe border style="width: 100%" empty-text="暂无">
+                <el-table-column label="投稿" min-width="200" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        {{ row.user_post?.title || `#${row.publish_id}` }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="用户" width="120" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        {{ row.user?.name || '—' }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="状态" width="100">
+                    <template #default="{ row }">
+                        {{ enumLabel('publishAuditStatus', row.status) }}
+                    </template>
+                </el-table-column>
+                <el-table-column prop="priority" label="优先级" width="88" />
+                <el-table-column label="操作" width="100" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -129,128 +124,58 @@ onMounted(() => load(1));
             :total="total"
             @update:page="load"
         />
-        <div v-if="editing" class="modal" @click.self="closeEdit">
-            <div class="modal__box" @click.stop>
-                <h2>审核记录 #{{ editing.id }}</h2>
-                <p v-if="err" class="admin-modal-err">{{ err }}</p>
-                <label class="fld">
-                    <span>状态</span>
-                    <select v-model="form.status">
-                        <option v-for="o in publishAuditStatusOpts" :key="o.value" :value="o.value">{{ o.label }}</option>
-                    </select>
-                </label>
-                <label class="fld"><span>优先级</span><input v-model.number="form.priority" type="number" /></label>
-                <label class="fld"><span>拒绝原因</span><textarea v-model="form.reject_reason" rows="2" /></label>
-                <label class="fld"><span>修改建议</span><textarea v-model="form.suggest" rows="2" /></label>
-                <div class="modal__btns">
-                    <button type="button" class="btn" @click="closeEdit">取消</button>
-                    <button type="button" class="btn btn--pri" @click="save">保存</button>
-                </div>
-            </div>
-        </div>
+
+        <el-dialog
+            v-model="dialogOpen"
+            :title="editing ? `审核记录 #${editing.id}` : ''"
+            width="480px"
+            destroy-on-close
+            align-center
+            @closed="
+                () => {
+                    editing = null;
+                    err = '';
+                }
+            "
+        >
+            <el-alert v-if="err && dialogOpen" type="error" :closable="false" show-icon class="mb-3" :title="err" />
+            <el-form v-if="editing" label-position="top">
+                <el-form-item label="状态">
+                    <el-select v-model="form.status" class="w-full" placeholder="状态">
+                        <el-option
+                            v-for="o in publishAuditStatusOpts"
+                            :key="o.value"
+                            :label="o.label"
+                            :value="o.value"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="优先级">
+                    <el-input-number v-model="form.priority" :min="0" :step="1" controls-position="right" class="w-full" />
+                </el-form-item>
+                <el-form-item label="拒绝原因">
+                    <el-input v-model="form.reject_reason" type="textarea" :rows="2" />
+                </el-form-item>
+                <el-form-item label="修改建议">
+                    <el-input v-model="form.suggest" type="textarea" :rows="2" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="closeEdit">取消</el-button>
+                <el-button type="primary" @click="save">保存</el-button>
+            </template>
+        </el-dialog>
     </AdminPageShell>
 </template>
 
 <style scoped>
-.tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    margin-bottom: 0;
+.oc-pa-alert {
+    margin-bottom: 12px;
 }
-.tab {
-    padding: 0.35rem 0.75rem;
-    border-radius: 999px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-    font-size: 0.8rem;
+.mb-3 {
+    margin-bottom: 12px;
 }
-.tab.on {
-    background: #1e293b;
-    color: #fff;
-    border-color: #1e293b;
-}
-.ok {
-    color: #166534;
-}
-.bad {
-    color: #b91c1c;
-}
-.tbl {
+.w-full {
     width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-}
-.tbl th,
-.tbl td {
-    padding: 0.5rem 0.65rem;
-    border-bottom: 1px solid #f1f5f9;
-    text-align: left;
-}
-.tbl th {
-    background: #f8fafc;
-    font-weight: 600;
-}
-.lnk {
-    border: none;
-    background: none;
-    color: #2563eb;
-    cursor: pointer;
-    padding: 0;
-}
-.empty {
-    padding: 1rem;
-    color: #94a3b8;
-    margin: 0;
-}
-.modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 80;
-    padding: 1rem;
-}
-.modal__box {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1.25rem;
-    width: 100%;
-    max-width: 420px;
-}
-.fld {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    margin-bottom: 0.65rem;
-    font-size: 0.85rem;
-}
-.fld input,
-.fld select,
-.fld textarea {
-    padding: 0.45rem 0.5rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-}
-.modal__btns {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-}
-.btn {
-    padding: 0.45rem 0.85rem;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-}
-.btn--pri {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
 }
 </style>

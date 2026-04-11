@@ -71,7 +71,25 @@ class AdminBootstrapSeeder extends Seeder
                 );
             }
 
-            $superRole->permissions()->syncWithoutDetaching([$allPermission->id]);
+            $rolesWrite = AdminPermission::query()->updateOrCreate(
+                ['key' => 'admin:roles:write'],
+                [
+                    'module' => 'roles',
+                    'action' => 'write',
+                    'description' => '创建/编辑/删除后台角色与菜单配置',
+                ]
+            );
+
+            $menusWrite = AdminPermission::query()->updateOrCreate(
+                ['key' => 'admin:menus:write'],
+                [
+                    'module' => 'menus',
+                    'action' => 'write',
+                    'description' => '编辑后台侧边栏分组与菜单项',
+                ]
+            );
+
+            $superRole->permissions()->syncWithoutDetaching([$allPermission->id, $rolesWrite->id, $menusWrite->id]);
             $admin->adminRoles()->syncWithoutDetaching([$superRole->id]);
         }
 
@@ -141,6 +159,8 @@ class AdminBootstrapSeeder extends Seeder
             'admin:shared-components:read',
             'admin:audit-logs:read',
             'admin:publish-audits:read',
+            'admin:roles:read',
+            'admin:menus:read',
         ];
     }
 }

@@ -34,34 +34,30 @@ onMounted(() => load(1));
 <template>
     <AdminPageShell title="操作审计" lead="数据表 audit_logs（只读）。">
         <template #toolbar>
-            <label class="filt">
-                操作类型筛选
-                <input v-model="action" type="text" placeholder="如 update、create" />
-            </label>
+            <span class="oc-audit-filter-label">操作类型筛选</span>
+            <el-input v-model="action" clearable placeholder="如 update、create" style="width: 200px" />
         </template>
-        <p v-if="err" class="bad">{{ err }}</p>
+        <el-alert v-if="err" type="error" :closable="false" show-icon class="oc-audit-alert" :title="err" />
         <AdminCard>
-            <table class="tbl">
-                <thead>
-                    <tr>
-                        <th>时间</th>
-                        <th>用户</th>
-                        <th>操作</th>
-                        <th>模型</th>
-                        <th>ID</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="r in rows" :key="r.id">
-                        <td class="mono">{{ r.created_at?.replace('T', ' ')?.slice(0, 19) }}</td>
-                        <td>{{ r.user?.name || '—' }}</td>
-                        <td>{{ enumLabel('auditAction', r.action) }}</td>
-                        <td class="small">{{ r.model_type }}</td>
-                        <td>{{ r.model_id }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="rows.length === 0" class="empty">暂无</p>
+            <el-table :data="rows" stripe border style="width: 100%" empty-text="暂无">
+                <el-table-column label="时间" width="168">
+                    <template #default="{ row }">
+                        <span class="mono">{{ row.created_at?.replace('T', ' ')?.slice(0, 19) }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="用户" min-width="120" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        {{ row.user?.name || '—' }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="120">
+                    <template #default="{ row }">
+                        {{ enumLabel('auditAction', row.action) }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="模型" min-width="160" show-overflow-tooltip prop="model_type" />
+                <el-table-column prop="model_id" label="ID" width="88" />
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -74,51 +70,16 @@ onMounted(() => load(1));
 </template>
 
 <style scoped>
-.filt {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0;
-    font-size: 0.85rem;
+.oc-audit-filter-label {
+    font-size: 13px;
+    color: var(--el-text-color-regular);
 }
-.filt input {
-    padding: 0.35rem 0.5rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    width: 10rem;
-}
-.bad {
-    color: #b91c1c;
-}
-.tbl {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.8rem;
-}
-.tbl th,
-.tbl td {
-    padding: 0.45rem 0.55rem;
-    border-bottom: 1px solid #f1f5f9;
-    text-align: left;
-    vertical-align: top;
-}
-.tbl th {
-    background: #f8fafc;
-    font-weight: 600;
+.oc-audit-alert {
+    margin-bottom: 12px;
 }
 .mono {
-    font-family: ui-monospace, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
     white-space: nowrap;
-}
-.small {
-    max-width: 140px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.empty {
-    padding: 1rem;
-    color: #94a3b8;
-    margin: 0;
 }
 </style>

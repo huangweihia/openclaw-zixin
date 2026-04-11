@@ -45,45 +45,38 @@ function onFilter() {
 </script>
 
 <template>
-    <AdminPageShell title="积分流水" lead="表 points，含注册赠送等入账记录。">
+    <AdminPageShell title="积分流水" lead="表 points，含注册赠送等入账记录。" :loading="loading">
         <template #toolbar>
-            <div class="toolbar">
-                <input v-model="userId" type="search" class="search" placeholder="按用户 ID 筛选" @keyup.enter="onFilter" />
-                <button type="button" class="btn" @click="onFilter">筛选</button>
-            </div>
+            <el-input
+                v-model="userId"
+                clearable
+                placeholder="按用户 ID 筛选"
+                style="width: 200px"
+                @keyup.enter="onFilter"
+            />
+            <el-button type="primary" @click="onFilter">筛选</el-button>
         </template>
-        <p v-if="loadErr" class="msg-err">{{ loadErr }}</p>
-        <AdminCard class="table-wrap">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>用户</th>
-                        <th>变动</th>
-                        <th>余额</th>
-                        <th>类型</th>
-                        <th>分类</th>
-                        <th>说明</th>
-                        <th>时间</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="r in rows" :key="r.id">
-                        <td>{{ r.id }}</td>
-                        <td>
-                            <span v-if="r.user">{{ r.user.name }} · {{ r.user.email }}</span>
-                            <span v-else>—</span>
-                        </td>
-                        <td>{{ r.amount }}</td>
-                        <td>{{ r.balance }}</td>
-                        <td>{{ r.type }}</td>
-                        <td>{{ r.category }}</td>
-                        <td class="desc">{{ r.description }}</td>
-                        <td class="mono sm">{{ r.created_at }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="!loading && rows.length === 0" class="empty">暂无流水</p>
+        <el-alert v-if="loadErr" type="error" :closable="false" show-icon class="oc-pl-alert" :title="loadErr" />
+        <AdminCard>
+            <el-table :data="rows" stripe border style="width: 100%" empty-text="暂无流水">
+                <el-table-column prop="id" label="ID" width="72" />
+                <el-table-column label="用户" min-width="200" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <template v-if="row.user">{{ row.user.name }} · {{ row.user.email }}</template>
+                        <template v-else>—</template>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="amount" label="变动" width="100" />
+                <el-table-column prop="balance" label="余额" width="100" />
+                <el-table-column prop="type" label="类型" width="120" />
+                <el-table-column prop="category" label="分类" width="120" />
+                <el-table-column prop="description" label="说明" min-width="160" show-overflow-tooltip />
+                <el-table-column label="时间" width="168">
+                    <template #default="{ row }">
+                        <span class="mono">{{ row.created_at }}</span>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -97,80 +90,11 @@ function onFilter() {
 </template>
 
 <style scoped>
-.page-title {
-    margin: 0 0 0.35rem;
-    font-size: 1.5rem;
-}
-.lead {
-    margin: 0 0 1rem;
-    font-size: 0.88rem;
-    color: #64748b;
-}
-.lead code {
-    font-size: 0.85em;
-    background: #e2e8f0;
-    padding: 0.1rem 0.35rem;
-    border-radius: 4px;
-}
-.toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-.search {
-    width: 100%;
-    max-width: 220px;
-    padding: 0.5rem 0.65rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-}
-.btn {
-    padding: 0.5rem 0.85rem;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-}
-.msg-err {
-    color: #b91c1c;
-}
-.table-wrap {
-    background: #fff;
-    border-radius: 10px;
-    overflow: auto;
-    border: 1px solid #e2e8f0;
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-}
-.table th,
-.table td {
-    padding: 0.55rem 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid #f1f5f9;
-    vertical-align: top;
-}
-.table th {
-    background: #f8fafc;
-    font-weight: 600;
-}
-.desc {
-    max-width: 240px;
-    word-break: break-word;
+.oc-pl-alert {
+    margin-bottom: 12px;
 }
 .mono {
-    font-family: ui-monospace, monospace;
-    white-space: nowrap;
-}
-.sm {
-    font-size: 0.78rem;
-}
-.empty {
-    padding: 1.25rem;
-    color: #94a3b8;
-    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
 }
 </style>

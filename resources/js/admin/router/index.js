@@ -40,8 +40,11 @@ import PublishAuditsIndex from '../pages/PublishAuditsIndex.vue';
 import SharedComponentsShowcase from '../pages/SharedComponentsShowcase.vue';
 import OpenclawTaskLogsIndex from '../pages/OpenclawTaskLogsIndex.vue';
 import PersonalityQuizOps from '../pages/PersonalityQuizOps.vue';
+import AdminRolesIndex from '../pages/AdminRolesIndex.vue';
+import AdminNavMenusIndex from '../pages/AdminNavMenusIndex.vue';
+import { setAdminUser, can } from '../permissions';
 
-const auth = (title) => ({ auth: true, title });
+const auth = (title, perm = null) => ({ auth: true, title, ...(perm ? { perm } : {}) });
 
 export function createAdminRouter(base) {
     const router = createRouter({
@@ -133,6 +136,18 @@ export function createAdminRouter(base) {
                 meta: auth('公共组件'),
             },
             { path: '/personality-quiz', name: 'personality-quiz', component: PersonalityQuizOps, meta: auth('SBTI 配置') },
+            {
+                path: '/admin-roles',
+                name: 'admin-roles',
+                component: AdminRolesIndex,
+                meta: auth('角色与菜单', 'admin:roles:read'),
+            },
+            {
+                path: '/nav-menus',
+                name: 'nav-menus',
+                component: AdminNavMenusIndex,
+                meta: auth('菜单与导航', 'admin:menus:read'),
+            },
         ],
     });
 
@@ -156,9 +171,16 @@ export function createAdminRouter(base) {
         }
         if (needsAuth) {
             try {
-                await axios.get('/api/admin/me');
+                const { data } = await axios.get('/api/admin/me');
+                setAdminUser(data.user ?? null);
+                const needPerm = [...to.matched].reverse().find((r) => r.meta?.perm)?.meta?.perm;
+                if (needPerm && !can(needPerm)) {
+                    next({ name: 'dashboard' });
+                    return;
+                }
                 next();
             } catch {
+                setAdminUser(null);
                 next({ name: 'login', query: { redirect: to.fullPath } });
             }
             return;

@@ -28,31 +28,32 @@ onMounted(() => load(1));
 
 <template>
     <AdminPageShell title="会员订阅记录" lead="subscriptions 表联 users。">
-        <p v-if="err" class="err">{{ err }}</p>
+        <el-alert v-if="err" type="error" :closable="false" show-icon class="oc-sub-alert" :title="err" />
         <AdminCard>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>用户</th>
-                        <th>套餐</th>
-                        <th>金额</th>
-                        <th>状态</th>
-                        <th>到期</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="r in rows" :key="r.id">
-                        <td>{{ r.id }}</td>
-                        <td>{{ r.user_name }}（{{ r.user_email }}）</td>
-                        <td>{{ enumLabel('subscriptionPlan', r.plan) }}</td>
-                        <td>{{ r.amount }}</td>
-                        <td>{{ enumLabel('subscriptionStatus', r.status) }}</td>
-                        <td class="muted">{{ r.expires_at?.slice(0, 10) || '—' }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="rows.length === 0" class="empty">暂无订阅记录</p>
+            <el-table :data="rows" stripe border style="width: 100%" empty-text="暂无订阅记录">
+                <el-table-column prop="id" label="ID" width="72" />
+                <el-table-column label="用户" min-width="200" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        {{ row.user_name }}（{{ row.user_email }}）
+                    </template>
+                </el-table-column>
+                <el-table-column label="套餐" width="120">
+                    <template #default="{ row }">
+                        {{ enumLabel('subscriptionPlan', row.plan) }}
+                    </template>
+                </el-table-column>
+                <el-table-column prop="amount" label="金额" width="100" />
+                <el-table-column label="状态" width="120">
+                    <template #default="{ row }">
+                        {{ enumLabel('subscriptionStatus', row.status) }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="到期" width="120">
+                    <template #default="{ row }">
+                        <span class="muted">{{ row.expires_at?.slice(0, 10) || '—' }}</span>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -65,46 +66,11 @@ onMounted(() => load(1));
 </template>
 
 <style scoped>
-.page-title {
-    margin: 0 0 0.35rem;
-    font-size: 1.5rem;
-}
-.lead {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
-    color: #64748b;
-}
-.err {
-    color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    overflow: auto;
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.82rem;
-}
-.table th,
-.table td {
-    padding: 0.5rem 0.65rem;
-    text-align: left;
-    border-bottom: 1px solid #f1f5f9;
-}
-.table th {
-    background: #f8fafc;
-    font-weight: 600;
+.oc-sub-alert {
+    margin-bottom: 12px;
 }
 .muted {
-    color: #64748b;
+    color: var(--el-text-color-secondary);
     white-space: nowrap;
-}
-.empty {
-    padding: 1rem;
-    color: #94a3b8;
-    margin: 0;
 }
 </style>

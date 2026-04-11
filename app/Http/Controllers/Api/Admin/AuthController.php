@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AdminUser;
 use App\Models\User;
+use App\Services\AdminMenuVisibility;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -117,6 +118,11 @@ class AuthController extends Controller
             $adminPermissions = ['*'];
         }
 
+        $adminMenuKeyWhitelist = AdminMenuVisibility::menuKeyWhitelistForUser($user);
+        if ($adminProfile?->is_super) {
+            $adminMenuKeyWhitelist = null;
+        }
+
         return [
             'id' => $user->id,
             'name' => $user->name,
@@ -132,6 +138,7 @@ class AuthController extends Controller
                 : null,
             'admin_roles' => $adminRoles,
             'admin_permissions' => $adminPermissions,
+            'admin_menu_key_whitelist' => $adminMenuKeyWhitelist,
         ];
     }
 }

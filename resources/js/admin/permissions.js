@@ -25,6 +25,18 @@ export function can(permissionKey) {
         return true;
     }
 
-    return perms.includes(permissionKey);
+    if (perms.includes(permissionKey)) {
+        return true;
+    }
+
+    const parts = permissionKey.split(':');
+    const mod = parts[1];
+    if (mod) {
+        if (perms.includes(`admin:${mod}:*`) || perms.includes(`admin:${mod}`)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 

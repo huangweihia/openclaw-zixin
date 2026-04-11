@@ -34,43 +34,37 @@ onMounted(() => load(1));
 <template>
     <AdminPageShell title="浏览历史（全站）" lead="对齐功能清单 26：后台可审计 view_histories，与前台「我的浏览」同源数据。">
         <template #toolbar>
-            <div class="toolbar">
-            <input
+            <el-input
                 v-model="userId"
-                type="search"
-                class="search"
+                clearable
                 placeholder="按 user_id 筛选"
+                style="width: 200px"
                 @change="load(1)"
             />
-            <button type="button" class="btn" @click="load(1)">筛选</button>
-            </div>
+            <el-button type="primary" @click="load(1)">筛选</el-button>
         </template>
-        <p v-if="err" class="err">{{ err }}</p>
+        <el-alert v-if="err" type="error" :closable="false" show-icon class="oc-vh-alert" :title="err" />
         <AdminCard>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>用户</th>
-                        <th>类型</th>
-                        <th>对象 ID</th>
-                        <th>浏览时间</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="r in rows" :key="r.id">
-                        <td>{{ r.id }}</td>
-                        <td>
-                            <template v-if="r.user"> {{ r.user.name }}（{{ r.user.email }}） </template>
-                            <template v-else>—</template>
-                        </td>
-                        <td class="mono">{{ r.viewable_type?.split('\\').pop() }}</td>
-                        <td>{{ r.viewable_id }}</td>
-                        <td class="muted">{{ r.viewed_at?.replace('T', ' ').slice(0, 19) }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <p v-if="rows.length === 0" class="empty">暂无记录</p>
+            <el-table :data="rows" stripe border style="width: 100%" empty-text="暂无记录">
+                <el-table-column prop="id" label="ID" width="72" />
+                <el-table-column label="用户" min-width="200" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <template v-if="row.user">{{ row.user.name }}（{{ row.user.email }}）</template>
+                        <template v-else>—</template>
+                    </template>
+                </el-table-column>
+                <el-table-column label="类型" min-width="140" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <span class="mono">{{ row.viewable_type?.split('\\').pop() }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="viewable_id" label="对象 ID" width="100" />
+                <el-table-column label="浏览时间" width="168">
+                    <template #default="{ row }">
+                        <span class="muted">{{ row.viewed_at?.replace('T', ' ').slice(0, 19) }}</span>
+                    </template>
+                </el-table-column>
+            </el-table>
         </AdminCard>
         <AdminPagination
             v-if="meta"
@@ -83,69 +77,15 @@ onMounted(() => load(1));
 </template>
 
 <style scoped>
-.page-title {
-    margin: 0 0 0.35rem;
-    font-size: 1.5rem;
-}
-.lead {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
-    color: #64748b;
-}
-.toolbar {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
-}
-.search {
-    padding: 0.45rem 0.55rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    width: 200px;
-}
-.btn {
-    padding: 0.45rem 0.75rem;
-    border-radius: 6px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    cursor: pointer;
-}
-.err {
-    color: #b91c1c;
-}
-.card {
-    background: #fff;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    overflow: auto;
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.82rem;
-}
-.table th,
-.table td {
-    padding: 0.5rem 0.65rem;
-    text-align: left;
-    border-bottom: 1px solid #f1f5f9;
-}
-.table th {
-    background: #f8fafc;
-    font-weight: 600;
+.oc-vh-alert {
+    margin-bottom: 12px;
 }
 .mono {
-    font-family: ui-monospace, monospace;
-    font-size: 0.78rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
 }
 .muted {
-    color: #64748b;
+    color: var(--el-text-color-secondary);
     white-space: nowrap;
-}
-.empty {
-    padding: 1rem;
-    color: #94a3b8;
-    margin: 0;
 }
 </style>

@@ -71,6 +71,30 @@ class AdminRoutesTest extends TestCase
         $this->getJson('/api/admin/users')->assertOk()->assertJsonStructure(['data', 'current_page']);
     }
 
+    public function test_admin_roles_list_and_form_options_ok_for_admin(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin);
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+
+        $this->getJson('/api/admin/admin-roles')->assertOk()->assertJsonStructure(['roles']);
+        $this->getJson('/api/admin/admin-roles/form-options')
+            ->assertOk()
+            ->assertJsonStructure(['menu_catalog', 'all_permissions']);
+    }
+
+    public function test_admin_nav_menu_and_nav_config_ok_for_admin(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin);
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+
+        $this->getJson('/api/admin/nav-menu')->assertOk()->assertJsonStructure(['menu']);
+        $this->getJson('/api/admin/nav-config')->assertOk()->assertJsonStructure(['sections']);
+    }
+
     public function test_admin_upload_image_returns_public_url(): void
     {
         Storage::fake('public');
