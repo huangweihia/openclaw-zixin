@@ -67,6 +67,14 @@ docker compose -f docker-compose.server.yml exec -T php php -m | grep intl
 
 不换源、网络又差时，**仅 `apt-get update` 就可能要十几分钟**，与是否 Docker 无关。
 
+## 登录页能打开，点登录报 405：POST admin/login 不允许
+
+Filament 登录由 **Livewire** 处理，正常提交应请求 **`/livewire/update`**，而不是传统表单 POST 到 `/admin/login`。若出现 405：
+
+1. 在服务器执行 **`php artisan route:clear`**（不要用 `route:cache`；本仓库 `server-update.sh` 已改为 `route:clear`）。
+2. 浏览器 **强制刷新**（Ctrl+F5）或清缓存；开发者工具 Network 里确认 **`livewire.js`**、**`livewire/update`** 无 404/被拦截。
+3. 若站点的 **HTTPS / 域名** 与 `.env` 里 `APP_URL` 不一致，修正后执行 `php artisan config:clear` 再试。
+
 ### 方式 B：用仓库里的 Dockerfile 重建镜像（日常不要加 `--no-cache`）
 
 `git pull` 后执行（**默认不要** `--no-cache`，否则会强制整镜像重跑 apt，非常慢；仅怀疑构建缓存损坏时再临时加）：
