@@ -27,7 +27,7 @@ class AdminPanelProvider extends PanelProvider
 {
     public function boot(): void
     {
-        parent::boot();
+        // Filament v3 的 PanelProvider 未声明 boot()，勿调用 parent::boot()。
 
         Filament::serving(function (): void {
             Field::configureUsing(function (Field $field): void {
