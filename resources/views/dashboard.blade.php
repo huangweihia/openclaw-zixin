@@ -20,8 +20,9 @@
             class="w-full lg:sticky lg:top-20 oc-surface p-4"
             style="width: var(--ocDashLeft); max-width: 520px;"
         >
-            <h3 class="text-sm font-bold oc-heading mb-3">快捷菜单</h3>
+            <h3 class="text-sm font-bold oc-heading mb-3">个人中心</h3>
             <nav class="space-y-1" aria-label="个人中心菜单">
+                <p class="text-[11px] font-semibold uppercase tracking-wide oc-muted mb-1 px-1">常用</p>
                 <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm font-semibold oc-heading" data-tab="profile" style="background: rgba(148,163,184,.12);">
                     个人资料
                 </button>
@@ -31,39 +32,28 @@
                 <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="timeline">
                     最近动态
                 </button>
+                <p class="text-[11px] font-semibold uppercase tracking-wide oc-muted mb-1 mt-3 px-1">快捷入口</p>
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="posts">
+                    📝 我的发布
+                </button>
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="favorites">
+                    ⭐ 我的收藏
+                </button>
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="history">
+                    👣 浏览历史
+                </button>
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="comments">
+                    💬 我的评论
+                </button>
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="orders">
+                    💳 我的订单
+                </button>
+                @if ($u->role === 'svip' || $u->isAdmin())
+                    <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="svip">
+                        ✨ SVIP 定制
+                    </button>
+                @endif
             </nav>
-
-            <div class="mt-5 pt-4 border-t oc-border">
-                <h4 class="text-xs font-bold oc-heading mb-3">快捷入口</h4>
-                <div class="grid grid-cols-2 gap-3">
-                    <a href="{{ route('user-posts.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
-                        <span class="text-xl" aria-hidden="true">📝</span>
-                        <span class="text-sm font-semibold oc-heading">我的发布</span>
-                    </a>
-                    <a href="{{ route('favorites.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
-                        <span class="text-xl" aria-hidden="true">⭐</span>
-                        <span class="text-sm font-semibold oc-heading">我的收藏</span>
-                    </a>
-                    <a href="{{ route('history.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
-                        <span class="text-xl" aria-hidden="true">👣</span>
-                        <span class="text-sm font-semibold oc-heading">浏览历史</span>
-                    </a>
-                    <a href="{{ route('dashboard.comments') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
-                        <span class="text-xl" aria-hidden="true">💬</span>
-                        <span class="text-sm font-semibold oc-heading">我的评论</span>
-                    </a>
-                    <a href="{{ route('dashboard.orders') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
-                        <span class="text-xl" aria-hidden="true">💳</span>
-                        <span class="text-sm font-semibold oc-heading">我的订单</span>
-                    </a>
-                    @if ($u->role === 'svip' || $u->isAdmin())
-                        <a href="{{ route('svip-subscriptions.index') }}" class="oc-quick-tile flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center">
-                            <span class="text-xl" aria-hidden="true">✨</span>
-                            <span class="text-sm font-semibold oc-heading">SVIP 定制</span>
-                        </a>
-                    @endif
-                </div>
-            </div>
         </aside>
 
         {{-- 左侧宽度拖拽条（仅桌面端） --}}
@@ -199,10 +189,10 @@
         @endif
     </div>
 
-    {{-- 最近动态 --}}
+    {{-- 最近动态（含原首页「全部动态」会员开通流水） --}}
     <div id="dash-timeline" class="oc-dash-panel oc-surface p-6 md:p-8 hidden" data-panel="timeline">
         <h3 class="text-lg font-bold oc-heading mb-4">最近动态</h3>
-        <p class="text-xs oc-muted mb-4">时间线</p>
+        <p class="text-xs oc-muted mb-4">与你相关的时间线</p>
         @if ($timeline->isEmpty())
             <p class="text-sm oc-muted m-0">暂无动态，去发布内容或参与互动吧。</p>
         @else
@@ -216,7 +206,83 @@
                 @endforeach
             </ul>
         @endif
+
+        <div class="mt-10 pt-8 border-t oc-border">
+            <h3 class="text-lg font-bold oc-heading mb-2">全站动态</h3>
+            <p class="text-xs oc-muted mb-4">近期会员开通记录（脱敏展示）</p>
+            @if ($vipActivities->isEmpty())
+                <p class="text-sm oc-muted m-0">暂无全站动态数据。</p>
+            @else
+                <ul class="space-y-0 m-0 p-0 list-none max-h-[28rem] overflow-y-auto pr-1">
+                    @foreach ($vipActivities as $activity)
+                        <li class="flex items-center justify-between gap-3 py-3 border-b oc-border">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm" style="background: linear-gradient(135deg, #a78bfa, #6366f1);">
+                                    {{ mb_substr($activity->name, 0, 1) }}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-semibold oc-heading text-sm truncate">{{ $activity->name }}</div>
+                                    <div class="text-xs oc-muted">开通了{{ $activity->plan_text }}</div>
+                                </div>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <div class="text-sm font-bold" style="background: linear-gradient(90deg, #7c3aed, #4f46e5); -webkit-background-clip: text; background-clip: text; color: transparent;">¥{{ number_format($activity->amount) }}</div>
+                                <div class="text-[11px] oc-muted">{{ $activity->created_at->diffForHumans() }}</div>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </div>
     </div>
+
+    @php
+        $embedQs = '?oc_embed=1';
+    @endphp
+    <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="posts" style="min-height: 70vh;">
+        <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+            <span class="text-sm font-semibold oc-heading">我的发布</span>
+            <a href="{{ route('user-posts.index') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
+        </div>
+        <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="我的发布" data-embed-src="{{ route('user-posts.index') }}{{ $embedQs }}"></iframe>
+    </div>
+    <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="favorites" style="min-height: 70vh;">
+        <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+            <span class="text-sm font-semibold oc-heading">我的收藏</span>
+            <a href="{{ route('favorites.index') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
+        </div>
+        <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="我的收藏" data-embed-src="{{ route('favorites.index') }}{{ $embedQs }}"></iframe>
+    </div>
+    <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="history" style="min-height: 70vh;">
+        <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+            <span class="text-sm font-semibold oc-heading">浏览历史</span>
+            <a href="{{ route('history.index') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
+        </div>
+        <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="浏览历史" data-embed-src="{{ route('history.index') }}{{ $embedQs }}"></iframe>
+    </div>
+    <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="comments" style="min-height: 70vh;">
+        <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+            <span class="text-sm font-semibold oc-heading">我的评论</span>
+            <a href="{{ route('dashboard.comments') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
+        </div>
+        <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="我的评论" data-embed-src="{{ route('dashboard.comments') }}{{ $embedQs }}"></iframe>
+    </div>
+    <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="orders" style="min-height: 70vh;">
+        <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+            <span class="text-sm font-semibold oc-heading">我的订单</span>
+            <a href="{{ route('dashboard.orders') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
+        </div>
+        <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="我的订单" data-embed-src="{{ route('dashboard.orders') }}{{ $embedQs }}"></iframe>
+    </div>
+    @if ($u->role === 'svip' || $u->isAdmin())
+        <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="svip" style="min-height: 70vh;">
+            <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+                <span class="text-sm font-semibold oc-heading">SVIP 定制</span>
+                <a href="{{ route('svip-subscriptions.index') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
+            </div>
+            <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="SVIP 定制" data-embed-src="{{ route('svip-subscriptions.index') }}{{ $embedQs }}"></iframe>
+        </div>
+    @endif
         </section>
     </div>
 @endsection
@@ -242,10 +308,20 @@
                 panels.forEach((p) => {
                     const on = p.getAttribute('data-panel') === name;
                     p.classList.toggle('hidden', !on);
+                    if (on) {
+                        const iframe = p.querySelector('iframe[data-embed-src]');
+                        if (iframe) {
+                            const src = iframe.getAttribute('data-embed-src');
+                            if (src && !iframe.getAttribute('src')) {
+                                iframe.setAttribute('src', src);
+                            }
+                        }
+                    }
                 });
             };
             tabs.forEach((t) => t.addEventListener('click', () => setActive(t.getAttribute('data-tab'))));
-            setActive('profile');
+            const initialTab = window.location.hash === '#timeline' ? 'timeline' : 'profile';
+            setActive(initialTab);
 
             // Resizer: 调整左侧宽度（桌面端）
             let dragging = false;
@@ -314,8 +390,13 @@
                     if (!email) return;
                     const checked = Array.from(form.querySelectorAll('.email-sub-topic:checked')).map((x) => x.value);
                     if (!checked.length) {
-                        msg.textContent = '请至少选择一个订阅内容';
-                        msg.style.color = '#b91c1c';
+                        msg.textContent = '';
+                        if (typeof window.ocToast === 'function') {
+                            window.ocToast('请至少选择一个订阅内容', 'warning');
+                        } else {
+                            msg.textContent = '请至少选择一个订阅内容';
+                            msg.style.color = '#b91c1c';
+                        }
                         return;
                     }
                     const schedule = {};
@@ -341,11 +422,26 @@
                             }),
                         });
                         const data = await res.json().catch(() => ({}));
-                        msg.textContent = res.ok ? '订阅成功，后续可在后台邮件订阅管理查看。' : (data.message || '订阅失败，请稍后重试');
-                        msg.style.color = res.ok ? '#166534' : '#b91c1c';
+                        msg.textContent = '';
+                        msg.style.color = '';
+                        if (typeof window.ocToast === 'function') {
+                            if (res.ok) {
+                                window.ocToast('订阅成功，后续可在后台邮件订阅管理查看。', 'success');
+                            } else {
+                                window.ocToast(data.message || '订阅失败，请稍后重试', 'error');
+                            }
+                        } else {
+                            msg.textContent = res.ok ? '订阅成功，后续可在后台邮件订阅管理查看。' : (data.message || '订阅失败，请稍后重试');
+                            msg.style.color = res.ok ? '#166534' : '#b91c1c';
+                        }
                     } catch (err) {
-                        msg.textContent = '网络异常，请稍后重试';
-                        msg.style.color = '#b91c1c';
+                        msg.textContent = '';
+                        if (typeof window.ocToast === 'function') {
+                            window.ocToast('网络异常，请稍后重试', 'error');
+                        } else {
+                            msg.textContent = '网络异常，请稍后重试';
+                            msg.style.color = '#b91c1c';
+                        }
                     }
                 });
             })();

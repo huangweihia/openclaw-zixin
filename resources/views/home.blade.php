@@ -244,37 +244,22 @@
         </div>
     </section>
     
-    <!-- 实时动态区 -->
-    <section class="py-20 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center mb-12">
-                📢 实时动态
-            </h2>
-            <div class="bg-white rounded-2xl shadow-lg p-8 overflow-hidden relative h-64">
-                <div class="scroll-animation">
-                    @forelse($vipActivities as $activity)
-                    <div class="flex items-center justify-between py-4 border-b border-gray-100">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold">
-                                {{ mb_substr($activity->name, 0, 1) }}
-                            </div>
-                            <div>
-                                <div class="font-semibold text-gray-800">{{ $activity->name }}</div>
-                                <div class="text-sm text-gray-500">开通了{{ $activity->plan_text }}</div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-lg font-bold gradient-text">¥{{ number_format($activity->amount) }}</div>
-                            <div class="text-xs text-gray-400">{{ $activity->created_at->diffForHumans() }}</div>
-                        </div>
-                    </div>
-                    @empty
-                    <div class="text-center text-gray-500 py-20">
-                        暂无动态数据
-                    </div>
-                    @endforelse
-                </div>
-            </div>
+    <!-- 全站动态已整合至个人中心「最近动态」 -->
+    <section class="py-14 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">📢 全站动态</h2>
+            <p class="text-gray-600 text-sm md:text-base mb-4">
+                会员开通等全站动态已移至个人中心，与「最近动态」一起查看。
+            </p>
+            @auth
+                <a href="{{ route('dashboard') }}#timeline" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:opacity-95">
+                    前往个人中心
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:opacity-95">
+                    登录后查看
+                </a>
+            @endauth
         </div>
     </section>
     

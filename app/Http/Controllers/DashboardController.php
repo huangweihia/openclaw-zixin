@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\UserAction;
 use App\Models\UserPost;
 use App\Models\ViewHistory;
+use App\Support\VipActivityFeed;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -21,6 +22,8 @@ class DashboardController extends Controller
     {
         /** @var User $u */
         $u = auth()->user();
+
+        VipActivityFeed::seedDemoIfNeeded(50);
 
         $postsCount = UserPost::query()
             ->where('user_id', $u->id)
@@ -70,6 +73,7 @@ class DashboardController extends Controller
         };
 
         $timeline = $this->buildTimeline($u);
+        $vipActivities = VipActivityFeed::recent(50);
 
         return view('dashboard', compact(
             'postsCount',
@@ -85,6 +89,7 @@ class DashboardController extends Controller
             'emailSubscription',
             'roleLabel',
             'timeline',
+            'vipActivities',
         ));
     }
 

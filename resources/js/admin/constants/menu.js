@@ -55,10 +55,15 @@ export const ADMIN_MENU = [
         ],
     },
     {
+        section: '小游戏',
+        items: [
+            { to: '/personality-quiz', label: 'SBTI 配置', icon: '🧠', perm: 'admin:settings:read' },
+        ],
+    },
+    {
         section: '系统',
         items: [
             { to: '/settings', label: '系统与站点', icon: '⚙️', perm: 'admin:settings:read' },
-            { to: '/personality-quiz', label: 'SBTI', icon: '🧠', perm: 'admin:settings:read' },
             { to: '/email-settings', label: '邮件 SMTP 配置', icon: '🔧', perm: 'admin:email-settings:read' },
             { to: '/shared-components', label: '公共组件', icon: '🧩', perm: 'admin:shared-components:read' },
             { to: '/audit-logs', label: '操作审计', icon: '📋', perm: 'admin:audit-logs:read' },

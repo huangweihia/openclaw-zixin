@@ -55,21 +55,28 @@
     </style>
     @stack('head')
 </head>
-<body class="oc-page-bg min-h-screen pt-16 flex flex-col">
-    @include('partials.navbar')
-    @include('partials.announcement-marquee', ['placement' => 'top'])
-    @include('partials.flash')
+@php
+    $ocSiteEmbed = request()->boolean('oc_embed');
+@endphp
+<body class="oc-page-bg min-h-screen flex flex-col {{ $ocSiteEmbed ? 'pt-0' : 'pt-16' }}">
+    @unless ($ocSiteEmbed)
+        @include('partials.navbar')
+        @include('partials.announcement-marquee', ['placement' => 'top'])
+        @include('partials.flash')
+    @endunless
 
-    <div class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full">
+    <div class="flex-1 w-full {{ $ocSiteEmbed ? 'max-w-none px-3 py-3' : 'max-w-7xl mx-auto px-4 py-8' }}">
         <main class="min-w-0">
             @yield('content')
         </main>
     </div>
 
-    @include('partials.announcement-marquee', ['placement' => 'bottom'])
-    @include('partials.footer')
-    @include('partials.announcement-float')
-    @include('partials.floating-ads')
+    @unless ($ocSiteEmbed)
+        @include('partials.announcement-marquee', ['placement' => 'bottom'])
+        @include('partials.footer')
+        @include('partials.announcement-float')
+        @include('partials.floating-ads')
+    @endunless
 
     @vite(['resources/js/blade-skin-mount.js'])
     @include('partials.oc-toast')

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import axios from 'axios';
 import AdminPageShell from '../components/AdminPageShell.vue';
-import { toast } from '../../frontend/utils/toast';
+import { ElMessage } from 'element-plus';
 
 const LS_TOKEN_KEY = 'oc_personality_quiz_admin_token';
 
@@ -61,7 +61,7 @@ async function save() {
     try {
         await axios.put('/api/personality-quiz/admin/settings', { key: 'enabled', value: enabled.value ? '1' : '0' }, { headers: headers() });
         await axios.put('/api/personality-quiz/admin/settings', { key: 'low_match_threshold', value: String(threshold.value ?? '') }, { headers: headers() });
-        toast('已保存');
+        ElMessage.success('配置已保存');
         localStorage.setItem(LS_TOKEN_KEY, t);
         await load();
     } catch (e) {
@@ -73,7 +73,7 @@ async function save() {
 
 function copyManageUrl() {
     navigator.clipboard?.writeText(manageUrl.value);
-    toast('已复制管理页链接');
+    ElMessage.success('已复制管理页链接');
 }
 
 onMounted(() => {
@@ -87,7 +87,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <AdminPageShell title="SBTI">
+    <AdminPageShell title="SBTI 配置" lead="题库与维度请在「无登录管理页」维护；此处仅做开关与阈值，并生成管理链接。">
         <div class="card">
             <div class="card__body space-y-4">
                 <div class="text-slate-600">

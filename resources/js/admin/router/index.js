@@ -132,7 +132,7 @@ export function createAdminRouter(base) {
                 component: SharedComponentsShowcase,
                 meta: auth('公共组件'),
             },
-            { path: '/personality-quiz', name: 'personality-quiz', component: PersonalityQuizOps, meta: auth('SBTI') },
+            { path: '/personality-quiz', name: 'personality-quiz', component: PersonalityQuizOps, meta: auth('SBTI 配置') },
         ],
     });
 

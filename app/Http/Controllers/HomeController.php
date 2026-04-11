@@ -7,6 +7,7 @@ use App\Models\Article;
 use App\Models\PersonalityQuizSetting;
 use App\Models\Project;
 use App\Support\PricingConfig;
+use App\Support\VipActivityFeed;
 use App\Models\PersonalityQuestion;
 use App\Models\PrivateTrafficSop;
 use App\Models\SideHustleCase;
@@ -21,9 +22,7 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         $this->seedHomeDemoContentIfEmpty();
-        $this->seedVipActivitiesIfNeeded(50);
-
-        $vipActivities = $this->queryVipActivities();
+        VipActivityFeed::seedDemoIfNeeded(50);
         $homeStats = $this->homeStats();
 
         $user = $request->user();
@@ -49,7 +48,6 @@ class HomeController extends Controller
             && PersonalityQuestion::query()->exists();
 
         return view('home', compact(
-            'vipActivities',
             'homeStats',
             'vipPreviews',
             'pricingPlans',
@@ -61,33 +59,6 @@ class HomeController extends Controller
             'canSvip',
             'personalityQuizAvailable'
         ));
-    }
-
-    private function queryVipActivities()
-    {
-        if (! Schema::hasTable('subscriptions')) {
-            return collect();
-        }
-
-        return DB::table('subscriptions')
-            ->join('users', 'subscriptions.user_id', '=', 'users.id')
-            ->where('subscriptions.status', 'active')
-            ->whereIn('subscriptions.plan', ['monthly', 'yearly', 'lifetime'])
-            ->orderByDesc('subscriptions.created_at')
-            ->limit(50)
-            ->get([
-                'users.name',
-                'subscriptions.plan',
-                'subscriptions.amount',
-                'subscriptions.created_at',
-            ])
-            ->map(function ($item) {
-                $item->name = Str::limit($item->name, 1, '***');
-                $item->plan_text = $this->getPlanText($item->plan);
-                $item->created_at = \Carbon\Carbon::parse($item->created_at);
-
-                return $item;
-            });
     }
 
     /**
@@ -109,58 +80,6 @@ class HomeController extends Controller
             // 运营要求：累计变现固定文案
             'revenue_text' => '200 万+',
         ];
-    }
-
-    /**
-     * 为「实时动态」补足 50 条测试订阅数据（仅在 subscriptions 表存在且数据不足时插入）。
-     */
-    private function seedVipActivitiesIfNeeded(int $target = 50): void
-    {
-        if (! Schema::hasTable('subscriptions') || ! Schema::hasTable('users')) {
-            return;
-        }
-
-        $existing = (int) DB::table('subscriptions')->count();
-        if ($existing >= $target) {
-            return;
-        }
-
-        $users = DB::table('users')->orderByDesc('id')->limit(30)->get(['id', 'name']);
-        if ($users->isEmpty()) {
-            return;
-        }
-
-        $need = $target - $existing;
-        $now = now();
-        $rows = [];
-        $plans = [
-            ['plan' => 'monthly', 'amount' => 29.00, 'days' => 30],
-            ['plan' => 'yearly', 'amount' => 199.00, 'days' => 365],
-            ['plan' => 'lifetime', 'amount' => 999.00, 'days' => 3650],
-        ];
-
-        for ($i = 0; $i < $need; $i++) {
-            $u = $users[$i % $users->count()];
-            $pick = $plans[$i % count($plans)];
-            $createdAt = $now->copy()->subMinutes($i * 35 + random_int(0, 20));
-            $startedAt = $createdAt->copy();
-            $expiresAt = $startedAt->copy()->addDays($pick['days']);
-
-            $rows[] = [
-                'user_id' => $u->id,
-                'plan' => $pick['plan'],
-                'amount' => $pick['amount'],
-                'status' => 'active',
-                'started_at' => $startedAt,
-                'expires_at' => $expiresAt,
-                'payment_id' => null,
-                'payment_method' => 'demo',
-                'created_at' => $createdAt,
-                'updated_at' => $createdAt,
-            ];
-        }
-
-        DB::table('subscriptions')->insert($rows);
     }
 
     /**
@@ -406,16 +325,6 @@ class HomeController extends Controller
                 );
             }
         }
-    }
-
-    private function getPlanText($plan): string
-    {
-        return match ($plan) {
-            'monthly' => '月度会员',
-            'yearly' => '年度会员',
-            'lifetime' => '终身会员',
-            default => (string) $plan,
-        };
     }
 
     private function featuredArticles()
