@@ -28,7 +28,7 @@ class UserSkinResource extends BaseAdminResource
 
     public static function canCreate(): bool
     {
-        return static::canViewAny() && false;
+        return static::canViewAny() && true;
     }
 
     public static function canEdit($record): bool
@@ -49,9 +49,18 @@ class UserSkinResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
-                Forms\Components\TextInput::make('skin_id')->numeric(),
-                Forms\Components\DateTimePicker::make('activated_at')
+            Forms\Components\Select::make('user_id')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Forms\Components\Select::make('skin_id')
+                ->relationship('skinConfig', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Forms\Components\DateTimePicker::make('activated_at')
+                ->native(false),
         ]);
     }
 
@@ -83,6 +92,7 @@ class UserSkinResource extends BaseAdminResource
     {
         return [
             'index' => \App\Filament\Resources\UserSkinResource\Pages\ListUserSkins::route('/'),
+            'create' => \App\Filament\Resources\UserSkinResource\Pages\CreateUserSkin::route('/create'),
             'edit' => \App\Filament\Resources\UserSkinResource\Pages\EditUserSkin::route('/{record}/edit'),
         ];
     }

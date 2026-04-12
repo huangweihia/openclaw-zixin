@@ -23,6 +23,8 @@ class Project extends Model
         'is_featured',
         'is_vip',
         'category_id',
+        'svip_subscription_id',
+        'collected_at',
     ];
 
     protected $casts = [
@@ -30,6 +32,7 @@ class Project extends Model
         'is_featured' => 'boolean',
         'is_vip' => 'boolean',
         'score' => 'decimal:2',
+        'collected_at' => 'datetime',
     ];
 
     public function category(): BelongsTo

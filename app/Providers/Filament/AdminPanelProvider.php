@@ -12,6 +12,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Facades\Filament;
+use Filament\View\PanelsRenderHook;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Widgets;
@@ -97,7 +98,11 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => '<link rel="stylesheet" href="'.e(asset('css/filament-admin-tweaks.css')).'" />',
+            );
 
         if ($useSplitHosts) {
             return $panel->domain($adminDomain)->path('');

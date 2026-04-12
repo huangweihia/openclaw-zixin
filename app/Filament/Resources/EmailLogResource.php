@@ -50,7 +50,11 @@ class EmailLogResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
+            Forms\Components\Select::make('user_id')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->nullable(),
             Forms\Components\TextInput::make('template_key')->maxLength(65535),
             Forms\Components\TextInput::make('to')->maxLength(65535),
             Forms\Components\TextInput::make('subject')->maxLength(65535),

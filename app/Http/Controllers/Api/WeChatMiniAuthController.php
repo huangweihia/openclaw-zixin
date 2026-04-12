@@ -349,6 +349,10 @@ class WeChatMiniAuthController extends Controller
             'subscription_ends_at' => $user->subscription_ends_at?->toIso8601String(),
             'vip_days_left' => $this->vipDaysLeft($user),
             'role_label' => $this->roleLabel($user),
+            /** VIP/SVIP/管理员可读会员专享正文、浏览类 VIP 详情 */
+            'has_vip_content_access' => $user->hasMemberMenuPrivileges(),
+            /** SVIP 皮肤、高阶定制等（与 SkinController type=svip 一致） */
+            'has_svip_privileges' => in_array((string) $user->role, ['svip', 'admin'], true),
         ];
     }
 

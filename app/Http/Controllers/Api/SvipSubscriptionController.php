@@ -196,6 +196,7 @@ class SvipSubscriptionController extends Controller
             'source_url' => $url,
             'cover_image' => $item['cover_image'] ?? null,
             'is_published' => true,
+            'is_vip' => true,
             'is_vip_only' => true,
             'svip_subscription_id' => $subscriptionId,
             'published_at' => now(),

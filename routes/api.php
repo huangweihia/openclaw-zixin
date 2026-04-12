@@ -10,8 +10,14 @@ use App\Http\Controllers\Api\PersonalityQuizAdminController;
 use App\Http\Controllers\Api\PersonalityQuizController;
 use App\Http\Controllers\Api\PublicArticleController;
 use App\Http\Controllers\Api\PublicBrowseController;
+use App\Http\Controllers\Api\PublicArticleCommentController;
+use App\Http\Controllers\Api\WeChatMiniArticleCommentController;
 use App\Http\Controllers\Api\WeChatMiniAuthController;
 use App\Http\Controllers\Api\WeChatMiniProfileController;
+use App\Http\Controllers\Api\WeChatMiniEmailSubscriptionController;
+use App\Http\Controllers\Api\WeChatMiniSvipSubscriptionController;
+use App\Http\Controllers\Api\WeChatMiniSubscriptionFeedController;
+use App\Http\Controllers\Api\WeChatMiniInboxController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -54,6 +60,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/wechat/mini/orders', [WeChatMiniProfileController::class, 'orders']);
     Route::get('/wechat/mini/favorites', [WeChatMiniProfileController::class, 'favorites']);
     Route::get('/wechat/mini/posts', [WeChatMiniProfileController::class, 'posts']);
+    Route::get('/wechat/mini/svip-subscriptions', [WeChatMiniSvipSubscriptionController::class, 'index']);
+    Route::get('/wechat/mini/subscription-feed', [WeChatMiniSubscriptionFeedController::class, 'index']);
+    Route::get('/wechat/mini/inbox/unread-count', [WeChatMiniInboxController::class, 'unreadCount']);
+    Route::get('/wechat/mini/inbox', [WeChatMiniInboxController::class, 'index']);
+    Route::post('/wechat/mini/inbox/read-all', [WeChatMiniInboxController::class, 'readAll']);
+    Route::post('/wechat/mini/inbox/{id}/read', [WeChatMiniInboxController::class, 'markRead'])
+        ->where('id', '[0-9]+');
+    Route::get('/wechat/mini/email-subscription', [WeChatMiniEmailSubscriptionController::class, 'show']);
+    Route::post('/wechat/mini/articles/{slug}/comments', [WeChatMiniArticleCommentController::class, 'store']);
 });
 
 Route::post('/email-subscriptions', [PublicEmailSubscriptionController::class, 'store']);
@@ -81,10 +96,11 @@ Route::post('/openclaw/data', [OpenClawDataController::class, 'store']);
 // OpenClaw Task Logs - 接收定时任务执行日志
 Route::post('/openclaw/task-log', [OpenClawTaskLogController::class, 'store']);
 
-// 前台公开内容（小程序 / 第三方 JSON）
-Route::prefix('public')->middleware('throttle:120,1')->group(function () {
+// 前台公开内容（小程序 / 第三方 JSON）；sanctum.optional 用于带 Token 时识别 VIP 可读全文
+Route::prefix('public')->middleware(['throttle:120,1', 'sanctum.optional'])->group(function () {
     Route::get('categories', [PublicArticleController::class, 'categories']);
     Route::get('articles', [PublicArticleController::class, 'index']);
+    Route::get('articles/{slug}/comments', [PublicArticleCommentController::class, 'index']);
     Route::get('articles/{slug}', [PublicArticleController::class, 'show']);
 
     Route::get('browse/projects', [PublicBrowseController::class, 'projectsIndex']);

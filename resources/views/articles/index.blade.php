@@ -53,30 +53,37 @@
     @else
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($articles as $article)
-                <a href="{{ route('articles.show', $article) }}" class="oc-article-card">
-                    @if ($article->cover_image)
-                        <div class="oc-card-thumb bg-slate-100 overflow-hidden">
-                            <img src="{{ $article->cover_image }}" alt="" class="w-full h-full object-cover" loading="lazy" />
-                        </div>
+                @php
+                    $vipLocked = $article->is_vip && !($canAccessVip ?? false);
+                @endphp
+                <div class="oc-article-card relative">
+                    @if ($vipLocked)
+                        <div class="block text-inherit no-underline">
                     @else
-                        <div class="oc-card-thumb flex items-center justify-center text-2xl"
-                            style="background: var(--light);">📄</div>
+                        <a href="{{ route('articles.show', $article) }}" class="block text-inherit no-underline">
                     @endif
-                    <div class="p-5">
-                        <div class="flex items-start justify-between gap-2 mb-2">
-                            <h2 class="text-lg font-bold line-clamp-2" style="color: var(--dark);">{{ $article->title }}</h2>
-                            @if ($article->is_vip)
-                                <span class="text-xs shrink-0 px-2 py-0.5 rounded-full font-semibold"
-                                    style="background: rgba(245, 158, 11, 0.15); color: #b45309;">VIP</span>
-                            @endif
+                        @include('partials.article-cover-thumb', ['cover' => $article->cover_image])
+                        <div class="p-5">
+                            <div class="flex items-start justify-between gap-2 mb-2">
+                                <h2 class="text-lg font-bold line-clamp-2" style="color: var(--dark);">{{ $article->title }}</h2>
+                                @if ($article->is_vip)
+                                    <span class="text-xs shrink-0 px-2 py-0.5 rounded-full font-semibold"
+                                        style="background: rgba(245, 158, 11, 0.15); color: #b45309;">VIP</span>
+                                @endif
+                            </div>
+                            <p class="text-sm line-clamp-2 mb-4" style="color: var(--gray);">{{ $article->summary }}</p>
+                            <div class="flex justify-between text-xs" style="color: var(--gray-light);">
+                                <span>{{ $article->published_at?->format('Y-m-d') }}</span>
+                                <span>👁 {{ number_format($article->view_count) }} · ❤️ {{ number_format($article->like_count) }}</span>
+                            </div>
                         </div>
-                        <p class="text-sm line-clamp-2 mb-4" style="color: var(--gray);">{{ $article->summary }}</p>
-                        <div class="flex justify-between text-xs" style="color: var(--gray-light);">
-                            <span>{{ $article->published_at?->format('Y-m-d') }}</span>
-                            <span>👁 {{ number_format($article->view_count) }} · ❤️ {{ number_format($article->like_count) }}</span>
+                    @if ($vipLocked)
                         </div>
-                    </div>
-                </a>
+                        <x-vip-content-lock />
+                    @else
+                        </a>
+                    @endif
+                </div>
             @endforeach
         </div>
 

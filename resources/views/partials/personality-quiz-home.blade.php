@@ -33,6 +33,29 @@
     })();
 
     var LS_KEY = 'oc_pq_guest_token';
+    /** 点击关闭（× / 遮罩 / Esc）后，一段时间内不再自动弹出 */
+    var LS_DISMISS_UNTIL = 'oc_pq_dismissed_until_ms';
+    var AUTO_OPEN_COOLDOWN_MS = 60 * 60 * 1000;
+
+    function ocPqDismissedUntil() {
+        try {
+            var raw = localStorage.getItem(LS_DISMISS_UNTIL);
+            var n = raw ? parseInt(raw, 10) : 0;
+            return Number.isFinite(n) ? n : 0;
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    function ocPqShouldSkipAutoOpen() {
+        return Date.now() < ocPqDismissedUntil();
+    }
+
+    function ocPqRecordDismissCooldown() {
+        try {
+            localStorage.setItem(LS_DISMISS_UNTIL, String(Date.now() + AUTO_OPEN_COOLDOWN_MS));
+        } catch (e) {}
+    }
     function ensureGuestToken() {
         try {
             var t = localStorage.getItem(LS_KEY);
@@ -105,7 +128,10 @@
         return base ? base + '/' + pool[Math.abs(h) % pool.length] + '.svg' : '';
     }
 
-    function setOpen(on) {
+    function setOpen(on, recordDismiss) {
+        if (!on && recordDismiss) {
+            ocPqRecordDismissCooldown();
+        }
         root.classList.toggle('hidden', !on);
         root.setAttribute('aria-hidden', on ? 'false' : 'true');
         if (on) document.documentElement.style.overflow = 'hidden';
@@ -345,19 +371,22 @@
     openBtn.addEventListener('click', function () {
         openModalAndStart();
     });
-    btnClose.addEventListener('click', function () { setOpen(false); });
+    btnClose.addEventListener('click', function () { setOpen(false, true); });
     root.addEventListener('click', function (e) {
-        if (e.target === root) setOpen(false);
+        if (e.target === root) setOpen(false, true);
     });
 
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && root && !root.classList.contains('hidden')) {
-            setOpen(false);
+            setOpen(false, true);
         }
     });
 
-    // 进入首页且本块已渲染时自动打开弹窗（可点 ×、遮罩或 Esc 关闭）；按钮仍可再次打开
+    // 进入首页且本块已渲染时自动打开弹窗（可点 ×、遮罩或 Esc 关闭）；1 小时内不再自动打开；「打开测试」按钮仍可手动进入
     function scheduleAutoOpen() {
+        if (ocPqShouldSkipAutoOpen()) {
+            return;
+        }
         requestAnimationFrame(function () {
             requestAnimationFrame(openModalAndStart);
         });
@@ -370,7 +399,7 @@
 
     btnNext.addEventListener('click', function () {
         if (state.step === 'intro') {
-            setOpen(false);
+            setOpen(false, true);
             return;
         }
         if (state.step === 'question') {
@@ -385,7 +414,7 @@
             return;
         }
         if (state.step === 'error' || state.step === 'result') {
-            setOpen(false);
+            setOpen(false, true);
             return;
         }
     });

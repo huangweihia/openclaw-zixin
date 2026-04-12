@@ -30,11 +30,19 @@
 
             @include('partials.ad-slot', ['code' => 'article-top'])
 
-            @if ($article->cover_image)
-                <button type="button" id="cover-open" class="w-full rounded-xl overflow-hidden mb-8 border-0 p-0 cursor-zoom-in bg-transparent">
-                    <img src="{{ $article->cover_image }}" alt="" class="w-full max-h-[28rem] object-cover" />
-                </button>
-            @endif
+            @php
+                $ocArticlePh = asset('images/article-card-placeholder.svg');
+                $ocCoverSrc = $article->cover_image ?: $ocArticlePh;
+            @endphp
+            <button type="button" id="cover-open" class="w-full rounded-xl overflow-hidden mb-8 border-0 p-0 cursor-zoom-in bg-transparent">
+                <img
+                    src="{{ $ocCoverSrc }}"
+                    alt=""
+                    class="w-full max-h-[28rem] object-cover bg-slate-100"
+                    data-oc-article-ph="{{ $ocArticlePh }}"
+                    onerror="this.onerror=null;if(this.dataset.ocArticlePh)this.src=this.dataset.ocArticlePh;"
+                />
+            </button>
 
             <div class="oc-surface p-6 md:p-8 article-content max-w-none" id="article-body" style="color: var(--dark);">
                 @if ($canReadFull)
@@ -134,33 +142,37 @@
     @include('partials.comment-scripts')
     @include('partials.engagement-scripts')
 
-    @if ($article->cover_image)
-        <div id="cover-modal" class="oc-modal-overlay hidden" role="dialog" aria-modal="true">
-            <div class="max-w-5xl w-full p-2">
-                <button type="button" id="cover-close" class="block ml-auto mb-2 text-white text-sm underline">关闭</button>
-                <img src="{{ $article->cover_image }}" alt="" class="w-full rounded-lg max-h-[85vh] object-contain bg-black/40" />
-            </div>
+    <div id="cover-modal" class="oc-modal-overlay hidden" role="dialog" aria-modal="true">
+        <div class="max-w-5xl w-full p-2">
+            <button type="button" id="cover-close" class="block ml-auto mb-2 text-white text-sm underline">关闭</button>
+            <img
+                src="{{ $ocCoverSrc }}"
+                alt=""
+                class="w-full rounded-lg max-h-[85vh] object-contain bg-black/40"
+                data-oc-article-ph="{{ $ocArticlePh }}"
+                onerror="this.onerror=null;if(this.dataset.ocArticlePh)this.src=this.dataset.ocArticlePh;"
+            />
         </div>
-    @endif
+    </div>
 @endsection
 
 @push('scripts')
-    @if ($article->cover_image)
-        <script>
-            (function () {
-                const modal = document.getElementById('cover-modal');
-                document.getElementById('cover-open')?.addEventListener('click', function () {
-                    modal.classList.remove('hidden');
-                });
-                document.getElementById('cover-close')?.addEventListener('click', function () {
-                    modal.classList.add('hidden');
-                });
-                modal?.addEventListener('click', function (e) {
-                    if (e.target === modal) modal.classList.add('hidden');
-                });
-            })();
-        </script>
-    @endif
+    <script>
+        (function () {
+            const modal = document.getElementById('cover-modal');
+            const openBtn = document.getElementById('cover-open');
+            if (!modal || !openBtn) return;
+            openBtn.addEventListener('click', function () {
+                modal.classList.remove('hidden');
+            });
+            document.getElementById('cover-close')?.addEventListener('click', function () {
+                modal.classList.add('hidden');
+            });
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) modal.classList.add('hidden');
+            });
+        })();
+    </script>
     <script>
         (function () {
             const bar = document.getElementById('read-progress-bar');

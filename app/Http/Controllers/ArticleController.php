@@ -66,12 +66,16 @@ class ArticleController extends Controller
 
         $articles = $query->paginate(12)->appends($request->query());
 
+        $canAccessVip = $request->user()
+            && in_array($request->user()->role, ['vip', 'svip', 'admin'], true);
+
         return view('articles.index', [
             'categories' => $categories,
             'articles' => $articles,
             'currentCategory' => $slug,
             'currentSort' => $sort,
             'searchQ' => $q,
+            'canAccessVip' => $canAccessVip,
         ]);
     }
 
@@ -81,11 +85,21 @@ class ArticleController extends Controller
             abort(404);
         }
 
-        $article->increment('view_count');
-        $article->refresh();
-
         $canReadFull = ! $article->is_vip
             || ($request->user() && in_array($request->user()->role, ['vip', 'svip', 'admin'], true));
+
+        if ($article->is_vip && ! $canReadFull) {
+            if (! $request->user()) {
+                return redirect()->guest(route('login'));
+            }
+
+            return redirect()
+                ->route('pricing')
+                ->with('warning', '该文章为 VIP 专属内容，请先开通会员后阅读。');
+        }
+
+        $article->increment('view_count');
+        $article->refresh();
 
         ViewHistoryRecorder::record($request->user(), $article);
 

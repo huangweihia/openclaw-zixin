@@ -2,10 +2,15 @@
 
 namespace App\Filament\Resources;
 
+use App\Models\Article;
 use App\Models\Comment;
+use App\Models\Project;
+use App\Models\UserPost;
 use App\Filament\Resources\CommentResource\Pages;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use App\Filament\Resources\BaseAdminResource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,6 +19,22 @@ use Illuminate\Support\Str;
 
 class CommentResource extends BaseAdminResource
 {
+    /** @return array<class-string, string> */
+    public static function commentableTypeOptions(): array
+    {
+        return [
+            Article::class => '文章',
+            UserPost::class => '用户动态',
+            Project::class => '项目',
+        ];
+    }
+
+    /** @param  class-string  $type */
+    public static function commentableTitleColumn(string $type): string
+    {
+        return $type === Project::class ? 'name' : 'title';
+    }
+
     protected static ?string $model = Comment::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
@@ -49,10 +70,73 @@ class CommentResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
-            Forms\Components\TextInput::make('commentable_type')->maxLength(65535),
-            Forms\Components\TextInput::make('commentable_id')->numeric(),
-            Forms\Components\TextInput::make('parent_id')->numeric(),
+            Forms\Components\Select::make('user_id')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Forms\Components\Select::make('commentable_type')
+                ->label('评论对象类型')
+                ->options(static::commentableTypeOptions())
+                ->required()
+                ->native(false)
+                ->live()
+                ->afterStateUpdated(fn (Set $set) => $set('commentable_id', null)),
+            Forms\Components\Select::make('commentable_id')
+                ->label('评论对象')
+                ->required()
+                ->searchable()
+                ->disabled(fn (Get $get): bool => blank($get('commentable_type')))
+                ->getSearchResultsUsing(function (string $search, Get $get): array {
+                    $type = $get('commentable_type');
+                    if (! is_string($type) || $type === '' || ! class_exists($type) || ! isset(static::commentableTypeOptions()[$type])) {
+                        return [];
+                    }
+                    $col = static::commentableTitleColumn($type);
+                    $q = $type::query();
+                    if ($type === Article::class) {
+                        $q->where('is_published', true);
+                    }
+                    if ($type === UserPost::class) {
+                        $q->where('status', 'approved');
+                    }
+
+                    return $q->where($col, 'like', '%'.$search.'%')
+                        ->orderByDesc('id')
+                        ->limit(50)
+                        ->get()
+                        ->mapWithKeys(function ($m) use ($col): array {
+                            $t = (string) ($m->{$col} ?? '');
+
+                            return [$m->id => '#'.$m->id.' '.Str::limit($t, 72)];
+                        })
+                        ->all();
+                })
+                ->getOptionLabelUsing(function ($value, Get $get): ?string {
+                    if ($value === null || $value === '') {
+                        return null;
+                    }
+                    $type = $get('commentable_type');
+                    if (! is_string($type) || ! class_exists($type)) {
+                        return '#'.(string) $value;
+                    }
+                    $m = $type::query()->find($value);
+                    if ($m === null) {
+                        return '#'.(string) $value;
+                    }
+                    $col = static::commentableTitleColumn($type);
+                    $t = (string) ($m->{$col} ?? '');
+
+                    return '#'.$m->id.' '.Str::limit($t, 72);
+                }),
+            Forms\Components\Select::make('parent_id')
+                ->relationship('parent', 'content')
+                ->getOptionLabelFromRecordUsing(
+                    fn (Comment $c): string => '#'.$c->id.' '.Str::limit(strip_tags((string) $c->content), 48)
+                )
+                ->searchable()
+                ->preload()
+                ->nullable(),
             Forms\Components\Textarea::make('content')->columnSpanFull()->rows(6),
             Forms\Components\Toggle::make('is_hidden'),
             Forms\Components\TextInput::make('like_count')->numeric(),

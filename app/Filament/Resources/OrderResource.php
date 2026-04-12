@@ -56,7 +56,12 @@ class OrderResource extends BaseAdminResource
                 ->nullable(),
             Forms\Components\TextInput::make('order_no')->maxLength(65535),
             Forms\Components\TextInput::make('product_type')->maxLength(65535),
-            Forms\Components\TextInput::make('product_id')->numeric(),
+            Forms\Components\Select::make('product_id')
+                ->options([
+                    1 => 'VIP 会员',
+                    2 => 'SVIP 会员',
+                ])
+                ->native(false),
             Forms\Components\TextInput::make('amount')->numeric()->step(0.01),
             Forms\Components\TextInput::make('status')->maxLength(65535),
             Forms\Components\TextInput::make('payment_id')->numeric(),

@@ -24,10 +24,13 @@ class Article extends Model
         'source_url',
         'meta_keywords',
         'meta_description',
+        'svip_subscription_id',
+        'is_vip_only',
     ];
 
     protected $casts = [
         'is_vip' => 'boolean',
+        'is_vip_only' => 'boolean',
         'is_published' => 'boolean',
         'published_at' => 'datetime',
     ];
@@ -45,6 +48,11 @@ class Article extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    public function svipSubscription(): BelongsTo
+    {
+        return $this->belongsTo(SvipSubscription::class, 'svip_subscription_id');
     }
 
     public function comments(): MorphMany

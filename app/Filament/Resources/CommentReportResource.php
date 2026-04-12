@@ -25,6 +25,27 @@ class CommentReportResource extends BaseAdminResource
 
     protected static ?string $pluralModelLabel = '评论举报';
 
+    /** @return array<string, string> */
+    public static function reasonOptions(): array
+    {
+        return [
+            'spam' => '垃圾信息',
+            'abuse' => '辱骂',
+            'harassment' => '骚扰',
+            'other' => '其他',
+        ];
+    }
+
+    /** @return array<string, string> */
+    public static function statusOptions(): array
+    {
+        return [
+            'pending' => '待处理',
+            'processed' => '已处理',
+            'rejected' => '已驳回',
+        ];
+    }
+
     public static function canCreate(): bool
     {
         return static::canViewAny() && false;
@@ -48,14 +69,43 @@ class CommentReportResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
-            Forms\Components\TextInput::make('comment_id')->numeric(),
-            Forms\Components\Textarea::make('reason')->columnSpanFull()->rows(6),
-            Forms\Components\Textarea::make('description')->columnSpanFull()->rows(6),
-            Forms\Components\TextInput::make('status')->maxLength(65535),
-            Forms\Components\Textarea::make('admin_note')->columnSpanFull()->rows(6),
-            Forms\Components\TextInput::make('processed_by')->maxLength(65535),
-            Forms\Components\DateTimePicker::make('processed_at'),
+            Forms\Components\Placeholder::make('reporter')
+                ->label('举报人')
+                ->content(fn (?CommentReport $record): string => $record?->user?->name ?? '—'),
+            Forms\Components\Placeholder::make('comment_excerpt')
+                ->label('被举报评论')
+                ->content(function (?CommentReport $record): string {
+                    $c = $record?->comment;
+
+                    return $c ? ('#'.$c->id.' '.\Illuminate\Support\Str::limit(strip_tags((string) $c->content), 200)) : '—';
+                })
+                ->columnSpanFull(),
+            Forms\Components\Select::make('reason')
+                ->label('原因')
+                ->options(static::reasonOptions())
+                ->required()
+                ->native(false),
+            Forms\Components\Textarea::make('description')
+                ->label('说明')
+                ->columnSpanFull()
+                ->rows(4),
+            Forms\Components\Select::make('status')
+                ->label('状态')
+                ->options(static::statusOptions())
+                ->required()
+                ->native(false),
+            Forms\Components\Textarea::make('admin_note')
+                ->label('管理员备注')
+                ->columnSpanFull()
+                ->rows(4),
+            Forms\Components\Select::make('processed_by')
+                ->label('处理人')
+                ->relationship('processor', 'name')
+                ->searchable()
+                ->preload()
+                ->nullable(),
+            Forms\Components\DateTimePicker::make('processed_at')
+                ->label('处理时间'),
         ]);
     }
 
@@ -75,7 +125,8 @@ class CommentReportResource extends BaseAdminResource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('reason')
                     ->label('原因')
-                    ->limit(40)
+                    ->formatStateUsing(fn (?string $state): string => static::reasonOptions()[$state ?? ''] ?? (string) $state)
+                    ->badge()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('description')
                     ->label('说明')
@@ -83,7 +134,14 @@ class CommentReportResource extends BaseAdminResource
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('status')
                     ->label('状态')
-                    ->limit(40)
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => static::statusOptions()[$state ?? ''] ?? (string) $state)
+                    ->color(fn (?string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'processed' => 'success',
+                        'rejected' => 'danger',
+                        default => 'gray',
+                    })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('processor.name')
                     ->label('处理人')

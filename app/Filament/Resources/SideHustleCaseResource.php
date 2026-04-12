@@ -63,13 +63,21 @@ class SideHustleCaseResource extends BaseAdminResource
                 Forms\Components\TextInput::make('visibility')->maxLength(65535),
                 Forms\Components\TextInput::make('status')->maxLength(65535),
                 Forms\Components\Textarea::make('audit_note')->columnSpanFull()->rows(6),
-                Forms\Components\TextInput::make('audited_by')->maxLength(65535),
+                Forms\Components\Select::make('audited_by')
+                    ->relationship('auditor', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->nullable(),
                 Forms\Components\DateTimePicker::make('audited_at'),
                 Forms\Components\TextInput::make('view_count')->numeric(),
                 Forms\Components\TextInput::make('like_count')->numeric(),
                 Forms\Components\TextInput::make('comment_count')->numeric(),
                 Forms\Components\TextInput::make('favorite_count')->numeric(),
-                Forms\Components\TextInput::make('user_id')->numeric()
+                Forms\Components\Select::make('user_id')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
         ]);
     }
 

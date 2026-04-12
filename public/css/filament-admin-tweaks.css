@@ -1,0 +1,46 @@
+/**
+ * Filament 后台侧栏与顶栏轻量美化（不覆盖 Filament 核心逻辑，仅增强层次与对比）
+ */
+.fi-sidebar {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    border-right: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.04);
+}
+
+.fi-sidebar-nav {
+    padding-top: 0.5rem;
+    padding-bottom: 1rem;
+}
+
+.fi-sidebar-group {
+    margin-top: 0.75rem;
+}
+
+.fi-sidebar-group .fi-sidebar-group-button {
+    border-radius: 0.5rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #475569;
+}
+
+.fi-sidebar-item-button {
+    border-radius: 0.5rem;
+    margin: 2px 0;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-button {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.18), rgba(99, 102, 241, 0.12));
+    color: #0c4a6e;
+    font-weight: 600;
+}
+
+.fi-sidebar-item:not(.fi-active) .fi-sidebar-item-button:hover {
+    background: rgba(148, 163, 184, 0.15);
+}
+
+.fi-topbar {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+}

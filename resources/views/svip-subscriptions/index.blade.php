@@ -79,20 +79,34 @@
             <div class="grid md:grid-cols-2 gap-4">
                 <label class="oc-field">
                     <span class="oc-label">主色</span>
-                    <input type="color" name="skin_primary" value="{{ old('skin_primary', '#2563eb') }}" class="oc-input" />
+                    <input type="color" id="oc-skin-primary" name="skin_primary" value="{{ old('skin_primary', '#2563eb') }}" class="oc-input" />
                 </label>
                 <label class="oc-field">
                     <span class="oc-label">辅色</span>
-                    <input type="color" name="skin_secondary" value="{{ old('skin_secondary', '#7c3aed') }}" class="oc-input" />
+                    <input type="color" id="oc-skin-secondary" name="skin_secondary" value="{{ old('skin_secondary', '#7c3aed') }}" class="oc-input" />
                 </label>
                 <label class="oc-field">
                     <span class="oc-label">强调色</span>
-                    <input type="color" name="skin_accent" value="{{ old('skin_accent', '#14b8a6') }}" class="oc-input" />
+                    <input type="color" id="oc-skin-accent" name="skin_accent" value="{{ old('skin_accent', '#14b8a6') }}" class="oc-input" />
                 </label>
                 <label class="oc-field">
                     <span class="oc-label">背景色</span>
-                    <input type="color" name="skin_bg" value="{{ old('skin_bg', '#0f172a') }}" class="oc-input" />
+                    <input type="color" id="oc-skin-bg" name="skin_bg" value="{{ old('skin_bg', '#0f172a') }}" class="oc-input" />
                 </label>
+            </div>
+            <div class="rounded-xl border oc-border overflow-hidden" id="oc-skin-preview-wrap">
+                <div class="text-xs oc-muted px-3 py-2 border-b oc-border">实时预览（示意导航与按钮）</div>
+                <div id="oc-skin-preview-inner" class="p-4 space-y-3 transition-colors">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span id="oc-skin-preview-brand" class="inline-flex h-8 px-3 rounded-lg text-sm font-semibold items-center">OpenClaw</span>
+                        <span class="text-xs oc-muted">首页 · 文章 · 项目</span>
+                    </div>
+                    <div id="oc-skin-preview-card" class="rounded-lg p-3 border oc-border">
+                        <div class="h-2 rounded w-2/3 mb-2" id="oc-skin-preview-bar1"></div>
+                        <div class="h-2 rounded w-full opacity-70" id="oc-skin-preview-bar2"></div>
+                    </div>
+                    <button type="button" id="oc-skin-preview-btn" class="inline-flex px-4 py-2 rounded-lg text-sm font-medium text-white border-0">主要按钮</button>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary text-sm">创建并启用我的定制皮肤</button>
         </form>
@@ -157,3 +171,44 @@
         @endif
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        (function () {
+            var p = document.getElementById('oc-skin-primary');
+            var s = document.getElementById('oc-skin-secondary');
+            var a = document.getElementById('oc-skin-accent');
+            var b = document.getElementById('oc-skin-bg');
+            var inner = document.getElementById('oc-skin-preview-inner');
+            var brand = document.getElementById('oc-skin-preview-brand');
+            var btn = document.getElementById('oc-skin-preview-btn');
+            var card = document.getElementById('oc-skin-preview-card');
+            var bar1 = document.getElementById('oc-skin-preview-bar1');
+            var bar2 = document.getElementById('oc-skin-preview-bar2');
+            if (!p || !inner || !brand || !btn || !card) return;
+
+            function apply() {
+                var cp = p.value || '#2563eb';
+                var cs = s && s.value ? s.value : '#7c3aed';
+                var ca = a && a.value ? a.value : '#14b8a6';
+                var cb = b && b.value ? b.value : '#0f172a';
+                inner.style.background = cb;
+                inner.style.color = '#e2e8f0';
+                brand.style.background = 'linear-gradient(135deg,' + cp + ',' + cs + ')';
+                brand.style.color = '#fff';
+                card.style.borderColor = 'rgba(148,163,184,0.35)';
+                card.style.background = 'rgba(255,255,255,0.06)';
+                if (bar1) {
+                    bar1.style.background = ca;
+                    bar2.style.background = cs;
+                    bar2.style.opacity = '0.65';
+                }
+                btn.style.background = 'linear-gradient(135deg,' + cp + ',' + cs + ')';
+            }
+            [p, s, a, b].forEach(function (el) {
+                if (el) el.addEventListener('input', apply);
+            });
+            apply();
+        })();
+    </script>
+@endpush

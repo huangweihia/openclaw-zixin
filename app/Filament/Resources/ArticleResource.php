@@ -49,13 +49,19 @@ class ArticleResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('category_id')->numeric(),
-                Forms\Components\TextInput::make('title')->maxLength(65535),
+            Forms\Components\Select::make('category_id')
+                ->relationship('category', 'name')
+                ->searchable()
+                ->preload(),
+            Forms\Components\TextInput::make('title')->maxLength(65535),
                 Forms\Components\TextInput::make('slug')->maxLength(65535),
                 Forms\Components\Textarea::make('summary')->columnSpanFull()->rows(6),
                 Forms\Components\Textarea::make('content')->columnSpanFull()->rows(6),
                 Forms\Components\TextInput::make('cover_image')->maxLength(65535),
-                Forms\Components\TextInput::make('author_id')->numeric(),
+                Forms\Components\Select::make('author_id')
+                    ->relationship('author', 'name')
+                    ->searchable()
+                    ->preload(),
                 Forms\Components\TextInput::make('view_count')->numeric(),
                 Forms\Components\TextInput::make('like_count')->numeric(),
                 Forms\Components\Toggle::make('is_vip'),

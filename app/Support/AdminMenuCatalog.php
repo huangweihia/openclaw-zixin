@@ -7,12 +7,12 @@ use App\Models\AdminNavSection;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * 菜单目录：优先读 admin_nav_* 表；未迁移时用静态列表兜底。
+ * 菜单目录：数据来自 admin_nav_sections / admin_nav_items；无表时回退静态列表（测试/未迁移环境）。
  */
 final class AdminMenuCatalog
 {
     /**
-     * @return array<int, array{key: string, perm: string, section: string, label: string, match_exact?: bool}>
+     * @return array<int, array{key: string, perm: string, section: string, label: string, path?: string|null, match_exact?: bool}>
      */
     public static function items(): array
     {
@@ -34,6 +34,7 @@ final class AdminMenuCatalog
                     'perm' => $item->perm_key,
                     'section' => $section->title,
                     'label' => $item->label,
+                    'path' => $item->path,
                     'match_exact' => (bool) $item->match_exact,
                 ];
             }
@@ -43,7 +44,7 @@ final class AdminMenuCatalog
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, string> menu_key => perm
      */
     public static function keyToPermMap(): array
     {
@@ -134,7 +135,7 @@ final class AdminMenuCatalog
     }
 
     /**
-     * @return array<int, array{key: string, perm: string, section: string, label: string, match_exact?: bool}>
+     * @return array<int, array{key: string, perm: string, section: string, label: string, path?: string|null, match_exact?: bool}>
      */
     private static function legacyItems(): array
     {

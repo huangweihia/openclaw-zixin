@@ -49,8 +49,11 @@ class EmailSubscriptionResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
-                Forms\Components\TextInput::make('email')->maxLength(65535),
+            Forms\Components\Select::make('user_id')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload(),
+            Forms\Components\TextInput::make('email')->maxLength(65535),
                 Forms\Components\Textarea::make('subscribed_to')->columnSpanFull()->helperText('JSON 数组，可手填'),
                 Forms\Components\Textarea::make('topic_schedule')->columnSpanFull()->helperText('JSON 数组，可手填'),
                 Forms\Components\Toggle::make('is_unsubscribed'),

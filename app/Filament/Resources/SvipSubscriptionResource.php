@@ -49,8 +49,12 @@ class SvipSubscriptionResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
-                Forms\Components\TextInput::make('name')->maxLength(65535),
+            Forms\Components\Select::make('user_id')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Forms\Components\TextInput::make('name')->maxLength(65535),
                 Forms\Components\Textarea::make('keywords')->columnSpanFull()->rows(6),
                 Forms\Components\Textarea::make('exclude_keywords')->columnSpanFull()->rows(6),
                 Forms\Components\Textarea::make('sources')->columnSpanFull()->rows(6),

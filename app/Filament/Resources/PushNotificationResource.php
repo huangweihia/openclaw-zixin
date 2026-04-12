@@ -49,8 +49,12 @@ class PushNotificationResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
-                Forms\Components\TextInput::make('title')->maxLength(65535),
+            Forms\Components\Select::make('user_id')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Forms\Components\TextInput::make('title')->maxLength(65535),
                 Forms\Components\Textarea::make('content')->columnSpanFull()->rows(6),
                 Forms\Components\TextInput::make('action_url')->maxLength(65535),
                 Forms\Components\Textarea::make('data')->columnSpanFull()->helperText('JSON 数组，可手填'),

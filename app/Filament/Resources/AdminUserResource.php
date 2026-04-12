@@ -50,10 +50,16 @@ class AdminUserResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')
-                ->numeric()
+            Forms\Components\Select::make('user_id')
+                ->relationship(
+                    name: 'user',
+                    titleAttribute: 'name',
+                    modifyQueryUsing: fn (Builder $query) => $query->where('role', 'admin'),
+                )
+                ->searchable()
+                ->preload()
                 ->required()
-                ->helperText('对应 users 表主键（须为 role=admin 的账号）。'),
+                ->helperText('须选择 role=admin 的站内账号。'),
             Forms\Components\TextInput::make('display_name')->maxLength(255),
             Forms\Components\Toggle::make('is_active')->default(true),
             Forms\Components\Toggle::make('is_super'),

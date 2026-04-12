@@ -51,7 +51,11 @@ class AuditLogResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
+            Forms\Components\Select::make('user_id')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->nullable(),
             Forms\Components\TextInput::make('action')->maxLength(65535),
             Forms\Components\TextInput::make('model_type')->maxLength(65535),
             Forms\Components\TextInput::make('model_id')->numeric(),

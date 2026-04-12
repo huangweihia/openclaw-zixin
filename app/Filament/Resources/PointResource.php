@@ -44,7 +44,29 @@ class PointResource extends BaseAdminResource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['user']);
+        return parent::getEloquentQuery()->with(['user', 'reference']);
+    }
+
+    /** @return array<string, string> */
+    public static function typeLabels(): array
+    {
+        return [
+            'earn' => '获得',
+            'spend' => '消费',
+        ];
+    }
+
+    /** @return array<string, string> */
+    public static function categoryLabels(): array
+    {
+        return [
+            'register' => '注册奖励',
+            'login' => '登录',
+            'order' => '订单',
+            'admin' => '管理员调整',
+            'consume' => '消费',
+            'refund' => '退款',
+        ];
     }
 
     public static function form(Form $form): Form
@@ -77,8 +99,14 @@ class PointResource extends BaseAdminResource
                     ->sortable()
                     ->color(fn ($state): string => (float) $state >= 0 ? 'success' : 'danger'),
                 Tables\Columns\TextColumn::make('balance')->label('余额')->toggleable(),
-                Tables\Columns\TextColumn::make('type')->badge()->toggleable(),
-                Tables\Columns\TextColumn::make('category')->limit(24)->toggleable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => static::typeLabels()[$state ?? ''] ?? (string) $state)
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('category')
+                    ->limit(24)
+                    ->formatStateUsing(fn (?string $state): string => static::categoryLabels()[$state ?? ''] ?? (string) $state)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('description')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(),
             ])
@@ -105,8 +133,13 @@ class PointResource extends BaseAdminResource
                         ->badge()
                         ->color(fn ($state): string => (float) $state >= 0 ? 'success' : 'danger'),
                     Infolists\Components\TextEntry::make('balance')->label('变动后余额'),
-                    Infolists\Components\TextEntry::make('type')->label('类型')->badge(),
-                    Infolists\Components\TextEntry::make('category')->label('分类'),
+                    Infolists\Components\TextEntry::make('type')
+                        ->label('类型')
+                        ->badge()
+                        ->formatStateUsing(fn (?string $state): string => static::typeLabels()[$state ?? ''] ?? (string) $state),
+                    Infolists\Components\TextEntry::make('category')
+                        ->label('分类')
+                        ->formatStateUsing(fn (?string $state): string => static::categoryLabels()[$state ?? ''] ?? (string) $state),
                     Infolists\Components\TextEntry::make('created_at')->label('发生时间')->dateTime(),
                 ]),
             Infolists\Components\Section::make('说明与关联')
@@ -116,10 +149,30 @@ class PointResource extends BaseAdminResource
                         ->label('说明')
                         ->placeholder('—')
                         ->columnSpanFull(),
-                    Infolists\Components\TextEntry::make('reference_type')
-                        ->label('关联类型')
-                        ->formatStateUsing(fn (?string $state): string => $state ? class_basename($state) : '—'),
-                    Infolists\Components\TextEntry::make('reference_id')->label('关联 ID'),
+                    Infolists\Components\TextEntry::make('reference_label')
+                        ->label('关联对象')
+                        ->getStateUsing(function (Point $record): string {
+                            if (! $record->reference_type || ! $record->reference_id) {
+                                return '—';
+                            }
+                            $record->loadMissing('reference');
+                            $ref = $record->reference;
+                            $typeZh = match (class_basename((string) $record->reference_type)) {
+                                'Article' => '文章',
+                                'Order' => '订单',
+                                'UserPost' => '动态',
+                                default => class_basename((string) $record->reference_type),
+                            };
+                            if ($ref === null) {
+                                return $typeZh.' #'.(string) $record->reference_id;
+                            }
+                            $title = $ref->title ?? $ref->name ?? $ref->order_no ?? null;
+
+                            return $title !== null && $title !== ''
+                                ? $typeZh.'：'.$title
+                                : $typeZh.' #'.(string) $record->reference_id;
+                        })
+                        ->columnSpanFull(),
                 ])
                 ->columns(2)
                 ->collapsible(),

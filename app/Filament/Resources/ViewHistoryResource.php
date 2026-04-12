@@ -44,13 +44,17 @@ class ViewHistoryResource extends BaseAdminResource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['user']);
+        return parent::getEloquentQuery()->with(['user', 'viewable']);
     }
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
+            Forms\Components\Select::make('user_id')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->nullable(),
             Forms\Components\TextInput::make('viewable_type')->maxLength(65535),
             Forms\Components\TextInput::make('viewable_id')->numeric(),
             Forms\Components\DateTimePicker::make('viewed_at'),
@@ -66,11 +70,33 @@ class ViewHistoryResource extends BaseAdminResource
                     ->label('用户')
                     ->searchable()
                     ->placeholder('—'),
-                Tables\Columns\TextColumn::make('viewable_type')
-                    ->label('类型')
-                    ->formatStateUsing(fn (?string $state): string => $state ? class_basename($state) : '—')
+                Tables\Columns\TextColumn::make('viewable_label')
+                    ->label('查看对象')
+                    ->getStateUsing(function (ViewHistory $record): string {
+                        if (! $record->viewable_type || ! $record->viewable_id) {
+                            return '—';
+                        }
+                        $record->loadMissing('viewable');
+                        $v = $record->viewable;
+                        $typeZh = match (class_basename((string) $record->viewable_type)) {
+                            'Article' => '文章',
+                            'UserPost' => '动态',
+                            'Project' => '项目',
+                            'SideHustleCase' => '副业案例',
+                            'AiToolMonetization' => 'AI 工具',
+                            'MemberPremium' => '会员资源',
+                            default => class_basename((string) $record->viewable_type),
+                        };
+                        if ($v === null) {
+                            return $typeZh.' #'.(string) $record->viewable_id;
+                        }
+                        $title = $v->title ?? $v->name ?? null;
+
+                        return $title !== null && $title !== ''
+                            ? $typeZh.'：'.(\Illuminate\Support\Str::limit((string) $title, 40))
+                            : $typeZh.' #'.(string) $record->viewable_id;
+                    })
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('viewable_id')->label('对象 ID')->toggleable(),
                 Tables\Columns\TextColumn::make('viewed_at')->dateTime()->sortable()->toggleable(),
             ])
             ->defaultSort('viewed_at', 'desc')
@@ -91,11 +117,32 @@ class ViewHistoryResource extends BaseAdminResource
                     Infolists\Components\TextEntry::make('user.name')
                         ->label('用户')
                         ->placeholder('未登录 / 无'),
-                    Infolists\Components\TextEntry::make('viewable_type')
-                        ->label('资源类型')
-                        ->formatStateUsing(fn (?string $state): string => $state ? class_basename($state) : '—')
-                        ->description(fn (ViewHistory $record): string => 'Morph：'.((string) ($record->viewable_type ?? ''))),
-                    Infolists\Components\TextEntry::make('viewable_id')->label('资源 ID'),
+                    Infolists\Components\TextEntry::make('viewable_label')
+                        ->label('查看对象')
+                        ->getStateUsing(function (ViewHistory $record): string {
+                            if (! $record->viewable_type || ! $record->viewable_id) {
+                                return '—';
+                            }
+                            $record->loadMissing('viewable');
+                            $v = $record->viewable;
+                            $typeZh = match (class_basename((string) $record->viewable_type)) {
+                                'Article' => '文章',
+                                'UserPost' => '动态',
+                                'Project' => '项目',
+                                'SideHustleCase' => '副业案例',
+                                'AiToolMonetization' => 'AI 工具',
+                                'MemberPremium' => '会员资源',
+                                default => class_basename((string) $record->viewable_type),
+                            };
+                            if ($v === null) {
+                                return $typeZh.' #'.(string) $record->viewable_id;
+                            }
+                            $title = $v->title ?? $v->name ?? null;
+
+                            return $title !== null && $title !== ''
+                                ? $typeZh.'：'.$title
+                                : $typeZh.' #'.(string) $record->viewable_id;
+                        }),
                     Infolists\Components\TextEntry::make('viewed_at')->label('浏览时间')->dateTime()->columnSpanFull(),
                 ]),
         ]);

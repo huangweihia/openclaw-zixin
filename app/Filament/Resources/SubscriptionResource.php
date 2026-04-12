@@ -49,8 +49,12 @@ class SubscriptionResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
-                Forms\Components\TextInput::make('plan')->maxLength(65535),
+            Forms\Components\Select::make('user_id')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Forms\Components\TextInput::make('plan')->maxLength(65535),
                 Forms\Components\TextInput::make('amount')->numeric()->step(0.01),
                 Forms\Components\TextInput::make('status')->maxLength(65535),
                 Forms\Components\DateTimePicker::make('started_at'),

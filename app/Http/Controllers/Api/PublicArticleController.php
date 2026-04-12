@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\Category;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -127,7 +128,10 @@ class PublicArticleController extends Controller
         $article->increment('view_count');
         $article->refresh();
 
-        $canReadFull = ! $article->is_vip;
+        /** @var User|null $user */
+        $user = auth('sanctum')->user();
+        $hasVipAccess = $user instanceof User && $user->hasMemberMenuPrivileges();
+        $canReadFull = ! $article->is_vip || $hasVipAccess;
 
         $data = [
             'id' => $article->id,
@@ -149,7 +153,11 @@ class PublicArticleController extends Controller
             ] : null,
             'can_read_full' => $canReadFull,
             'content' => $canReadFull ? $article->content : null,
-            'vip_hint' => $canReadFull ? null : '本文为会员专享，完整正文请在官网登录后阅读。',
+            'vip_hint' => $canReadFull
+                ? null
+                : ($user
+                    ? '本文为 VIP/SVIP 会员专享，请开通会员后阅读全文。'
+                    : '本文为 VIP/SVIP 会员专享，请登录并开通会员后阅读全文。'),
         ];
 
         return response()->json([

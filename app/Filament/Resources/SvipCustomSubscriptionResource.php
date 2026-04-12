@@ -51,7 +51,11 @@ class SvipCustomSubscriptionResource extends BaseAdminResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('user_id')->numeric(),
+            Forms\Components\Select::make('user_id')
+                ->relationship('user', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
             Forms\Components\TextInput::make('plan_name')->maxLength(65535),
             Forms\Components\Textarea::make('description')->columnSpanFull()->rows(6),
             Forms\Components\TextInput::make('delivery_frequency')->maxLength(65535),

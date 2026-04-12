@@ -55,7 +55,11 @@ class ProjectResource extends BaseAdminResource
                 Forms\Components\TextInput::make('difficulty')->maxLength(65535),
                 Forms\Components\Toggle::make('is_featured'),
                 Forms\Components\Toggle::make('is_vip'),
-                Forms\Components\TextInput::make('category_id')->numeric()
+                Forms\Components\Select::make('category_id')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->nullable(),
         ]);
     }
 
