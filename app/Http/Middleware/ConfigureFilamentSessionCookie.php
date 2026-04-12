@@ -43,7 +43,12 @@ class ConfigureFilamentSessionCookie
             }
 
             if ($request->is('livewire/*')) {
-                return $this->refererAdminHostMatches($request, $adminHost);
+                if ($this->refererAdminHostMatches($request, $adminHost)) {
+                    return true;
+                }
+
+                // Referer 常被代理/浏览器策略去掉；若请求里已有后台专用 Cookie，仍用同一 Session，避免 419
+                return $this->requestHasFilamentSessionCookie($request);
             }
 
             return false;
@@ -59,11 +64,29 @@ class ConfigureFilamentSessionCookie
 
         if ($request->is('livewire/*')) {
             $ref = (string) $request->headers->get('referer', '');
+            if ($ref !== '' && str_contains($ref, '/'.$adminBase)) {
+                return true;
+            }
 
-            return $ref !== '' && str_contains($ref, '/'.$adminBase);
+            return $this->requestHasFilamentSessionCookie($request);
         }
 
         return false;
+    }
+
+    /**
+     * 判断是否已携带 Filament 专用 Session Cookie（与 config admin.session_cookie 一致）。
+     */
+    private function requestHasFilamentSessionCookie(Request $request): bool
+    {
+        $name = trim((string) config('admin.session_cookie', ''));
+        if ($name === '') {
+            return false;
+        }
+
+        $cookieHeader = (string) $request->headers->get('Cookie', '');
+
+        return str_contains($cookieHeader, $name.'=');
     }
 
     private function refererAdminHostMatches(Request $request, string $adminHost): bool
