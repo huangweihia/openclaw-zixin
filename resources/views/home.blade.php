@@ -281,18 +281,19 @@
             <div class="grid md:grid-cols-3 gap-8 items-stretch">
                 @foreach ($vipPreviews as $preview)
                     @if (! empty($preview['locked']))
-                        <div class="bg-gray-50 rounded-2xl p-8 card-hover relative ring-1 ring-gray-200 flex flex-col h-full min-h-[280px] overflow-hidden">
+                        <div class="bg-white rounded-2xl p-8 card-hover relative ring-1 ring-slate-200/90 shadow-sm flex flex-col h-full min-h-[260px] overflow-hidden">
                             <div class="text-5xl mb-4 shrink-0">{{ $preview['icon'] }}</div>
                             <h3 class="text-2xl font-bold mb-3 text-gray-800 shrink-0 line-clamp-2">{{ $preview['title'] }}</h3>
                             <p class="text-gray-600 mb-0 flex-1 text-sm leading-relaxed line-clamp-4">{{ $preview['summary'] }}</p>
                             @include('partials.vip-mask', [
                                 'title' => 'VIP 专属内容',
                                 'desc' => '开通会员后可查看完整案例、工具与 SOP 内容。',
-                                'cta' => '立即开通 VIP',
+                                'cta' => auth()->check() ? '立即开通 VIP' : '登录 / 开通 VIP',
+                                'href' => auth()->check() ? route('pricing') : route('login', ['return' => url()->current()]),
                             ])
                         </div>
                     @else
-                        <a href="{{ $preview['url'] }}" class="flex flex-col h-full min-h-[280px] bg-gray-50 rounded-2xl p-8 card-hover relative oc-home-vip-card" style="text-decoration: none; color: inherit;">
+                        <a href="{{ $preview['url'] }}" class="flex flex-col h-full min-h-[260px] bg-white rounded-2xl p-8 card-hover relative ring-1 ring-slate-200/90 shadow-sm oc-home-vip-card" style="text-decoration: none; color: inherit;">
                             <div class="text-5xl mb-4 shrink-0">{{ $preview['icon'] }}</div>
                             <h3 class="text-2xl font-bold mb-3 text-gray-800 shrink-0 line-clamp-2">{{ $preview['title'] }}</h3>
                             <p class="text-gray-600 mb-0 flex-1 text-sm leading-relaxed line-clamp-4">{{ $preview['summary'] }}</p>
@@ -409,8 +410,7 @@
     @include('partials.ad-slot', ['code' => 'home-banner', 'bannerPlacement' => 'bottom'])
 
     @include('partials.announcement-marquee', ['placement' => 'bottom'])
-    @include('partials.announcement-float')
-    @include('partials.floating-ads')
+    @include('partials.floating-promos')
 
     <!-- 底部页脚 -->
     @include('partials.footer')

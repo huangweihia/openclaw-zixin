@@ -87,9 +87,13 @@ class AdSlotResource extends BaseAdminResource
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('code')
-                    ->required()
+                    ->label('编码')
                     ->maxLength(128)
-                    ->unique(ignoreRecord: true),
+                    ->unique(ignoreRecord: true)
+                    ->disabled()
+                    ->dehydrated()
+                    ->visibleOn('edit')
+                    ->helperText('创建时根据「名称」自动生成，全站唯一，用于模板与接口引用。'),
                 Forms\Components\Select::make('position')
                     ->options(static::positionOptions())
                     ->required()

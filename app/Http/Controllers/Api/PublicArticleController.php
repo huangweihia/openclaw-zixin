@@ -48,7 +48,9 @@ class PublicArticleController extends Controller
         $sort = $request->string('sort', 'latest')->toString();
         match ($sort) {
             'hot' => $query->orderByDesc('view_count')->orderByDesc('published_at'),
-            'vip' => $query->where('is_vip', true)->orderByDesc('published_at'),
+            'vip' => $query->where(function ($q) {
+                $q->where('is_vip', true)->orWhere('is_vip_only', true);
+            })->orderByDesc('published_at'),
             default => $query->orderByDesc('published_at'),
         };
 
@@ -72,6 +74,7 @@ class PublicArticleController extends Controller
                 'view_count',
                 'like_count',
                 'is_vip',
+                'is_vip_only',
                 'is_published',
                 'published_at',
                 'created_at',
@@ -93,6 +96,7 @@ class PublicArticleController extends Controller
                 'view_count' => $a->view_count,
                 'like_count' => $a->like_count,
                 'is_vip' => $a->is_vip,
+                'is_vip_only' => $a->is_vip_only,
                 'published_at' => $a->published_at?->toIso8601String(),
                 'category' => $a->category ? [
                     'name' => $a->category->name,
@@ -130,8 +134,7 @@ class PublicArticleController extends Controller
 
         /** @var User|null $user */
         $user = auth('sanctum')->user();
-        $hasVipAccess = $user instanceof User && $user->hasMemberMenuPrivileges();
-        $canReadFull = ! $article->is_vip || $hasVipAccess;
+        $canReadFull = $article->userCanReadFull($user instanceof User ? $user : null);
 
         $data = [
             'id' => $article->id,
@@ -142,6 +145,7 @@ class PublicArticleController extends Controller
             'view_count' => $article->view_count,
             'like_count' => $article->like_count,
             'is_vip' => $article->is_vip,
+            'is_vip_only' => $article->is_vip_only,
             'published_at' => $article->published_at?->toIso8601String(),
             'category' => $article->category ? [
                 'name' => $article->category->name,
@@ -156,8 +160,12 @@ class PublicArticleController extends Controller
             'vip_hint' => $canReadFull
                 ? null
                 : ($user
-                    ? '本文为 VIP/SVIP 会员专享，请开通会员后阅读全文。'
-                    : '本文为 VIP/SVIP 会员专享，请登录并开通会员后阅读全文。'),
+                    ? ($article->is_vip_only
+                        ? '本文为 SVIP 会员专享，请升级后阅读全文。'
+                        : '本文为 VIP 会员专享，请开通会员后阅读全文。')
+                    : ($article->is_vip_only
+                        ? '本文为 SVIP 会员专享，请登录并升级后阅读全文。'
+                        : '本文为 VIP 会员专享，请登录并开通会员后阅读全文。')),
         ];
 
         return response()->json([

@@ -21,7 +21,7 @@ class PublicEmailSubscriptionController extends Controller
         }
 
         $user = $request->user();
-        if (! $user || ! in_array((string) $user->role, ['vip', 'svip', 'admin'], true)) {
+        if (! $user || ! $user->canAccessVipExclusiveContent()) {
             return response()->json(['message' => '仅 VIP / SVIP / 管理员可订阅'], 403);
         }
 

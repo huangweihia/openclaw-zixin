@@ -6,8 +6,10 @@ use App\Models\SideHustleCase;
 use App\Models\UserPost;
 use App\Models\CommentLike;
 use App\Support\CommentThreadBuilder;
+use App\Support\SiteGateMask;
 use App\Support\ViewHistoryRecorder;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -21,7 +23,7 @@ class SideHustleCaseWebController extends Controller
             ->orderByDesc('id');
 
         $user = $request->user();
-        $canVip = $user && in_array($user->role, ['vip', 'svip', 'admin'], true);
+        $canVip = (bool) $user?->canAccessVipExclusiveContent();
 
         $query->where(function ($q) use ($canVip) {
             $q->where('visibility', 'public');
@@ -58,7 +60,39 @@ class SideHustleCaseWebController extends Controller
         abort_unless($sideHustleCase->status === 'approved', 404);
 
         $canRead = $sideHustleCase->visibility === 'public'
-            || ($request->user() && in_array($request->user()->role, ['vip', 'svip', 'admin'], true));
+            || (bool) $request->user()?->canAccessVipExclusiveContent();
+
+        if (! $canRead && $sideHustleCase->visibility === 'vip') {
+            $sideHustleCase->increment('view_count');
+            $sideHustleCase->refresh();
+            ViewHistoryRecorder::record($request->user(), $sideHustleCase);
+            $teaserPlain = $sideHustleCase->summary
+                ?: Str::limit(strip_tags((string) $sideHustleCase->content), 480);
+            $teaserHtml = Str::markdown($teaserPlain);
+            $mask = SiteGateMask::forVipExclusive($request->user(), $request->fullUrl());
+
+            return view('cases.show', [
+                'case' => $sideHustleCase,
+                'canReadFull' => false,
+                'teaserHtml' => $teaserHtml,
+                'gateMask' => $mask,
+                'bodyHtml' => '',
+                'stepsHtml' => null,
+                'recommendCases' => SideHustleCase::query()
+                    ->where('status', 'approved')
+                    ->whereKeyNot($sideHustleCase->id)
+                    ->where('visibility', 'public')
+                    ->orderByDesc('like_count')
+                    ->orderByDesc('view_count')
+                    ->limit(6)
+                    ->get(['id', 'title', 'slug', 'like_count', 'view_count']),
+                'comments' => new LengthAwarePaginator(collect(), 0, 20, 1, [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]),
+                'likedCommentIds' => [],
+            ]);
+        }
 
         abort_unless($canRead, 403);
 
@@ -98,6 +132,7 @@ class SideHustleCaseWebController extends Controller
 
         return view('cases.show', [
             'case' => $sideHustleCase,
+            'canReadFull' => true,
             'bodyHtml' => $bodyHtml,
             'stepsHtml' => $stepsHtml,
             'recommendCases' => $recommendCases,

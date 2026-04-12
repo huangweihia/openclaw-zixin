@@ -157,7 +157,7 @@
                 <a href="{{ route('payments.confirm', ['plan' => 'vip']) }}" class="btn btn-secondary text-sm">去支付页</a>
             </div>
         @endif
-        @if (in_array($u->role, ['vip', 'svip', 'admin'], true))
+        @if ($u->canAccessVipExclusiveContent())
             <div class="mt-4 pt-4 border-t oc-border">
                 <h4 class="text-sm font-semibold oc-heading mb-2">邮件订阅（可选内容 + 发送时间）</h4>
                 <form id="email-sub-form" class="space-y-3">
@@ -376,7 +376,7 @@
             }, 1000);
         })();
     </script>
-    @if (in_array($u->role, ['vip', 'svip', 'admin'], true))
+    @if ($u->canAccessVipExclusiveContent())
         <script>
             (function () {
                 const form = document.getElementById('email-sub-form');

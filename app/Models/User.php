@@ -86,22 +86,58 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(\App\Models\Point::class, 'user_id')->orderByDesc('id');
     }
     
+    /**
+     * 付费档位（不含管理员）：用于订阅到期、VIP 角标等。
+     */
     public function isVip(): bool
     {
         return in_array($this->role, ['vip', 'svip'], true);
     }
-    
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
 
     /**
-     * 顶栏会员区 / VIP 皮肤等：管理员与付费会员同等对待，不提示「开通 VIP」。
+     * 站内容「VIP 门槛」：普通用户不可；VIP、SVIP、超级管理员可读 VIP 专属内容。
+     * （超级管理员 role=admin 全开，与业务上「第四档」一致。）
+     */
+    public function canAccessVipExclusiveContent(): bool
+    {
+        if ($this->is_banned) {
+            return false;
+        }
+
+        return in_array($this->role, ['vip', 'svip', 'admin'], true);
+    }
+
+    /**
+     * 站内容「SVIP 门槛」：仅 SVIP 与超级管理员（含全部 SVIP 权益）。
+     */
+    public function canAccessSvipExclusiveContent(): bool
+    {
+        if ($this->is_banned) {
+            return false;
+        }
+
+        return in_array($this->role, ['svip', 'admin'], true);
+    }
+
+    /**
+     * 超级管理员（users.role = admin）：站内容全部权限，等同最高档。
+     */
+    public function isSiteSuperAdmin(): bool
+    {
+        return $this->role === 'admin' && ! $this->is_banned;
+    }
+
+    /**
+     * 顶栏会员区 / VIP 皮肤等：与 canAccessVipExclusiveContent 一致。
      */
     public function hasMemberMenuPrivileges(): bool
     {
-        return in_array($this->role, ['vip', 'svip', 'admin'], true);
+        return $this->canAccessVipExclusiveContent();
     }
 
     public function adminRoles(): BelongsToMany

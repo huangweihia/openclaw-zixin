@@ -26,21 +26,22 @@
             @if ($canReadFull)
                 {!! $bodyHtml !!}
             @else
-                <p class="oc-muted mb-4">{{ $teaser }}</p>
-                <div class="oc-vip-lock">
-                    <div class="text-3xl mb-2">🔒</div>
-                    <p class="font-semibold mb-2 oc-heading">本文为 VIP 专享投稿</p>
-                    <p class="text-sm mb-4 oc-muted">开通 VIP 后可阅读全文并参与互动</p>
-                    @guest
-                        <a href="{{ route('login', ['return' => request()->path()]) }}" class="btn btn-primary">请先登录</a>
-                    @else
-                        <a href="{{ route('pricing') }}" class="btn btn-primary">解锁 VIP</a>
-                    @endguest
-                </div>
+                @php
+                    $gateMask = \App\Support\SiteGateMask::forVipExclusive(auth()->user(), request()->fullUrl());
+                @endphp
+                @include('partials.gated-content-teaser', [
+                    'teaserHtml' => '<p class="oc-muted m-0">'.e($teaser).'</p>',
+                    'mask' => $gateMask,
+                ])
             @endif
         </div>
 
-        @if ($canReadFull)
+        @if (! $canReadFull)
+            <section class="mt-12 oc-surface p-6">
+                <h2 class="text-xl font-bold mb-4 oc-heading">评论</h2>
+                <p class="text-sm oc-muted m-0">开通 VIP 后可阅读全文并参与评论与互动。</p>
+            </section>
+        @else
             <div class="flex flex-wrap gap-3 mt-8">
                 @auth
                     <form method="post" action="{{ route('posts.like', $post) }}" class="oc-engage-ajax">

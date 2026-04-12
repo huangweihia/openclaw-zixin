@@ -59,4 +59,28 @@ class Article extends Model
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
+
+    /**
+     * 是否可读全文：无门槛文；VIP 文需 VIP/SVIP/管理员；is_vip_only（SVIP 咨询等）需 SVIP/管理员。
+     */
+    public function userCanReadFull(?User $user): bool
+    {
+        if (! $this->is_vip && ! $this->is_vip_only) {
+            return true;
+        }
+
+        if ($user === null || $user->is_banned) {
+            return false;
+        }
+
+        if ($this->is_vip_only) {
+            return $user->canAccessSvipExclusiveContent();
+        }
+
+        if ($this->is_vip) {
+            return $user->canAccessVipExclusiveContent();
+        }
+
+        return true;
+    }
 }

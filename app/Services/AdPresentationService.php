@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AdSlot;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 /**
  * 仅保留广告位（AdSlot）兜底素材渲染：
@@ -127,19 +128,20 @@ class AdPresentationService
         }
 
         $user = Auth::user();
-        $role = strtolower((string) ($user->role ?? ''));
-        $isGuest = $user === null;
-        $isMember = in_array($role, ['vip', 'svip', 'admin'], true);
+        $isGuest = ! $user instanceof User;
+        $canVip = $user instanceof User && $user->canAccessVipExclusiveContent();
+        $canSvip = $user instanceof User && $user->canAccessSvipExclusiveContent();
+        $isAdmin = $user instanceof User && $user->isSiteSuperAdmin();
 
         return match ($audience) {
             'all' => true,
             'guest' => $isGuest,
             'user' => ! $isGuest,
-            'vip' => $role === 'vip' || $role === 'admin',
-            'svip' => $role === 'svip' || $role === 'admin',
-            'admin' => $role === 'admin',
-            'member' => $isMember,
-            'non_member' => ! $isMember,
+            'vip' => $canVip,
+            'svip' => $canSvip,
+            'admin' => $isAdmin,
+            'member' => $canVip,
+            'non_member' => ! $canVip,
             default => true,
         };
     }

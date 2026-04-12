@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\AiToolMonetization;
 use App\Models\UserPost;
+use App\Support\SiteGateMask;
 use App\Support\ViewHistoryRecorder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AiToolWebController extends Controller
@@ -15,7 +17,7 @@ class AiToolWebController extends Controller
         $query = AiToolMonetization::query()->orderByDesc('id');
 
         $user = $request->user();
-        $canVip = $user && in_array($user->role, ['vip', 'svip', 'admin'], true);
+        $canVip = (bool) $user?->canAccessVipExclusiveContent();
 
         $query->where(function ($q) use ($canVip) {
             $q->where('visibility', 'public');
@@ -50,7 +52,21 @@ class AiToolWebController extends Controller
     public function show(Request $request, AiToolMonetization $aiToolMonetization): View
     {
         $canRead = $aiToolMonetization->visibility === 'public'
-            || ($request->user() && in_array($request->user()->role, ['vip', 'svip', 'admin'], true));
+            || (bool) $request->user()?->canAccessVipExclusiveContent();
+
+        if (! $canRead && $aiToolMonetization->visibility === 'vip') {
+            $aiToolMonetization->increment('view_count');
+            $aiToolMonetization->refresh();
+            ViewHistoryRecorder::record($request->user(), $aiToolMonetization);
+            $teaserPlain = Str::limit(strip_tags((string) $aiToolMonetization->content), 480);
+
+            return view('tools.show', [
+                'tool' => $aiToolMonetization,
+                'canReadFull' => false,
+                'teaserHtml' => '<p>'.e($teaserPlain).'</p>',
+                'gateMask' => SiteGateMask::forVipExclusive($request->user(), $request->fullUrl()),
+            ]);
+        }
 
         abort_unless($canRead, 403);
 
@@ -60,6 +76,7 @@ class AiToolWebController extends Controller
 
         return view('tools.show', [
             'tool' => $aiToolMonetization,
+            'canReadFull' => true,
         ]);
     }
 }

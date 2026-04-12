@@ -7,6 +7,9 @@ use Illuminate\Support\Str;
 
 /**
  * 后台创建资源时统一生成唯一 slug / code / key，避免人工填写冲突。
+ *
+ * 约定：需要在「新增」时隐藏编码字段的 Filament 资源，在对应 Model 的 `creating` 中
+ * 对空 `code`/`slug` 调用本类；皮肤等也可在 CreateRecord::mutateFormDataBeforeCreate 中调用。
  */
 final class AdminUniqueCode
 {

@@ -5,19 +5,31 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\Comment;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
- * 文章评论列表（公开，无需登录）
+ * 文章评论列表；VIP 专享文与正文一致：无会员权限时不返回评论（防抓取与端上对齐）
  */
 class PublicArticleCommentController extends Controller
 {
-    public function index(string $slug): JsonResponse
+    public function index(Request $request, string $slug): JsonResponse
     {
         $article = Article::query()
             ->where('slug', $slug)
             ->where('is_published', true)
             ->firstOrFail();
+
+        /** @var User|null $user */
+        $user = auth('sanctum')->user();
+        $hasVipAccess = $user instanceof User && $user->hasMemberMenuPrivileges();
+        if ($article->is_vip && ! $hasVipAccess) {
+            return response()->json([
+                'success' => true,
+                'data' => [],
+            ]);
+        }
 
         $rows = Comment::query()
             ->where('commentable_type', $article->getMorphClass())

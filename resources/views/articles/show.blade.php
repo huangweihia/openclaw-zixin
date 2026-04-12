@@ -22,7 +22,9 @@
                     @endif
                     <span>{{ $article->published_at?->format('Y-m-d H:i') }}</span>
                     <span>阅读 {{ number_format($article->view_count) }}</span>
-                    @if ($article->is_vip)
+                    @if ($article->is_vip_only)
+                        <span class="font-semibold" style="color: #6d28d9;">SVIP 专属</span>
+                    @elseif ($article->is_vip)
                         <span class="font-semibold" style="color: #b45309;">VIP 专属</span>
                     @endif
                 </div>
@@ -38,17 +40,14 @@
                 @if ($canReadFull)
                     {!! $article->content !!}
                 @else
-                    <div class="mb-6">{!! $article->summary !!}</div>
-                    <div class="oc-vip-lock">
-                        <div class="text-3xl mb-2">🔒</div>
-                        <p class="font-semibold mb-2" style="color: var(--dark);">本文为 VIP 专属内容</p>
-                        <p class="text-sm mb-4" style="color: var(--gray);">开通 VIP 后可阅读全文</p>
-                        @guest
-                            <a href="{{ route('login', ['return' => request()->path()]) }}" class="btn btn-primary">请先登录</a>
-                        @else
-                            <a href="{{ route('pricing') }}" class="btn btn-primary">解锁 VIP</a>
-                        @endguest
-                    </div>
+                    @php
+                        $teaserHtml = $article->summary ?: \Illuminate\Support\Str::limit(strip_tags((string) $article->content), 320);
+                        $gateMask = \App\Support\SiteGateMask::forArticle($article, auth()->user(), request()->fullUrl());
+                    @endphp
+                    @include('partials.gated-content-teaser', [
+                        'teaserHtml' => $teaserHtml,
+                        'mask' => $gateMask,
+                    ])
                 @endif
             </div>
 

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdSlot;
-use App\Support\AdminUniqueCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -53,7 +52,6 @@ class AdSlotController extends Controller
             AdSlot::query()->where('is_active', true)->update(['is_active' => false]);
         }
         $data['audience'] = $data['audience'] ?? 'all';
-        $data['code'] = AdminUniqueCode::code($data['name'], AdSlot::class, 'code');
         $slot = AdSlot::query()->create($data);
 
         return response()->json([

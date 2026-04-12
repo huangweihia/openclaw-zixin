@@ -63,7 +63,7 @@ class PublishedUserPostController extends Controller
         }
 
         $canReadFull = $userPost->visibility !== 'vip'
-            || ($request->user() && in_array($request->user()->role, ['vip', 'svip', 'admin'], true));
+            || (bool) $request->user()?->canAccessVipExclusiveContent();
 
         $userPost->load('author');
         $userPost->increment('view_count');

@@ -130,8 +130,7 @@
     @unless ($ocSiteEmbed)
         @include('partials.announcement-marquee', ['placement' => 'bottom'])
         @include('partials.footer')
-        @include('partials.announcement-float')
-        @include('partials.floating-ads')
+        @include('partials.floating-promos')
     @endunless
 
     @vite(['resources/js/blade-skin-mount.js'])

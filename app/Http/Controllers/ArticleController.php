@@ -32,7 +32,9 @@ class ArticleController extends Controller
         $sort = $request->string('sort', 'latest')->toString();
         match ($sort) {
             'hot' => $query->orderByDesc('view_count')->orderByDesc('published_at'),
-            'vip' => $query->where('is_vip', true)->orderByDesc('published_at'),
+            'vip' => $query->where(function ($q) {
+                $q->where('is_vip', true)->orWhere('is_vip_only', true);
+            })->orderByDesc('published_at'),
             default => $query->orderByDesc('published_at'),
         };
 
@@ -57,6 +59,7 @@ class ArticleController extends Controller
                 'view_count',
                 'like_count',
                 'is_vip',
+                'is_vip_only',
                 'is_published',
                 'published_at',
                 'created_at',
@@ -66,16 +69,12 @@ class ArticleController extends Controller
 
         $articles = $query->paginate(12)->appends($request->query());
 
-        $canAccessVip = $request->user()
-            && in_array($request->user()->role, ['vip', 'svip', 'admin'], true);
-
         return view('articles.index', [
             'categories' => $categories,
             'articles' => $articles,
             'currentCategory' => $slug,
             'currentSort' => $sort,
             'searchQ' => $q,
-            'canAccessVip' => $canAccessVip,
         ]);
     }
 
@@ -85,18 +84,7 @@ class ArticleController extends Controller
             abort(404);
         }
 
-        $canReadFull = ! $article->is_vip
-            || ($request->user() && in_array($request->user()->role, ['vip', 'svip', 'admin'], true));
-
-        if ($article->is_vip && ! $canReadFull) {
-            if (! $request->user()) {
-                return redirect()->guest(route('login'));
-            }
-
-            return redirect()
-                ->route('pricing')
-                ->with('warning', '该文章为 VIP 专属内容，请先开通会员后阅读。');
-        }
+        $canReadFull = $article->userCanReadFull($request->user());
 
         $article->increment('view_count');
         $article->refresh();

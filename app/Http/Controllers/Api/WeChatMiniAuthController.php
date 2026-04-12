@@ -352,7 +352,8 @@ class WeChatMiniAuthController extends Controller
             /** VIP/SVIP/管理员可读会员专享正文、浏览类 VIP 详情 */
             'has_vip_content_access' => $user->hasMemberMenuPrivileges(),
             /** SVIP 皮肤、高阶定制等（与 SkinController type=svip 一致） */
-            'has_svip_privileges' => in_array((string) $user->role, ['svip', 'admin'], true),
+            'has_svip_privileges' => $user->canAccessSvipExclusiveContent(),
+            'is_site_super_admin' => $user->isSiteSuperAdmin(),
         ];
     }
 
@@ -361,7 +362,7 @@ class WeChatMiniAuthController extends Controller
         return match ($user->role) {
             'svip' => 'SVIP',
             'vip' => 'VIP 会员',
-            'admin' => '管理员',
+            'admin' => '超级管理员',
             default => '免费用户',
         };
     }

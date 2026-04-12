@@ -84,8 +84,19 @@ class VipController extends Controller
 
     public function pricing(): View
     {
+        $user = auth()->user();
+        $role = $user?->role;
+        $expiresAt = $user?->subscription_ends_at;
+        $daysLeft = null;
+        if ($expiresAt && $expiresAt->isFuture()) {
+            $daysLeft = (int) now()->startOfDay()->diffInDays($expiresAt->copy()->startOfDay());
+        }
+
         return view('vip.pricing', [
             'plans' => PricingConfig::catalogMerged(),
+            'memberRole' => $role,
+            'memberExpiresAt' => $expiresAt,
+            'memberDaysLeft' => $daysLeft,
         ]);
     }
 }

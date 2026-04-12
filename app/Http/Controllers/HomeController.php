@@ -26,10 +26,9 @@ class HomeController extends Controller
         $homeStats = $this->homeStats();
 
         $user = $request->user();
-        $userRole = strtolower((string) ($user->role ?? 'guest'));
-        $canVip = in_array($userRole, ['vip', 'svip', 'admin'], true);
-        $canSvip = in_array($userRole, ['svip', 'admin'], true);
-        $unlockedPreview = $user && in_array($user->role, ['vip', 'svip', 'admin'], true);
+        $canVip = (bool) $user?->canAccessVipExclusiveContent();
+        $canSvip = (bool) $user?->canAccessSvipExclusiveContent();
+        $unlockedPreview = (bool) $user?->canAccessVipExclusiveContent();
         $vipPreviews = $this->buildVipPreviews($unlockedPreview);
 
         $pricingPlans = $this->homePricingPlans();

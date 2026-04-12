@@ -17,16 +17,23 @@
                 </header>
 
                 <div class="oc-surface p-6 md:p-8 space-y-6">
-                    <section class="article-content text-sm leading-relaxed" style="color: var(--dark);">
-                        {!! $bodyHtml !!}
-                    </section>
-                    @if ($stepsHtml)
-                        <section>
-                            <h2 class="text-lg font-bold oc-heading mb-3">操作步骤</h2>
-                            <div class="article-content text-sm leading-relaxed" style="color: var(--dark);">
-                                {!! $stepsHtml !!}
-                            </div>
+                    @if ($canReadFull ?? true)
+                        <section class="article-content text-sm leading-relaxed" style="color: var(--dark);">
+                            {!! $bodyHtml !!}
                         </section>
+                        @if ($stepsHtml)
+                            <section>
+                                <h2 class="text-lg font-bold oc-heading mb-3">操作步骤</h2>
+                                <div class="article-content text-sm leading-relaxed" style="color: var(--dark);">
+                                    {!! $stepsHtml !!}
+                                </div>
+                            </section>
+                        @endif
+                    @else
+                        @include('partials.gated-content-teaser', [
+                            'teaserHtml' => $teaserHtml ?? '',
+                            'mask' => $gateMask ?? [],
+                        ])
                     @endif
                 </div>
             </div>
@@ -47,27 +54,33 @@
 
         <section class="mt-8 oc-surface p-6">
             <h2 class="text-xl font-bold mb-4 oc-heading">评论</h2>
-            @auth
-                <form method="post" action="{{ route('cases.comments.store', $case) }}" class="oc-comment-form-ajax mb-8">
-                    @csrf
-                    <input type="hidden" name="ajax" value="1" />
-                    <label class="oc-label" for="case-comment-content">发表评论</label>
-                    <textarea name="content" id="case-comment-content" rows="4" required minlength="1" class="oc-input mb-2" placeholder="输入评论内容"></textarea>
-                    <button type="submit" class="btn btn-primary text-sm">发表评论</button>
-                </form>
+            @if (! ($canReadFull ?? true))
+                <p class="text-sm oc-muted m-0">开通 VIP 后可查看全文并参与评论。</p>
             @else
-                <p class="text-sm mb-4 oc-muted">
-                    <a href="{{ route('login', ['return' => request()->path()]) }}" class="oc-link font-semibold" style="text-decoration: none;">请先登录</a> 后发表评论
-                </p>
-            @endauth
-            <div id="comments-list">
-                @forelse ($comments as $comment)
-                    @include('partials.comment-thread', ['root' => $comment, 'likedIds' => $likedCommentIds ?? [], 'commentContext' => 'case'])
-                @empty
-                    <p class="text-sm oc-muted oc-comments-empty m-0">暂无评论</p>
-                @endforelse
-            </div>
-            <div class="mt-6">{{ $comments->onEachSide(1)->links() }}</div>
+                @auth
+                    <form method="post" action="{{ route('cases.comments.store', $case) }}" class="oc-comment-form-ajax mb-8">
+                        @csrf
+                        <input type="hidden" name="ajax" value="1" />
+                        <label class="oc-label" for="case-comment-content">发表评论</label>
+                        <textarea name="content" id="case-comment-content" rows="4" required minlength="1" class="oc-input mb-2" placeholder="输入评论内容"></textarea>
+                        <button type="submit" class="btn btn-primary text-sm">发表评论</button>
+                    </form>
+                @else
+                    <p class="text-sm mb-4 oc-muted">
+                        <a href="{{ route('login', ['return' => request()->path()]) }}" class="oc-link font-semibold" style="text-decoration: none;">请先登录</a> 后发表评论
+                    </p>
+                @endauth
+            @endif
+            @if ($canReadFull ?? true)
+                <div id="comments-list">
+                    @forelse ($comments as $comment)
+                        @include('partials.comment-thread', ['root' => $comment, 'likedIds' => $likedCommentIds ?? [], 'commentContext' => 'case'])
+                    @empty
+                        <p class="text-sm oc-muted oc-comments-empty m-0">暂无评论</p>
+                    @endforelse
+                </div>
+                <div class="mt-6">{{ $comments->onEachSide(1)->links() }}</div>
+            @endif
         </section>
     </article>
 

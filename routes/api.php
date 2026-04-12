@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PersonalityQuizAdminController;
 use App\Http\Controllers\Api\PersonalityQuizController;
 use App\Http\Controllers\Api\PublicArticleController;
 use App\Http\Controllers\Api\PublicBrowseController;
+use App\Http\Controllers\Api\PublicAnnouncementController;
 use App\Http\Controllers\Api\PublicArticleCommentController;
 use App\Http\Controllers\Api\WeChatMiniArticleCommentController;
 use App\Http\Controllers\Api\WeChatMiniAuthController;
@@ -68,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/wechat/mini/inbox/{id}/read', [WeChatMiniInboxController::class, 'markRead'])
         ->where('id', '[0-9]+');
     Route::get('/wechat/mini/email-subscription', [WeChatMiniEmailSubscriptionController::class, 'show']);
+    /** @deprecated 请使用 POST /api/public/articles/{slug}/comments；保留以兼容旧包 */
     Route::post('/wechat/mini/articles/{slug}/comments', [WeChatMiniArticleCommentController::class, 'store']);
 });
 
@@ -75,12 +77,14 @@ Route::post('/email-subscriptions', [PublicEmailSubscriptionController::class, '
 Route::get('/email-unsubscribe/{token}', [PublicEmailSubscriptionController::class, 'unsubscribe'])
     ->where('token', '[A-Za-z0-9]+');
 
-// 皮肤 API（GET 支持可选 Bearer，以便登录用户看到私有皮肤等）
-Route::prefix('skins')->middleware('sanctum.optional')->group(function () {
-    Route::get('/', [SkinController::class, 'index']);           // GET /api/skins - 获取所有皮肤
-    Route::get('/current', [SkinController::class, 'show']);     // GET /api/skins/current - 获取当前用户皮肤
-    Route::put('/current', [SkinController::class, 'update'])->middleware('auth:sanctum'); // PUT /api/skins/current - 更新用户皮肤
-    Route::delete('/current', [SkinController::class, 'destroy'])->middleware('auth:sanctum'); // DELETE /api/skins/current - 重置为默认
+// 皮肤 API：GET 走可选 Bearer；PUT/DELETE 仅用 auth:sanctum（避免与 sanctum.optional 叠加导致部分环境无法识别登录态）
+Route::prefix('skins')->group(function () {
+    Route::middleware('sanctum.optional')->group(function () {
+        Route::get('/', [SkinController::class, 'index']);           // GET /api/skins
+        Route::get('/current', [SkinController::class, 'show']);     // GET /api/skins/current
+    });
+    Route::put('/current', [SkinController::class, 'update'])->middleware('auth:sanctum');
+    Route::delete('/current', [SkinController::class, 'destroy'])->middleware('auth:sanctum');
 });
 
 // SVIP 内容获取 - OpenClaw 定时任务调用
@@ -96,9 +100,16 @@ Route::post('/openclaw/data', [OpenClawDataController::class, 'store']);
 // OpenClaw Task Logs - 接收定时任务执行日志
 Route::post('/openclaw/task-log', [OpenClawTaskLogController::class, 'store']);
 
+// 发表评论：仅 Bearer 登录，不经过 sanctum.optional（与换肤 PUT 同理，避免中间件链导致未认证）
+Route::prefix('public')->middleware(['throttle:120,1', 'auth:sanctum'])->group(function () {
+    Route::post('articles/{slug}/comments', [WeChatMiniArticleCommentController::class, 'store']);
+});
+
 // 前台公开内容（小程序 / 第三方 JSON）；sanctum.optional 用于带 Token 时识别 VIP 可读全文
 Route::prefix('public')->middleware(['throttle:120,1', 'sanctum.optional'])->group(function () {
     Route::get('categories', [PublicArticleController::class, 'categories']);
+    Route::get('announcements', [PublicAnnouncementController::class, 'index']);
+    Route::get('announcements/{id}', [PublicAnnouncementController::class, 'show'])->whereNumber('id');
     Route::get('articles', [PublicArticleController::class, 'index']);
     Route::get('articles/{slug}/comments', [PublicArticleCommentController::class, 'index']);
     Route::get('articles/{slug}', [PublicArticleController::class, 'show']);

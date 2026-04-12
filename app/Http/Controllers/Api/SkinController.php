@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SkinConfig;
+use App\Models\User;
 use App\Models\UserSkin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class SkinController extends Controller
      */
     public function index(): JsonResponse
     {
-        $userId = Auth::id();
+        $userId = Auth::guard('sanctum')->id() ?? Auth::id();
         $skins = SkinConfig::query()
             ->where('is_active', true)
             ->where(function ($q) use ($userId) {
@@ -40,7 +41,7 @@ class SkinController extends Controller
      */
     public function show(): JsonResponse
     {
-        $user = Auth::user();
+        $user = Auth::guard('sanctum')->user() ?? Auth::user();
 
         if (!$user) {
             // 未登录用户返回默认皮肤
@@ -94,9 +95,10 @@ class SkinController extends Controller
      */
     public function update(Request $request): JsonResponse
     {
-        $user = Auth::user();
+        // API Bearer 走 sanctum 守卫；避免默认 web 守卫下 Auth::user() 为空（小程序换肤 PUT）
+        $user = Auth::guard('sanctum')->user() ?? Auth::user();
 
-        if (!$user) {
+        if (! $user instanceof User) {
             return response()->json([
                 'success' => false,
                 'message' => '请先登录',
@@ -141,16 +143,13 @@ class SkinController extends Controller
             ], 403);
         }
 
-        $role = strtolower((string) ($user->role ?? 'user'));
-        $isVip = in_array($role, ['vip', 'svip', 'admin'], true);
-        $isSvip = in_array($role, ['svip', 'admin'], true);
-        if ($skinConfig->type === 'vip' && ! $isVip) {
+        if ($skinConfig->type === 'vip' && ! $user->canAccessVipExclusiveContent()) {
             return response()->json([
                 'success' => false,
                 'message' => '该皮肤仅限 VIP 用户使用',
             ], 403);
         }
-        if ($skinConfig->type === 'svip' && ! $isSvip) {
+        if ($skinConfig->type === 'svip' && ! $user->canAccessSvipExclusiveContent()) {
             return response()->json([
                 'success' => false,
                 'message' => '该皮肤仅限 SVIP 用户使用',
@@ -180,9 +179,9 @@ class SkinController extends Controller
      */
     public function destroy(): JsonResponse
     {
-        $user = Auth::user();
+        $user = Auth::guard('sanctum')->user() ?? Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => '请先登录',

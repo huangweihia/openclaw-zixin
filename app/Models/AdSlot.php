@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\AdminUniqueCode;
 use Illuminate\Database\Eloquent\Model;
 
 class AdSlot extends Model
@@ -27,5 +28,18 @@ class AdSlot extends Model
         'is_active' => 'boolean',
         'show_default_when_empty' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (AdSlot $slot): void {
+            if (! filled($slot->code)) {
+                $slot->code = AdminUniqueCode::code(
+                    filled($slot->name) ? (string) $slot->name : 'slot',
+                    self::class,
+                    'code'
+                );
+            }
+        });
+    }
 
 }

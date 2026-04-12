@@ -31,7 +31,8 @@
             if ($isHomeBanner) {
                 $boxStyle .= ' max-height: min('.$h.'px, 40vh);';
             } else {
-                $boxStyle .= ' height: '.$h.'px; max-height: '.$h.'px;';
+                // 侧栏/内嵌：用 max-height 随内容增高，避免小图配大高度时出现大块灰底
+                $boxStyle .= ' max-height: '.$h.'px; height: auto; min-height: 0;';
             }
         }
         if ($w > 0 || $h > 0) {
@@ -57,7 +58,7 @@
             aria-label="关闭此广告位"
             title="关闭（本机记住 24 小时）"
         >×</button>
-        <div class="oc-ad-slot__box mx-auto flex items-center justify-center bg-black/5 min-h-0" style="{{ $boxStyle }}">
+        <div class="oc-ad-slot__box mx-auto flex items-center justify-center bg-slate-50/60 min-h-0" style="{{ $boxStyle }}">
         @php
             $defLink = trim((string) ($slot->default_link_url ?? ''));
         @endphp

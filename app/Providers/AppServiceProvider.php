@@ -97,26 +97,22 @@ class AppServiceProvider extends ServiceProvider
             $view->with('marqueeAnnouncements', $rows);
         });
 
-        View::composer('partials.announcement-float', function ($view) {
+        View::composer('partials.floating-promos', function ($view) {
             if (! Schema::hasColumn('announcements', 'is_floating')) {
                 $view->with('floatingAnnouncements', collect());
-
-                return;
+            } else {
+                $rows = Announcement::query()
+                    ->where('is_published', true)
+                    ->where('is_floating', true)
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                    })
+                    ->orderByRaw("CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
+                    ->orderByDesc('published_at')
+                    ->limit(1)
+                    ->get();
+                $view->with('floatingAnnouncements', $rows);
             }
-            $rows = Announcement::query()
-                ->where('is_published', true)
-                ->where('is_floating', true)
-                ->where(function ($q) {
-                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-                })
-                ->orderByRaw("CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
-                ->orderByDesc('published_at')
-                ->limit(1)
-                ->get();
-            $view->with('floatingAnnouncements', $rows);
-        });
-
-        View::composer('partials.floating-ads', function ($view) {
             $view->with('floatingAdPacks', app(AdPresentationService::class)->resolveFloatSlotPacks());
         });
 

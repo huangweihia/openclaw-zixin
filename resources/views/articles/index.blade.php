@@ -54,7 +54,7 @@
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($articles as $article)
                 @php
-                    $vipLocked = $article->is_vip && !($canAccessVip ?? false);
+                    $vipLocked = ! $article->userCanReadFull(auth()->user());
                 @endphp
                 <div class="oc-article-card relative">
                     @if ($vipLocked)
@@ -66,7 +66,10 @@
                         <div class="p-5">
                             <div class="flex items-start justify-between gap-2 mb-2">
                                 <h2 class="text-lg font-bold line-clamp-2" style="color: var(--dark);">{{ $article->title }}</h2>
-                                @if ($article->is_vip)
+                                @if ($article->is_vip_only)
+                                    <span class="text-xs shrink-0 px-2 py-0.5 rounded-full font-semibold"
+                                        style="background: rgba(139, 92, 246, 0.15); color: #6d28d9;">SVIP</span>
+                                @elseif ($article->is_vip)
                                     <span class="text-xs shrink-0 px-2 py-0.5 rounded-full font-semibold"
                                         style="background: rgba(245, 158, 11, 0.15); color: #b45309;">VIP</span>
                                 @endif

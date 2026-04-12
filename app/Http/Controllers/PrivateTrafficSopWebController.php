@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\CommentLike;
 use App\Models\PrivateTrafficSop;
 use App\Support\CommentThreadBuilder;
+use App\Support\SiteGateMask;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -16,7 +18,7 @@ class PrivateTrafficSopWebController extends Controller
         $query = PrivateTrafficSop::query()->orderByDesc('id');
 
         $user = $request->user();
-        $canVip = $user && in_array($user->role, ['vip', 'svip', 'admin'], true);
+        $canVip = (bool) $user?->canAccessVipExclusiveContent();
 
         $query->where(function ($q) use ($canVip) {
             $q->where('visibility', 'public');
@@ -35,7 +37,31 @@ class PrivateTrafficSopWebController extends Controller
     public function show(Request $request, PrivateTrafficSop $privateTrafficSop): View
     {
         $canRead = $privateTrafficSop->visibility === 'public'
-            || ($request->user() && in_array($request->user()->role, ['vip', 'svip', 'admin'], true));
+            || (bool) $request->user()?->canAccessVipExclusiveContent();
+
+        if (! $canRead && $privateTrafficSop->visibility === 'vip') {
+            $privateTrafficSop->increment('view_count');
+            $privateTrafficSop->refresh();
+            $teaserPlain = $privateTrafficSop->summary
+                ?: Str::limit(strip_tags((string) $privateTrafficSop->content), 480);
+            $teaserHtml = Str::markdown($teaserPlain);
+
+            return view('sops.show', [
+                'sop' => $privateTrafficSop,
+                'canReadFull' => false,
+                'bodyHtml' => '',
+                'teaserHtml' => $teaserHtml,
+                'gateMask' => SiteGateMask::forVipExclusive($request->user(), $request->fullUrl()),
+                'vipGate' => (bool) $privateTrafficSop->vip_gate_engagement,
+                'canSeeContact' => false,
+                'canComment' => false,
+                'comments' => new LengthAwarePaginator(collect(), 0, 20, 1, [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]),
+                'likedCommentIds' => [],
+            ]);
+        }
 
         abort_unless($canRead, 403);
 
@@ -71,6 +97,7 @@ class PrivateTrafficSopWebController extends Controller
 
         return view('sops.show', [
             'sop' => $privateTrafficSop,
+            'canReadFull' => true,
             'bodyHtml' => $bodyHtml,
             'canSeeContact' => $canSeeContact,
             'canComment' => $canComment,
