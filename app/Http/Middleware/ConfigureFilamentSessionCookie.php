@@ -7,25 +7,35 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Filament 可选独立 Session Cookie（与前台 SESSION_COOKIE 区分）。
+ * Filament 可选独立 Session Cookie（仅「双域名拆分」时与 SESSION_COOKIE 区分）。
  * 须在 EncryptCookies 与 StartSession 之前执行，以便 Cookie 加解密与会话名一致。
  *
- * 若配置了独立 Cookie 但未命中本中间件条件，Livewire POST 会落到默认会话 → 419。
+ * 路径 / IP 同域：`config('admin.session_cookie')` 恒为空，并在响应中清除历史 Filament Cookie，
+ * 避免浏览器同时携带两套 Session → Livewire 419。
  */
 class ConfigureFilamentSessionCookie
 {
     public function handle(Request $request, Closure $next): Response
     {
         $cookie = trim((string) config('admin.session_cookie', ''));
-        if ($cookie === '') {
-            return $next($request);
-        }
-
-        if ($this->shouldUseFilamentSession($request)) {
+        if ($cookie !== '' && $this->shouldUseFilamentSession($request)) {
             config(['session.cookie' => $cookie]);
         }
 
-        return $next($request);
+        $response = $next($request);
+
+        if ($cookie === '') {
+            foreach (config('admin.obsolete_session_cookies_to_expire', []) as $name) {
+                $name = trim((string) $name);
+                if ($name === '' || $name === config('session.cookie')) {
+                    continue;
+                }
+                // 须在 $next 之后直接挂到本响应上；queue 若晚于 AddQueuedCookies 出站则不会写入
+                $response = $response->withCookie(cookie()->forget($name));
+            }
+        }
+
+        return $response;
     }
 
     private function shouldUseFilamentSession(Request $request): bool
@@ -46,7 +56,6 @@ class ConfigureFilamentSessionCookie
                     return true;
                 }
 
-                // Referer 常被代理/浏览器策略去掉；若请求里已有后台专用 Cookie，仍用同一 Session，避免 419
                 return $this->requestHasFilamentSessionCookie($request);
             }
 
@@ -62,7 +71,6 @@ class ConfigureFilamentSessionCookie
         }
 
         if ($request->is('livewire/*')) {
-            // 同域路径型后台：全站仅 Filament 使用 Livewire，不再依赖 Referer/Cookie 猜测，避免 419
             return true;
         }
 
