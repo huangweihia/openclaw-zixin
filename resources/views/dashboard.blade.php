@@ -145,11 +145,11 @@
                     </div>
                 </div>
 
-                <div id="dash-guess" class="mt-8 pt-6 border-t oc-border">
-                    <h3 class="text-sm font-bold oc-heading mb-2">猜你感兴趣</h3>
-                    <p class="text-xs oc-muted mb-3 m-0">结合加热权重与热度推荐投稿；列表由接口随机生成。</p>
-                    <ul id="dash-guess-list" class="space-y-2 m-0 p-0 list-none text-sm oc-muted min-h-[2rem]"></ul>
-                </div>
+                <x-guess-you-like
+                    compact
+                    class="mt-8 pt-6 border-t oc-border"
+                    description="结合加热权重与热度推荐投稿；列表由接口随机生成。"
+                />
 
                 <div id="dash-profile-edit" class="mt-8 pt-6 border-t oc-border scroll-mt-24">
                     <h3 class="text-sm font-bold oc-heading mb-4">编辑资料</h3>
@@ -516,36 +516,4 @@
             })();
         </script>
     @endif
-    <script>
-        (function () {
-            const ul = document.getElementById('dash-guess-list');
-            if (!ul) return;
-            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            fetch('/api/public/guess/user-posts', {
-                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': token || '' },
-                credentials: 'same-origin',
-            })
-                .then((r) => r.json())
-                .then((data) => {
-                    const items = data.items || [];
-                    if (!items.length) {
-                        ul.innerHTML = '<li class="oc-muted">暂无可推荐投稿</li>';
-                        return;
-                    }
-                    ul.innerHTML = items
-                        .map(
-                            (it) =>
-                                '<li class="leading-snug"><a class="oc-link font-medium" style="text-decoration:none;" href="' +
-                                it.url +
-                                '">' +
-                                (it.title || '').replace(/</g, '&lt;') +
-                                '</a></li>'
-                        )
-                        .join('');
-                })
-                .catch(function () {
-                    ul.innerHTML = '<li class="text-red-600">加载失败</li>';
-                });
-        })();
-    </script>
 @endpush

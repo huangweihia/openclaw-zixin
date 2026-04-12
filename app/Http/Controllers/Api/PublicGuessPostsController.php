@@ -21,6 +21,7 @@ class PublicGuessPostsController extends Controller
 
         $user = $request->user();
         $canVip = (bool) $user?->canAccessVipExclusiveContent();
+        $excludePostId = max(0, (int) $request->query('exclude_post_id', 0));
 
         $q = UserPost::query()
             ->publicFeed()
@@ -31,6 +32,9 @@ class PublicGuessPostsController extends Controller
             ->limit(200);
 
         $pool = $q->get();
+        if ($excludePostId > 0) {
+            $pool = $pool->filter(fn (UserPost $p) => (int) $p->id !== $excludePostId)->values();
+        }
         if ($pool->isEmpty()) {
             return response()->json(['ok' => true, 'items' => []]);
         }

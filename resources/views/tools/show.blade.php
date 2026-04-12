@@ -31,5 +31,7 @@
                 ])
             @endif
         </div>
+
+        <x-guess-you-like />
     </div>
 @endsection

@@ -95,6 +95,8 @@
                 </div>
             </section>
         @endif
+
+        <x-guess-you-like :exclude-user-post-id="$post->id" />
     </div>
     @include('partials.engagement-scripts')
 @endsection

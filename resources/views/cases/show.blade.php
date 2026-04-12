@@ -103,6 +103,8 @@
         </section>
     </article>
 
+    <x-guess-you-like />
+
     @include('partials.comment-report-modal')
     @include('partials.comment-scripts')
 @endsection

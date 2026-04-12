@@ -121,5 +121,7 @@
                 </div>
             @endif
         </section>
+
+        <x-guess-you-like />
     </div>
 @endsection
