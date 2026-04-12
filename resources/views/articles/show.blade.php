@@ -30,18 +30,8 @@
 
             @include('partials.ad-slot', ['code' => 'article-top'])
 
-            @php
-                $ocArticlePh = asset('images/article-card-placeholder.svg');
-                $ocCoverSrc = $article->cover_image ?: $ocArticlePh;
-            @endphp
-            <button type="button" id="cover-open" class="w-full rounded-xl overflow-hidden mb-8 border-0 p-0 cursor-zoom-in bg-transparent">
-                <img
-                    src="{{ $ocCoverSrc }}"
-                    alt=""
-                    class="w-full max-h-[28rem] object-cover bg-slate-100"
-                    data-oc-article-ph="{{ $ocArticlePh }}"
-                    onerror="this.onerror=null;if(this.dataset.ocArticlePh)this.src=this.dataset.ocArticlePh;"
-                />
+            <button type="button" id="cover-open" class="w-full mb-8 border-0 p-0 cursor-zoom-in bg-transparent text-left">
+                @include('partials.article-cover-thumb', ['cover' => $article->cover_image, 'variant' => 'hero'])
             </button>
 
             <div class="oc-surface p-6 md:p-8 article-content max-w-none" id="article-body" style="color: var(--dark);">
@@ -145,13 +135,7 @@
     <div id="cover-modal" class="oc-modal-overlay hidden" role="dialog" aria-modal="true">
         <div class="max-w-5xl w-full p-2">
             <button type="button" id="cover-close" class="block ml-auto mb-2 text-white text-sm underline">关闭</button>
-            <img
-                src="{{ $ocCoverSrc }}"
-                alt=""
-                class="w-full rounded-lg max-h-[85vh] object-contain bg-black/40"
-                data-oc-article-ph="{{ $ocArticlePh }}"
-                onerror="this.onerror=null;if(this.dataset.ocArticlePh)this.src=this.dataset.ocArticlePh;"
-            />
+            @include('partials.article-cover-thumb', ['cover' => $article->cover_image, 'variant' => 'modal'])
         </div>
     </div>
 @endsection
