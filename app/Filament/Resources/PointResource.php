@@ -66,6 +66,13 @@ class PointResource extends BaseAdminResource
             'admin' => '管理员调整',
             'consume' => '消费',
             'refund' => '退款',
+            'boost' => '加热消耗',
+            'post_approve' => '投稿审核通过',
+            'login_daily' => '每日登录',
+            'point_purchase' => '积分套餐购买',
+            'post_liked' => '投稿被赞',
+            'post_favorited' => '投稿被收藏',
+            'post_commented' => '投稿被评论',
         ];
     }
 
@@ -87,7 +94,7 @@ class PointResource extends BaseAdminResource
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
+            ->columns(static::searchableColumns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('用户')

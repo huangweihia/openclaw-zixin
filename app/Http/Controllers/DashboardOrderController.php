@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use App\Models\SiteTestimonial;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class DashboardOrderController extends Controller
@@ -22,41 +20,22 @@ class DashboardOrderController extends Controller
         return view('dashboard-orders', compact('orders'));
     }
 
-    public function review(Request $request, Order $order): RedirectResponse
+    public function requestRefund(Request $request, Order $order): RedirectResponse
     {
         abort_unless((int) $order->user_id === (int) $request->user()->id, 403);
         abort_unless($order->status === 'paid', 400);
 
-        $data = $request->validate([
-            'rating' => ['required', 'integer', 'min:1', 'max:5'],
-            'body' => ['required', 'string', 'max:5000'],
-        ]);
+        if ($order->refund_requested_at !== null) {
+            return back()->with('error', '该订单已提交过退款申请，请耐心等待处理。');
+        }
 
-        $u = $request->user();
-        $planKey = $order->planKeyFromProduct();
-        $caption = match ($planKey) {
-            'svip' => 'SVIP · 订单 '.$order->order_no,
-            'vip' => 'VIP · 订单 '.$order->order_no,
-            default => '订单 '.$order->order_no,
-        };
+        $paidAt = $order->paid_at ?? $order->created_at;
+        if ($paidAt === null || $paidAt->lt(now()->subDays(7))) {
+            return back()->with('error', '仅支持支付成功后 7 日内申请退款。');
+        }
 
-        $name = (string) ($u->name ?? '用户');
-        $displayName = Str::limit($name, 1, '***');
-        $avatarInitial = mb_substr($name, 0, 1) ?: '用';
+        $order->forceFill(['refund_requested_at' => now()])->save();
 
-        SiteTestimonial::query()->create([
-            'display_name' => $displayName,
-            'caption' => $caption,
-            'body' => $data['body'],
-            'rating' => (int) $data['rating'],
-            'avatar_initial' => $avatarInitial,
-            'gradient_from' => 'from-blue-400',
-            'gradient_to' => 'to-blue-600',
-            'sort_order' => 0,
-            'is_published' => false, // 默认进池子但不发布，后台审核后发布到首页
-        ]);
-
-        return back()->with('success', '评价已提交，审核通过后会展示在首页评价区。');
+        return back()->with('success', '退款申请已提交，客服将尽快处理。');
     }
 }
-

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Models\User;
+use App\Support\AdminListSearch;
 use App\Support\AdminNavRegistry;
 use Filament\Resources\Resource;
 
@@ -85,5 +86,18 @@ abstract class BaseAdminResource extends Resource
         }
 
         return $u->allowsAdminMenuKey($mk);
+    }
+
+    /**
+     * 列表全局搜索：按「后台 → 列表搜索条件」配置的字段（或表结构推断的字符串/日期列）为 TextColumn 开启 searchable。
+     *
+     * @param  array<int, \Filament\Tables\Columns\Column>  $columns
+     * @return array<int, \Filament\Tables\Columns\Column>
+     */
+    protected static function searchableColumns(array $columns): array
+    {
+        $model = static::getModel();
+
+        return AdminListSearch::markSearchable(static::class, $model, $columns);
     }
 }

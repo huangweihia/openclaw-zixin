@@ -32,8 +32,7 @@
                 <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="timeline">
                     最近动态
                 </button>
-                <p class="text-sm font-bold oc-muted mb-2 mt-4 px-1 tracking-wide" style="letter-spacing: 0.04em;">快捷入口</p>
-                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="posts">
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link mt-3" data-tab="posts">
                     📝 我的发布
                 </button>
                 <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="favorites">
@@ -47,6 +46,9 @@
                 </button>
                 <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="orders">
                     💳 我的订单
+                </button>
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="points">
+                    🪙 积分与充值
                 </button>
                 @if ($u->role === 'svip' || $u->isAdmin())
                     <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="svip">
@@ -84,7 +86,7 @@
                     <div class="flex-1 min-w-0 text-center sm:text-left">
                         <div class="flex flex-wrap items-center justify-between gap-3 mb-2 w-full">
                             <h2 class="text-xl md:text-2xl font-bold oc-heading m-0">{{ $u->name }}</h2>
-                            <button type="button" id="oc-open-profile-modal" class="btn btn-secondary text-sm shrink-0">编辑</button>
+                            <a href="#dash-profile-edit" class="btn btn-secondary text-sm shrink-0" style="text-decoration:none;">编辑资料</a>
                         </div>
                         <p class="text-sm oc-muted mb-1">{{ $handle }}</p>
                         <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-sm">
@@ -113,7 +115,7 @@
 
                 <div class="mt-8 pt-6 border-t oc-border">
                     <h3 class="text-sm font-bold oc-heading mb-4">📊 统计数据</h3>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
                         <div class="oc-stat-card rounded-xl p-4 text-center">
                             <div class="text-lg mb-1">📝</div>
                             <div class="text-xs oc-muted">发布数</div>
@@ -135,7 +137,23 @@
                             <div class="text-xs oc-muted">评论数</div>
                             <div class="text-xl font-bold oc-heading">{{ number_format($commentsCount) }}</div>
                         </div>
+                        <div class="oc-stat-card rounded-xl p-4 text-center">
+                            <div class="text-lg mb-1">🪙</div>
+                            <div class="text-xs oc-muted">积分</div>
+                            <div class="text-xl font-bold oc-heading">{{ number_format((int) ($u->points_balance ?? 0)) }}</div>
+                        </div>
                     </div>
+                </div>
+
+                <div id="dash-guess" class="mt-8 pt-6 border-t oc-border">
+                    <h3 class="text-sm font-bold oc-heading mb-2">猜你感兴趣</h3>
+                    <p class="text-xs oc-muted mb-3 m-0">结合加热权重与热度推荐投稿；列表由接口随机生成。</p>
+                    <ul id="dash-guess-list" class="space-y-2 m-0 p-0 list-none text-sm oc-muted min-h-[2rem]"></ul>
+                </div>
+
+                <div id="dash-profile-edit" class="mt-8 pt-6 border-t oc-border scroll-mt-24">
+                    <h3 class="text-sm font-bold oc-heading mb-4">编辑资料</h3>
+                    @include('partials.dashboard-profile-forms')
                 </div>
             </div>
 
@@ -161,7 +179,8 @@
             <div class="mt-4 pt-4 border-t oc-border">
                 <h4 class="text-sm font-semibold oc-heading mb-2">邮件订阅（可选内容 + 发送时间）</h4>
                 <form id="email-sub-form" class="space-y-3">
-                    <input type="email" id="email-sub-input" class="oc-input" style="max-width:320px" value="{{ $u->email }}" required />
+                    <input type="email" id="email-sub-input" class="oc-input" style="max-width:320px" value="{{ $u->email }}" readonly tabindex="-1" aria-readonly="true" />
+                    <p class="text-xs oc-muted m-0">收件邮箱与账号绑定；修改请通过下方「修改绑定邮箱」完成。</p>
                     <div class="grid sm:grid-cols-2 gap-3">
                         @php
                             $topicLabels = ['daily' => '每日精选', 'weekly' => '每周精选', 'notification' => '系统通知', 'promotion' => '活动推广'];
@@ -206,34 +225,6 @@
                 @endforeach
             </ul>
         @endif
-
-        <div class="mt-10 pt-8 border-t oc-border">
-            <h3 class="text-lg font-bold oc-heading mb-2">全站动态</h3>
-            <p class="text-xs oc-muted mb-4">近期会员开通记录（脱敏展示）</p>
-            @if ($vipActivities->isEmpty())
-                <p class="text-sm oc-muted m-0">暂无全站动态数据。</p>
-            @else
-                <ul class="space-y-0 m-0 p-0 list-none max-h-[28rem] overflow-y-auto pr-1">
-                    @foreach ($vipActivities as $activity)
-                        <li class="flex items-center justify-between gap-3 py-3 border-b oc-border">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <div class="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm" style="background: linear-gradient(135deg, #a78bfa, #6366f1);">
-                                    {{ mb_substr($activity->name, 0, 1) }}
-                                </div>
-                                <div class="min-w-0">
-                                    <div class="font-semibold oc-heading text-sm truncate">{{ $activity->name }}</div>
-                                    <div class="text-xs oc-muted">开通了{{ $activity->plan_text }}</div>
-                                </div>
-                            </div>
-                            <div class="text-right shrink-0">
-                                <div class="text-sm font-bold" style="background: linear-gradient(90deg, #7c3aed, #4f46e5); -webkit-background-clip: text; background-clip: text; color: transparent;">¥{{ number_format($activity->amount) }}</div>
-                                <div class="text-[11px] oc-muted">{{ $activity->created_at->diffForHumans() }}</div>
-                            </div>
-                        </li>
-                    @endforeach
-                </ul>
-            @endif
-        </div>
     </div>
 
     @php
@@ -269,6 +260,12 @@
         </div>
         <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="我的订单" data-embed-src="{{ route('dashboard.orders') }}{{ $embedQs }}"></iframe>
     </div>
+    <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="points" style="min-height: 70vh;">
+        <div class="flex items-center gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+            <span class="text-sm font-semibold oc-heading">积分与充值</span>
+        </div>
+        <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="积分与充值" data-embed-src="{{ route('dashboard.points') }}{{ $embedQs }}"></iframe>
+    </div>
     @if ($u->role === 'svip' || $u->isAdmin())
         <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="svip" style="min-height: 70vh;">
             <div class="flex items-center gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
@@ -280,40 +277,9 @@
         </section>
     </div>
 
-    <div id="oc-profile-modal" class="oc-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="oc-profile-modal-title">
-        <div class="oc-modal max-w-2xl w-full max-h-[90vh] overflow-y-auto relative text-left">
-            <button type="button" id="oc-profile-modal-close" class="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center text-xl leading-none oc-heading border oc-border cursor-pointer" style="background: rgba(255,255,255,.92);" aria-label="关闭">×</button>
-            <h2 id="oc-profile-modal-title" class="text-xl font-bold oc-heading mb-6 pr-12">编辑资料</h2>
-            @include('partials.dashboard-profile-forms')
-        </div>
-    </div>
 @endsection
 
 @push('scripts')
-    <script>
-        (function () {
-            const modal = document.getElementById('oc-profile-modal');
-            const openBtn = document.getElementById('oc-open-profile-modal');
-            const closeBtn = document.getElementById('oc-profile-modal-close');
-            if (!modal) return;
-            const show = () => {
-                modal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            };
-            const hide = () => {
-                modal.classList.add('hidden');
-                document.body.style.overflow = '';
-            };
-            openBtn?.addEventListener('click', show);
-            closeBtn?.addEventListener('click', hide);
-            modal.addEventListener('click', function (e) {
-                if (e.target === modal) hide();
-            });
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape' && !modal.classList.contains('hidden')) hide();
-            });
-        })();
-    </script>
     <script>
         (function () {
             const np = document.getElementById('new-pw');
@@ -416,7 +382,15 @@
                 });
             };
             tabs.forEach((t) => t.addEventListener('click', () => setActive(t.getAttribute('data-tab'))));
-            const initialTab = window.location.hash === '#timeline' ? 'timeline' : 'profile';
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+            const allowed = ['profile', 'subscription', 'timeline', 'posts', 'favorites', 'history', 'comments', 'orders', 'points', 'svip'];
+            let initialTab = 'profile';
+            if (tabParam && allowed.includes(tabParam)) {
+                initialTab = tabParam;
+            } else if (window.location.hash === '#timeline') {
+                initialTab = 'timeline';
+            }
             setActive(initialTab);
 
             // Resizer: 调整左侧宽度（桌面端）
@@ -482,7 +456,7 @@
                 const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                 form.addEventListener('submit', async function (e) {
                     e.preventDefault();
-                    const email = (input?.value || '').trim();
+                    const email = @json($u->email);
                     if (!email) return;
                     const checked = Array.from(form.querySelectorAll('.email-sub-topic:checked')).map((x) => x.value);
                     if (!checked.length) {
@@ -512,7 +486,6 @@
                             },
                             credentials: 'same-origin',
                             body: JSON.stringify({
-                                email,
                                 subscribed_to: checked,
                                 topic_schedule: schedule,
                             }),
@@ -543,4 +516,36 @@
             })();
         </script>
     @endif
+    <script>
+        (function () {
+            const ul = document.getElementById('dash-guess-list');
+            if (!ul) return;
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            fetch('/api/public/guess/user-posts', {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': token || '' },
+                credentials: 'same-origin',
+            })
+                .then((r) => r.json())
+                .then((data) => {
+                    const items = data.items || [];
+                    if (!items.length) {
+                        ul.innerHTML = '<li class="oc-muted">暂无可推荐投稿</li>';
+                        return;
+                    }
+                    ul.innerHTML = items
+                        .map(
+                            (it) =>
+                                '<li class="leading-snug"><a class="oc-link font-medium" style="text-decoration:none;" href="' +
+                                it.url +
+                                '">' +
+                                (it.title || '').replace(/</g, '&lt;') +
+                                '</a></li>'
+                        )
+                        .join('');
+                })
+                .catch(function () {
+                    ul.innerHTML = '<li class="text-red-600">加载失败</li>';
+                });
+        })();
+    </script>
 @endpush

@@ -13,7 +13,11 @@
             </div>
         @endif
 
-        <form method="post" action="{{ route('login') }}" id="login-form">
+        @if (session('post_login_redirect'))
+            <p class="text-sm oc-muted text-center mb-6 m-0" role="status">登录成功，正在进入站点…</p>
+        @endif
+
+        <form method="post" action="{{ route('login') }}" id="login-form" @if (session('post_login_redirect')) class="hidden" aria-hidden="true" @endif>
             @csrf
             <input type="hidden" name="return" value="{{ old('return', $returnTo ?? '') }}" />
 
@@ -64,6 +68,16 @@
 @endsection
 
 @push('scripts')
+    @if (session('post_login_redirect'))
+        <script>
+            (function () {
+                var u = @json(session('post_login_redirect'));
+                setTimeout(function () {
+                    window.location.replace(u);
+                }, 900);
+            })();
+        </script>
+    @endif
     <script>
         (function () {
             const emailEl = document.getElementById('email');

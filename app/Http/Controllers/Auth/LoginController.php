@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\PointsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -49,14 +50,22 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
+        PointsService::tryDailyLoginReward($user);
+
         $user->forceFill([
             'last_login_at' => now(),
             'last_login_ip' => $request->ip(),
         ])->save();
 
-        $target = $this->safeInternalPath($credentials['return'] ?? $request->query('return'));
+        $target = $this->safeInternalPath($credentials['return'] ?? $request->query('return')) ?: '/';
+        if (str_starts_with($target, '/login')) {
+            $target = '/';
+        }
 
-        return redirect()->to($target ?: '/')->with('success', '登录成功');
+        return redirect()
+            ->route('login')
+            ->with('success', '登录成功')
+            ->with('post_login_redirect', $target);
     }
 
     public function destroy(Request $request): RedirectResponse

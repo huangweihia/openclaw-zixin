@@ -2,18 +2,22 @@
 
 namespace App\Filament\Resources;
 
-use App\Models\Subscription;
+use App\Models\User;
 use App\Filament\Resources\SubscriptionResource\Pages;
+use App\Filament\Resources\SubscriptionResource\RelationManagers;
 use Filament\Forms;
 use Filament\Forms\Form;
-use App\Filament\Resources\BaseAdminResource;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 class SubscriptionResource extends BaseAdminResource
 {
-    protected static ?string $model = Subscription::class;
+    protected static ?string $model = User::class;
+
+    protected static ?string $slug = 'subscriptions';
 
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
 
@@ -21,78 +25,116 @@ class SubscriptionResource extends BaseAdminResource
 
     protected static ?int $navigationSort = 20;
 
-    protected static ?string $modelLabel = '订阅';
+    protected static ?string $modelLabel = '订阅用户';
 
-    protected static ?string $pluralModelLabel = '订阅';
-
+    protected static ?string $pluralModelLabel = '会员订阅';
 
     public static function canCreate(): bool
     {
-        return static::canViewAny() && false;
+        return false;
     }
 
     public static function canEdit($record): bool
     {
-        return static::canViewAny() && true;
+        return false;
     }
 
     public static function canDelete($record): bool
     {
-        return static::canViewAny() && true;
+        return false;
     }
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with('user');
+        return parent::getEloquentQuery()
+            ->whereHas('subscriptions')
+            ->withCount('subscriptions')
+            ->withMax('subscriptions', 'created_at');
     }
 
     public static function form(Form $form): Form
     {
-        return $form->schema([
-            Forms\Components\Select::make('user_id')
-                ->relationship('user', 'name')
-                ->searchable()
-                ->preload()
-                ->required(),
-            Forms\Components\TextInput::make('plan')->maxLength(65535),
-                Forms\Components\TextInput::make('amount')->numeric()->step(0.01),
-                Forms\Components\TextInput::make('status')->maxLength(65535),
-                Forms\Components\DateTimePicker::make('started_at'),
-                Forms\Components\DateTimePicker::make('expires_at'),
-                Forms\Components\TextInput::make('payment_id')->numeric(),
-                Forms\Components\TextInput::make('payment_method')->maxLength(65535)
+        return $form->schema([]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist->schema([
+            Infolists\Components\Section::make('用户信息')
+                ->schema([
+                    Infolists\Components\TextEntry::make('id')->label('用户 ID'),
+                    Infolists\Components\TextEntry::make('name')->label('昵称'),
+                    Infolists\Components\TextEntry::make('email')->label('邮箱'),
+                    Infolists\Components\TextEntry::make('role')
+                        ->label('角色')
+                        ->badge()
+                        ->formatStateUsing(fn (?string $state): string => match ($state) {
+                            'user' => '普通用户',
+                            'vip' => 'VIP',
+                            'svip' => 'SVIP',
+                            'admin' => '管理员',
+                            default => (string) $state,
+                        }),
+                    Infolists\Components\TextEntry::make('subscription_ends_at')
+                        ->label('会员到期')
+                        ->dateTime()
+                        ->placeholder('—'),
+                ])
+                ->columns(2),
         ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
+            ->columns(static::searchableColumns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('user.name')
+                Tables\Columns\TextColumn::make('name')
                     ->label('用户')
-                    ->placeholder('—')
+                    ->limit(40)
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('plan')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('amount')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('status')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('started_at')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('expires_at')->limit(40)->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+                Tables\Columns\TextColumn::make('email')
+                    ->limit(48)
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('role')
+                    ->label('角色')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'user' => '普通用户',
+                        'vip' => 'VIP',
+                        'svip' => 'SVIP',
+                        'admin' => '管理员',
+                        default => (string) $state,
+                    })
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('subscriptions_count')
+                    ->label('订阅笔数')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('subscriptions_max_created_at')
+                    ->label('最近一笔')
+                    ->dateTime()
+                    ->sortable()
+                    ->placeholder('—'),
+            ]))
+            ->defaultSort('subscriptions_max_created_at', 'desc')
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                Tables\Actions\ViewAction::make()->label('订阅详情'),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]);
+            ->bulkActions([]);
     }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\SubscriptionsRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Resources\SubscriptionResource\Pages\ListSubscriptions::route('/'),
-            'edit' => \App\Filament\Resources\SubscriptionResource\Pages\EditSubscription::route('/{record}/edit'),
+            'index' => Pages\ListSubscriptionUsers::route('/'),
+            'view' => Pages\ViewSubscriptionUser::route('/{record}'),
         ];
     }
 }

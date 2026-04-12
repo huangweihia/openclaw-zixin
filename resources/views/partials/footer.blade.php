@@ -37,7 +37,18 @@
                 <h4 class="font-bold mb-3 oc-heading text-sm">联系我们</h4>
                 <ul class="space-y-2 text-sm oc-site-footer__muted list-none m-0 p-0">
                     @if (! empty(trim((string) ($ocSite['contact_email'] ?? ''))))
-                        <li>📧 <a href="mailto:{{ $ocSite['contact_email'] }}" class="oc-site-footer__link">{{ $ocSite['contact_email'] }}</a></li>
+                        @php
+                            $contactEmail = trim((string) $ocSite['contact_email']);
+                            $qqUin = preg_match('/^(\d+)@qq\.com$/i', $contactEmail, $m) ? $m[1] : null;
+                        @endphp
+                        <li>📧
+                            @if ($qqUin)
+                                <a href="tencent://message/?uin={{ $qqUin }}&amp;Site=&amp;Menu=yes" class="oc-site-footer__link" rel="noopener">{{ $contactEmail }}</a>
+                                <span class="text-xs oc-site-footer__muted">（点击唤起 QQ；未安装可用邮箱）</span>
+                            @else
+                                <a href="mailto:{{ $contactEmail }}" class="oc-site-footer__link">{{ $contactEmail }}</a>
+                            @endif
+                        </li>
                     @else
                         <li class="oc-site-footer__muted">📧 邮箱请见后台「系统与站点」配置</li>
                     @endif

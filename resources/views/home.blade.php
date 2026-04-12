@@ -147,7 +147,7 @@
                         </a>
                     @endif
                 @endguest
-                <button type="button" onclick="document.getElementById('vip-preview').scrollIntoView({ behavior: 'smooth' })"
+                <button type="button" onclick="document.getElementById('boutique-preview').scrollIntoView({ behavior: 'smooth' })"
                         class="oc-hero-cta-outline">
                     看看有什么
                 </button>
@@ -160,9 +160,34 @@
         </div>
     </section>
 
-    <section class="py-16 bg-white">
+    <!-- 数据展示区：紧邻 Banner -->
+    <section class="py-16 md:py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-10">🔥 精品内容</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div>
+                    <div class="text-5xl font-bold gradient-text mb-2">{{ number_format((int) ($homeStats['users'] ?? 0)) }}+</div>
+                    <div class="text-gray-600 text-lg">注册用户</div>
+                </div>
+                <div>
+                    <div class="text-5xl font-bold gradient-text mb-2">{{ number_format((int) ($homeStats['cases'] ?? 0)) }}+</div>
+                    <div class="text-gray-600 text-lg">副业案例</div>
+                </div>
+                <div>
+                    <div class="text-5xl font-bold gradient-text mb-2">{{ number_format((int) ($homeStats['tools'] ?? 0)) }}+</div>
+                    <div class="text-gray-600 text-lg">工具地图</div>
+                </div>
+                <div>
+                    <div class="text-5xl font-bold gradient-text mb-2">{{ $homeStats['revenue_text'] ?? '200 万+' }}</div>
+                    <div class="text-gray-600 text-lg">累计变现</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="boutique-preview" class="py-16 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-3">🔥 精品类目</h2>
+            <p class="text-center text-gray-600 mb-10 text-sm md:text-base max-w-2xl mx-auto">精选文章、项目与案例；横向滑动浏览，卡片外框与高度与首页「VIP 专属内容」预览卡一致。</p>
             <div class="space-y-8">
                 <div>
                     <h3 class="text-xl font-bold mb-4">精品文章</h3>
@@ -172,7 +197,7 @@
                                 @php
                                     $featArtLocked = ! $a->userCanReadFull(auth()->user());
                                 @endphp
-                                <div class="oc-feature-card rounded-xl p-6 block relative overflow-hidden">
+                                <div class="oc-feature-card rounded-2xl p-8 ring-1 ring-slate-200/90 shadow-sm min-h-[260px] block relative overflow-hidden">
                                     @if ($featArtLocked)
                                         <div class="block h-full" style="text-decoration:none;color:inherit;">
                                     @else
@@ -206,7 +231,7 @@
                                 @php
                                     $featProjLocked = ! $p->userCanReadFull(auth()->user());
                                 @endphp
-                                <div class="oc-feature-card rounded-xl p-6 block relative overflow-hidden">
+                                <div class="oc-feature-card rounded-2xl p-8 ring-1 ring-slate-200/90 shadow-sm min-h-[260px] block relative overflow-hidden">
                                     @if ($featProjLocked)
                                         <div class="block h-full" style="text-decoration:none;color:inherit;">
                                     @else
@@ -236,7 +261,7 @@
                     <div class="oc-testimonial-slider"><div class="oc-testimonial-track">
                         @foreach ([$featuredCases, $featuredCases] as $grp)
                             @foreach ($grp as $c)
-                                <div class="oc-feature-card rounded-xl p-6 block relative overflow-hidden">
+                                <div class="oc-feature-card rounded-2xl p-8 ring-1 ring-slate-200/90 shadow-sm min-h-[260px] block relative overflow-hidden">
                                     @if (($c->visibility ?? 'public') === 'vip' && ! $canVip)
                                         <div style="text-decoration:none;color:inherit;">
                                             <div class="kicker mb-3">💼 精品案例</div>
@@ -261,147 +286,53 @@
                         @endforeach
                     </div></div>
                 </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- 数据展示区 -->
-    <section class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                <div>
-                    <div class="text-5xl font-bold gradient-text mb-2">{{ number_format((int) ($homeStats['users'] ?? 0)) }}+</div>
-                    <div class="text-gray-600 text-lg">注册用户</div>
-                </div>
-                <div>
-                    <div class="text-5xl font-bold gradient-text mb-2">{{ number_format((int) ($homeStats['cases'] ?? 0)) }}+</div>
-                    <div class="text-gray-600 text-lg">副业案例</div>
-                </div>
-                <div>
-                    <div class="text-5xl font-bold gradient-text mb-2">{{ number_format((int) ($homeStats['tools'] ?? 0)) }}+</div>
-                    <div class="text-gray-600 text-lg">工具地图</div>
-                </div>
-                <div>
-                    <div class="text-5xl font-bold gradient-text mb-2">{{ $homeStats['revenue_text'] ?? '200 万+' }}</div>
-                    <div class="text-gray-600 text-lg">累计变现</div>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- 全站动态：首页与个人中心「最近动态」均可查看 -->
-    <section class="py-14 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4">
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2 text-center">📢 全站动态</h2>
-            <p class="text-gray-600 text-sm text-center mb-8">近期会员开通记录（脱敏展示）</p>
-            @if ($vipActivities->isEmpty())
-                <p class="text-center text-gray-500 text-sm m-0">暂无动态数据。</p>
-            @else
-                <ul class="max-w-3xl mx-auto m-0 p-0 list-none bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100 overflow-hidden">
-                    @foreach ($vipActivities as $activity)
-                        <li class="flex items-center justify-between gap-4 py-4 px-5">
-                            <div class="min-w-0 text-left">
-                                <div class="font-semibold text-gray-800 text-sm">{{ $activity->name }}</div>
-                                <div class="text-xs text-gray-500">开通了{{ $activity->plan_text }}</div>
-                            </div>
-                            <div class="text-right shrink-0">
-                                <div class="text-sm font-bold text-indigo-600">¥{{ number_format((float) $activity->amount) }}</div>
-                                <div class="text-xs text-gray-400">{{ $activity->created_at->diffForHumans() }}</div>
-                            </div>
-                        </li>
-                    @endforeach
-                </ul>
-            @endif
-            @auth
-                <p class="text-center text-xs text-gray-500 mt-6 mb-0">
-                    个人中心「最近动态」中也可查看同一时间线。
-                    <a href="{{ route('dashboard') }}#timeline" class="text-indigo-600 font-medium" style="text-decoration:none;">去个人中心 →</a>
-                </p>
-            @endauth
-        </div>
-    </section>
-    
-    <!-- VIP 内容预览区 -->
-    <section id="vip-preview" class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center mb-4">
-                🔒 VIP 专属内容
-            </h2>
-            <p class="text-center text-gray-600 mb-12 text-lg">
-                开通 VIP，解锁全部高质量内容
-            </p>
-            <div class="grid md:grid-cols-3 gap-8 items-stretch">
-                @foreach ($vipPreviews as $preview)
-                    @if (! empty($preview['locked']))
-                        <div class="bg-white rounded-2xl p-8 card-hover relative ring-1 ring-slate-200/90 shadow-sm flex flex-col h-full min-h-[260px] overflow-hidden">
-                            <div class="text-5xl mb-4 shrink-0">{{ $preview['icon'] }}</div>
-                            <h3 class="text-2xl font-bold mb-3 text-gray-800 shrink-0 line-clamp-2">{{ $preview['title'] }}</h3>
-                            <p class="text-gray-600 mb-0 flex-1 text-sm leading-relaxed line-clamp-4">{{ $preview['summary'] }}</p>
-                            @include('partials.vip-mask', [
-                                'title' => 'VIP 专属内容',
-                                'desc' => '开通会员后可查看完整案例、工具与 SOP 内容。',
-                                'cta' => auth()->check() ? '立即开通 VIP' : '登录 / 开通 VIP',
-                                'href' => auth()->check() ? route('pricing') : route('login', ['return' => url()->current()]),
-                            ])
-                        </div>
-                    @else
-                        <a href="{{ $preview['url'] }}" class="flex flex-col h-full min-h-[260px] bg-white rounded-2xl p-8 card-hover relative ring-1 ring-slate-200/90 shadow-sm oc-home-vip-card" style="text-decoration: none; color: inherit;">
-                            <div class="text-5xl mb-4 shrink-0">{{ $preview['icon'] }}</div>
-                            <h3 class="text-2xl font-bold mb-3 text-gray-800 shrink-0 line-clamp-2">{{ $preview['title'] }}</h3>
-                            <p class="text-gray-600 mb-0 flex-1 text-sm leading-relaxed line-clamp-4">{{ $preview['summary'] }}</p>
-                            <span class="oc-cta-primary mt-6 shrink-0">
-                                查看详情
-                            </span>
-                        </a>
-                    @endif
-                @endforeach
-            </div>
-        </div>
-    </section>
-    
-    <!-- 用户评价区 -->
-    <section class="py-20 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center mb-12">
-                💬 用户评价
-            </h2>
-            <div class="oc-testimonial-slider">
-                @if ($testimonials->count() > 0)
-                <div class="oc-testimonial-track">
-                    @foreach ([$testimonials, $testimonials] as $testimonialGroup)
-                    @foreach ($testimonialGroup as $t)
-                    <div class="oc-testimonial-card bg-white rounded-2xl p-8 card-hover flex flex-col min-h-[260px]">
-                        <div class="flex items-center gap-4 mb-4 shrink-0">
-                            <div class="w-16 h-16 rounded-full bg-gradient-to-br {{ $t->gradient_from }} {{ $t->gradient_to }} flex items-center justify-center text-white text-2xl font-bold shrink-0">
-                                {{ mb_substr($t->avatar_initial, 0, 1) }}
-                            </div>
-                            <div class="min-w-0">
-                                <div class="font-bold text-lg truncate">{{ $t->display_name }}</div>
-                                @if ($t->caption)
-                                    <div class="text-sm text-gray-500 truncate">{{ $t->caption }}</div>
-                                @endif
-                            </div>
-                        </div>
-                        <p class="text-gray-700 leading-relaxed flex-1 text-sm line-clamp-5 m-0">
-                            「{{ $t->body }}」
-                        </p>
-                        <div class="flex mt-4 text-yellow-500 shrink-0 text-sm" aria-label="评分 {{ $t->rating }} 星">
-                            @for ($i = 0; $i < min(5, max(1, (int) $t->rating)); $i++)
-                                ⭐
-                            @endfor
-                        </div>
+                @if ($featuredUserPosts->isNotEmpty())
+                    @php
+                        $postTypeLabels = [
+                            'case' => '案例',
+                            'tool' => '工具',
+                            'experience' => '经验',
+                            'resource' => '资源',
+                            'question' => '讨论',
+                        ];
+                    @endphp
+                    <div>
+                        <h3 class="text-xl font-bold mb-4">精品投稿</h3>
+                        <p class="text-sm oc-muted mb-4 m-0">按加热权重与热度排序；登录用户可在投稿详情页使用积分加热。</p>
+                        <div class="oc-testimonial-slider"><div class="oc-testimonial-track">
+                            @foreach ([$featuredUserPosts, $featuredUserPosts] as $grp)
+                                @foreach ($grp as $up)
+                                    <div class="oc-feature-card rounded-2xl p-8 ring-1 ring-slate-200/90 shadow-sm min-h-[260px] block relative overflow-hidden">
+                                        @if ($up->visibility === 'vip' && ! $canVip)
+                                            <div style="text-decoration:none;color:inherit;">
+                                                <div class="kicker mb-3">✍️ {{ $postTypeLabels[$up->type] ?? $up->type }}</div>
+                                                <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $up->title }}</div>
+                                                <div class="meta">赞 {{ number_format((int) $up->like_count) }} · 阅 {{ number_format((int) $up->view_count) }}</div>
+                                            </div>
+                                            @include('partials.vip-mask', [
+                                                'title' => 'VIP 投稿',
+                                                'desc' => '开通 VIP 后可查看全文。',
+                                                'cta' => '开通 VIP',
+                                                'href' => route('pricing'),
+                                            ])
+                                        @else
+                                            <a href="{{ route('posts.show', $up) }}" style="text-decoration:none;color:inherit;">
+                                                <div class="kicker mb-3">✍️ {{ $postTypeLabels[$up->type] ?? $up->type }}</div>
+                                                <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $up->title }}</div>
+                                                <div class="meta">赞 {{ number_format((int) $up->like_count) }} · 阅 {{ number_format((int) $up->view_count) }}</div>
+                                            </a>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            @endforeach
+                        </div></div>
                     </div>
-                    @endforeach
-                    @endforeach
-                </div>
-                @else
-                <p class="text-center text-gray-500 m-0">暂无评价展示。</p>
                 @endif
             </div>
         </div>
     </section>
     
-    <!-- 价格方案区 -->
+    <!-- 价格方案区（紧随精品类目） -->
     <section class="py-12 md:py-16 bg-white">
         <div class="max-w-7xl mx-auto px-4">
             <h2 class="text-4xl font-bold text-center mb-4">
@@ -454,6 +385,57 @@
             </div>
         </div>
     </section>
+
+    <!-- 全站动态：采用原「用户评价」横向卡片版式 -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-3">💬 全站动态</h2>
+            <p class="text-gray-600 text-center mb-10">近期会员开通记录（脱敏展示）</p>
+            @if ($vipActivities->isEmpty())
+                <p class="text-center text-gray-500 m-0">暂无动态数据。</p>
+            @else
+                <div class="oc-testimonial-slider">
+                    <div class="oc-testimonial-track">
+                        @foreach ([$vipActivities, $vipActivities] as $grp)
+                            @foreach ($grp as $activity)
+                                @php
+                                    $nm = (string) $activity->name;
+                                    $initial = $nm !== '' ? mb_substr(str_replace(['*',' '], '', $nm), 0, 1) : '会';
+                                @endphp
+                                <div class="oc-testimonial-card bg-white rounded-2xl p-8 card-hover flex flex-col min-h-[260px]">
+                                    <div class="flex items-center gap-4 mb-4 shrink-0">
+                                        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white text-2xl font-bold shrink-0">
+                                            {{ $initial }}
+                                        </div>
+                                        <div class="min-w-0 text-left">
+                                            <div class="font-bold text-lg truncate">{{ $activity->name }}</div>
+                                            <div class="text-sm text-gray-500 truncate">{{ $activity->plan_text }}</div>
+                                        </div>
+                                    </div>
+                                    <p class="text-gray-700 leading-relaxed flex-1 text-sm line-clamp-4 m-0">
+                                        「开通了{{ $activity->plan_text }}，实付 ¥{{ number_format((float) $activity->amount) }} · {{ $activity->created_at->diffForHumans() }}」
+                                    </p>
+                                    <div class="flex mt-4 text-yellow-500 shrink-0 text-sm" aria-hidden="true">
+                                        @for ($si = 0; $si < 5; $si++)
+                                            ⭐
+                                        @endfor
+                                    </div>
+                                </div>
+                            @endforeach
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+            @auth
+                <p class="text-center text-xs text-gray-500 mt-6 mb-0">
+                    个人中心「最近动态」中也可查看同一时间线。
+                    <a href="{{ route('dashboard') }}#timeline" class="text-indigo-600 font-medium" style="text-decoration:none;">去个人中心 →</a>
+                </p>
+            @endauth
+        </div>
+    </section>
+
+    {{-- 原「VIP 专属内容」「用户评价」整段模板已归档至 partials/_archived_home_vip_preview.blade.php 与 partials/_archived_home_testimonials.blade.php，需要恢复时对照复制即可；此处注释勿删。 --}}
 
         </div>
     </div>

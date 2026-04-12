@@ -48,7 +48,7 @@ class EmailSubscriptionTopicTemplateResource extends BaseAdminResource
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
+            ->columns(static::searchableColumns([
                 Tables\Columns\TextColumn::make('topic_key')
                     ->label('场景键')
                     ->searchable()

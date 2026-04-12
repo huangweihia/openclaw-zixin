@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use App\Models\UserAction;
+use App\Services\ContentEngagementNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,6 +42,7 @@ class ArticleEngagementController extends Controller
                 ]);
                 Article::query()->whereKey($article->id)->increment('like_count');
                 $message = '点赞成功';
+                app(ContentEngagementNotifier::class)->notifyLiked($user, $article);
             }
 
             $liked = ! $row;
@@ -81,6 +83,7 @@ class ArticleEngagementController extends Controller
                     'type' => 'favorite',
                 ]);
                 $message = '已加入收藏';
+                app(ContentEngagementNotifier::class)->notifyFavorited($user, $article);
             }
 
             $favorited = ! $row;

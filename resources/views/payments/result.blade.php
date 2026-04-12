@@ -10,7 +10,10 @@
         <div class="rounded-lg p-4 mb-6 text-left" style="background: var(--light, #f1f5f9);">
             <p class="text-sm oc-muted">状态</p>
             <p class="font-semibold oc-heading">{{ $order->status === 'paid' ? '已支付' : '待支付' }}</p>
-            @if ($planKey)
+            @if (! empty($orderSummary))
+                <p class="text-sm oc-muted mt-2">商品</p>
+                <p class="font-semibold oc-heading">{{ $orderSummary }}</p>
+            @elseif ($planKey)
                 <p class="text-sm oc-muted mt-2">套餐</p>
                 <p class="font-semibold oc-heading">{{ strtoupper($planKey) }}</p>
             @endif
@@ -27,7 +30,7 @@
                 @csrf
                 <button type="submit" class="btn btn-primary w-full">演示：标记为已支付</button>
             </form>
-            <p class="text-xs oc-muted">本地/演示环境可用，模拟开通会员（非真实扣款）。</p>
+            <p class="text-xs oc-muted">本地/演示环境可用，模拟完成支付（非真实扣款）。</p>
         @endif
 
         <div class="flex flex-col gap-2 mt-8">

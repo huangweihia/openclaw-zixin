@@ -28,7 +28,6 @@ class PublicEmailSubscriptionController extends Controller
         }
 
         $data = $request->validate([
-            'email' => ['required', 'email', 'max:255'],
             'subscribed_to' => ['nullable', 'array', 'min:1'],
             'subscribed_to.*' => ['string', Rule::in(EmailSubscription::TOPICS)],
             'topic_schedule' => ['nullable', 'array'],
@@ -36,11 +35,10 @@ class PublicEmailSubscriptionController extends Controller
 
         $topics = $data['subscribed_to'] ?? [EmailSubscription::TOPIC_NOTIFICATION];
 
-        $sub = EmailSubscription::query()->firstOrNew(['email' => $data['email']]);
+        $email = (string) $user->email;
+        $sub = EmailSubscription::query()->firstOrNew(['email' => $email]);
         $wasNew = ! $sub->exists;
-        if ($wasNew) {
-            $sub->user_id = $user->id;
-        }
+        $sub->user_id = $user->id;
         $sub->subscribed_to = $topics;
         $topicSchedule = [];
         foreach (($data['topic_schedule'] ?? []) as $topic => $time) {

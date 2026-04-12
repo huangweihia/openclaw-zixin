@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\UserAction;
 use App\Models\UserPost;
+use App\Services\ContentEngagementNotifier;
+use App\Services\PointsService;
+use App\Services\UserPostHeatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,6 +43,15 @@ class UserPostEngagementController extends Controller
                 ]);
                 UserPost::query()->whereKey($userPost->id)->increment('like_count');
                 $message = '点赞成功';
+                app(ContentEngagementNotifier::class)->notifyLiked($user, $userPost);
+                UserPostHeatService::increment($userPost, (int) config('heat.like', 5), 'like');
+                $author = $userPost->author;
+                if ($author && (int) $author->id !== (int) $user->id) {
+                    $p = (int) config('points_rewards.post_liked_author', 0);
+                    if ($p > 0) {
+                        PointsService::earn($author, $p, 'post_liked', '投稿被点赞', $userPost->getMorphClass(), (int) $userPost->id);
+                    }
+                }
             }
 
             $liked = ! $row;
@@ -81,6 +93,15 @@ class UserPostEngagementController extends Controller
                 ]);
                 UserPost::query()->whereKey($userPost->id)->increment('favorite_count');
                 $message = '已加入收藏';
+                app(ContentEngagementNotifier::class)->notifyFavorited($user, $userPost);
+                UserPostHeatService::increment($userPost, (int) config('heat.favorite', 8), 'favorite');
+                $author = $userPost->author;
+                if ($author && (int) $author->id !== (int) $user->id) {
+                    $p = (int) config('points_rewards.post_favorited_author', 0);
+                    if ($p > 0) {
+                        PointsService::earn($author, $p, 'post_favorited', '投稿被收藏', $userPost->getMorphClass(), (int) $userPost->id);
+                    }
+                }
             }
 
             $favorited = ! $row;

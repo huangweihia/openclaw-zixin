@@ -85,9 +85,7 @@
                         <a href="{{ route('dashboard') }}" class="oc-user-dropdown__item" role="menuitem">个人中心</a>
                         <a href="{{ route('favorites.index') }}" class="oc-user-dropdown__item" role="menuitem">我的收藏</a>
                         <a href="{{ route('user-posts.index') }}" class="oc-user-dropdown__item" role="menuitem">我的发布</a>
-                        @if ($user->role === 'svip' || $isAdminUser)
-                            <a href="{{ route('svip-subscriptions.index') }}" class="oc-user-dropdown__item" role="menuitem">SVIP 定制订阅</a>
-                        @endif
+                        <a href="{{ route('dashboard', ['tab' => 'orders']) }}" class="oc-user-dropdown__item" role="menuitem">我的订单</a>
                         <hr class="oc-user-dropdown__sep" />
                         @if ($user->hasMemberMenuPrivileges())
                             <div class="oc-user-dropdown__vip" role="presentation">
@@ -104,7 +102,6 @@
                             <a href="{{ route('pricing') }}" class="oc-user-dropdown__item oc-user-dropdown__item--accent" role="menuitem">👑 开通 VIP</a>
                         @endif
                         <hr class="oc-user-dropdown__sep" />
-                        <a href="{{ route('dashboard.edit') }}" class="oc-user-dropdown__item" role="menuitem">编辑资料</a>
                         <form method="post" action="{{ route('logout') }}" class="oc-user-dropdown__form">
                             @csrf
                             <button type="submit" class="oc-user-dropdown__item oc-user-dropdown__item--danger" role="menuitem">退出登录</button>

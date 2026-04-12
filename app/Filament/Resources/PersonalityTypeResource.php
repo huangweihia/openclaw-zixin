@@ -62,7 +62,7 @@ class PersonalityTypeResource extends BaseAdminResource
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
+            ->columns(static::searchableColumns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
                 Tables\Columns\TextColumn::make('code')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('cn_name')->limit(40)->toggleable(),

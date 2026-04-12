@@ -68,7 +68,7 @@ class PersonalityQuizPlayResource extends BaseAdminResource
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
+            ->columns(static::searchableColumns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
                 Tables\Columns\TextColumn::make('guest_token')
                     ->label('游客标识')

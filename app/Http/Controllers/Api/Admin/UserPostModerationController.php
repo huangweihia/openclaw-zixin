@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\InboxNotification;
 use App\Models\User;
 use App\Models\UserPost;
+use App\Services\UserPostModerationRewards;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -112,6 +113,8 @@ class UserPostModerationController extends Controller
             'audited_by' => $admin->id,
             'audited_at' => now(),
         ])->save();
+
+        UserPostModerationRewards::onApproved($userPost->fresh(['author']));
 
         $content = $userPost->visibility === 'private'
             ? '你的投稿「'.$userPost->title.'」已通过审核（仅自己可见）。'

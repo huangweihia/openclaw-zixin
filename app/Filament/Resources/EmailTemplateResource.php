@@ -213,7 +213,7 @@ class EmailTemplateResource extends BaseAdminResource
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
+            ->columns(static::searchableColumns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
                 Tables\Columns\TextColumn::make('name')->limit(40)->toggleable()->label('名称'),
                 Tables\Columns\TextColumn::make('key')->limit(40)->toggleable()->label('key'),

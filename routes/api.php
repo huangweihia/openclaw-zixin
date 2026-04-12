@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\PersonalityQuizController;
 use App\Http\Controllers\Api\PublicArticleController;
 use App\Http\Controllers\Api\PublicBrowseController;
 use App\Http\Controllers\Api\PublicAnnouncementController;
+use App\Http\Controllers\Api\PublicGuessPostsController;
 use App\Http\Controllers\Api\PublicArticleCommentController;
 use App\Http\Controllers\Api\WeChatMiniArticleCommentController;
 use App\Http\Controllers\Api\WeChatMiniAuthController;
@@ -125,6 +126,7 @@ Route::prefix('public')->middleware(['throttle:120,1', 'sanctum.optional'])->gro
     Route::get('browse/tools/{slug}', [PublicBrowseController::class, 'toolsShow']);
     Route::get('browse/sops', [PublicBrowseController::class, 'sopsIndex']);
     Route::get('browse/sops/{slug}', [PublicBrowseController::class, 'sopsShow']);
+    Route::get('guess/user-posts', [PublicGuessPostsController::class, 'index']);
 });
 
 // SBTI（公开）

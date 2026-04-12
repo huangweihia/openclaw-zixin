@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\InboxNotification;
 use App\Models\UserPost;
+use App\Services\UserPostModerationRewards;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -41,6 +42,8 @@ class UserPostModerationController extends Controller
             'audited_by' => $request->user()->id,
             'audited_at' => now(),
         ])->save();
+
+        UserPostModerationRewards::onApproved($userPost->fresh(['author']));
 
         $content = $userPost->visibility === 'private'
             ? '你的投稿「'.$userPost->title.'」已通过审核（仅自己可见）。'

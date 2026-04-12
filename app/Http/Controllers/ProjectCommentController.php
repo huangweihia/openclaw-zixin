@@ -48,6 +48,8 @@ class ProjectCommentController extends Controller
 
         if ($parentForNotify !== null) {
             app(CommentReplyNotifier::class)->notify($comment, $parentForNotify);
+        } else {
+            app(CommentReplyNotifier::class)->notifyNewRootComment($comment);
         }
 
         if ($this->wantsCommentJson($request)) {

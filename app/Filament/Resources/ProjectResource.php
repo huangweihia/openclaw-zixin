@@ -66,7 +66,7 @@ class ProjectResource extends BaseAdminResource
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
+            ->columns(static::searchableColumns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
                 Tables\Columns\TextColumn::make('name')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('full_name')->limit(40)->toggleable(),

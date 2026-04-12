@@ -56,6 +56,12 @@
                             {{ $userFavorited ? '⭐ 已收藏' : '☆ 收藏' }}
                         </button>
                     </form>
+                    @if ((int) ($boostCost ?? 0) > 0)
+                        <form method="post" action="{{ route('posts.boost', $post) }}" class="m-0" onsubmit="return confirm('确认消耗 {{ (int) $boostCost }} 积分加热本篇投稿？\n加热后将通过消息通知触达作者与部分用户，前台不展示加热人名单。');">
+                            @csrf
+                            <button type="submit" class="btn btn-secondary text-sm">🔥 加热（{{ (int) $boostCost }} 积分）</button>
+                        </form>
+                    @endif
                 @else
                     <a href="{{ route('login', ['return' => request()->path()]) }}" class="btn btn-secondary">登录后点赞 / 收藏</a>
                 @endauth

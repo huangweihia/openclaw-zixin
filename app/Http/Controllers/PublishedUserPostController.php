@@ -7,9 +7,11 @@ use App\Models\UserAction;
 use App\Models\UserPost;
 use App\Support\CommentThreadBuilder;
 use App\Support\ViewHistoryRecorder;
+use App\Services\UserPostHeatService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class PublishedUserPostController extends Controller
@@ -67,6 +69,9 @@ class PublishedUserPostController extends Controller
 
         $userPost->load('author');
         $userPost->increment('view_count');
+        if ($request->user()) {
+            UserPostHeatService::recordAuthenticatedView($userPost, (int) $request->user()->id);
+        }
         ViewHistoryRecorder::record($request->user(), $userPost);
 
         $bodyHtml = $canReadFull ? $userPost->content : null;
@@ -104,6 +109,10 @@ class PublishedUserPostController extends Controller
                 ->all();
         }
 
+        $boostCost = Schema::hasTable('content_boosts')
+            ? \App\Services\UserPostBoostService::pointsCost()
+            : 0;
+
         return view('user-posts.public-show', [
             'post' => $userPost,
             'canReadFull' => $canReadFull,
@@ -114,6 +123,7 @@ class PublishedUserPostController extends Controller
             'userFavorited' => $userFavorited,
             'comments' => $comments,
             'likedCommentIds' => $likedCommentIds,
+            'boostCost' => $boostCost,
         ]);
     }
 }

@@ -12,6 +12,7 @@ use App\Models\PersonalityQuestion;
 use App\Models\PrivateTrafficSop;
 use App\Models\SideHustleCase;
 use App\Models\SiteTestimonial;
+use App\Models\UserPost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -36,6 +37,7 @@ class HomeController extends Controller
         $featuredArticles = $this->featuredArticles();
         $featuredProjects = $this->featuredProjects();
         $featuredCases = $this->featuredCases();
+        $featuredUserPosts = $this->featuredUserPosts();
 
         $personalityQuizEnabled = true;
         if (Schema::hasTable('personality_quiz_settings')) {
@@ -56,6 +58,7 @@ class HomeController extends Controller
             'featuredArticles',
             'featuredProjects',
             'featuredCases',
+            'featuredUserPosts',
             'canVip',
             'canSvip',
             'personalityQuizAvailable',
@@ -357,5 +360,23 @@ class HomeController extends Controller
             ->orderByDesc('view_count')
             ->limit(8)
             ->get(['id', 'title', 'slug', 'like_count', 'view_count', 'visibility']);
+    }
+
+    /**
+     * 首页「精品投稿」：加热权重优先，其次热度。
+     */
+    private function featuredUserPosts()
+    {
+        if (! Schema::hasTable('user_posts') || ! Schema::hasColumn('user_posts', 'boost_weight')) {
+            return collect();
+        }
+
+        return UserPost::query()
+            ->publicFeed()
+            ->orderByDesc('boost_weight')
+            ->orderByDesc('heat_score')
+            ->orderByDesc('like_count')
+            ->limit(8)
+            ->get(['id', 'title', 'type', 'visibility', 'like_count', 'view_count', 'boost_weight', 'heat_score']);
     }
 }

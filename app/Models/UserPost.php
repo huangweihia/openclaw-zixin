@@ -27,12 +27,16 @@ class UserPost extends Model
         'like_count',
         'comment_count',
         'favorite_count',
+        'heat_score',
+        'boost_weight',
+        'last_boost_at',
     ];
 
     protected $casts = [
         'tags' => 'array',
         'attachments' => 'array',
         'audited_at' => 'datetime',
+        'last_boost_at' => 'datetime',
     ];
 
     public function author(): BelongsTo

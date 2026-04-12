@@ -17,12 +17,14 @@ class Order extends Model
         'payment_id',
         'payment_method',
         'paid_at',
+        'refund_requested_at',
         'remark',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'paid_at' => 'datetime',
+        'refund_requested_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

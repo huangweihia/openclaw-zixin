@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+@php
+    $ocSiteEmbed = request()->boolean('oc_embed');
+@endphp
 <head>
+    @if (!empty($ocSiteEmbed))
+        <base target="_top" />
+    @endif
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -23,9 +29,6 @@
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
     @stack('head')
 </head>
-@php
-    $ocSiteEmbed = request()->boolean('oc_embed');
-@endphp
 <body class="oc-page-bg min-h-screen flex flex-col {{ $ocSiteEmbed ? 'pt-0' : 'pt-16' }}">
     @unless ($ocSiteEmbed)
         @include('partials.navbar')

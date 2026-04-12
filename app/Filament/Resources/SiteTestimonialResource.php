@@ -79,7 +79,7 @@ class SiteTestimonialResource extends BaseAdminResource
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
+            ->columns(static::searchableColumns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
                 Tables\Columns\TextColumn::make('display_name')->label('显示名')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('caption')->label('副标题/说明')->limit(40)->toggleable(),

@@ -85,6 +85,11 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(\App\Models\Point::class, 'user_id')->orderByDesc('id');
     }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class, 'user_id')->orderByDesc('id');
+    }
     
     /**
      * 付费档位（不含管理员）：用于订阅到期、VIP 角标等。

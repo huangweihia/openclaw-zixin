@@ -2,14 +2,15 @@
 
 namespace App\Filament\Resources\SubscriptionResource\Pages;
 
-use App\Filament\Resources\Pages\Concerns\RedirectsToIndexAfterSave;
-
 use App\Filament\Resources\SubscriptionResource;
-use Filament\Resources\Pages\EditRecord;
+use Filament\Resources\Pages\ListRecords;
 
-class EditSubscription extends EditRecord
+class ListSubscriptionUsers extends ListRecords
 {
-    use RedirectsToIndexAfterSave;
-
     protected static string $resource = SubscriptionResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [];
+    }
 }

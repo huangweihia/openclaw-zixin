@@ -33,7 +33,10 @@ use App\Http\Controllers\PrivateTrafficSopWebController;
 use App\Http\Controllers\SopCommentController;
 use App\Http\Controllers\UserPostEngagementController;
 use App\Http\Controllers\UserPostCommentController;
+use App\Http\Controllers\UserPostBoostController;
 use App\Http\Controllers\UserRichUploadController;
+use App\Http\Controllers\DashboardPointsController;
+use App\Http\Controllers\DashboardPointOrderController;
 use App\Http\Controllers\PublicUserController;
 use App\Http\Controllers\UserMessageController;
 /*
@@ -97,7 +100,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/edit', [DashboardController::class, 'edit'])->name('dashboard.edit');
     Route::get('/dashboard/comments', [DashboardController::class, 'comments'])->name('dashboard.comments');
     Route::get('/dashboard/orders', [DashboardOrderController::class, 'index'])->name('dashboard.orders');
-    Route::post('/dashboard/orders/{order}/review', [DashboardOrderController::class, 'review'])->name('dashboard.orders.review');
+    Route::get('/dashboard/points', [DashboardPointsController::class, 'index'])->name('dashboard.points');
+    Route::post('/dashboard/point-orders', [DashboardPointOrderController::class, 'store'])->name('dashboard.point-orders.store');
+    Route::post('/dashboard/orders/{order}/refund', [DashboardOrderController::class, 'requestRefund'])->name('dashboard.orders.refund');
     Route::get('/dashboard/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
     Route::delete('/dashboard/favorites/{userAction}', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
     Route::post('/dashboard/favorites/bulk-delete', [FavoriteController::class, 'bulkDestroy'])->name('favorites.bulk-delete');
@@ -155,6 +160,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{userPost}/like', [UserPostEngagementController::class, 'toggleLike'])->name('posts.like');
     Route::post('/posts/{userPost}/favorite', [UserPostEngagementController::class, 'toggleFavorite'])->name('posts.favorite');
     Route::post('/posts/{userPost}/comments', [UserPostCommentController::class, 'store'])->name('posts.comments.store');
+    Route::post('/posts/{userPost}/boost', [UserPostBoostController::class, 'store'])->name('posts.boost');
 
     Route::post('/sops/{privateTrafficSop:slug}/comments', [SopCommentController::class, 'store'])->name('sops.comments.store');
     Route::post('/cases/{sideHustleCase}/comments', [SideHustleCaseCommentController::class, 'store'])->name('cases.comments.store');

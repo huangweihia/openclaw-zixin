@@ -9,9 +9,27 @@ use Illuminate\View\View;
 
 class InboxNotificationController extends Controller
 {
+    /** @var list<string> */
+    public const INTERACTION_TYPES = [
+        'comment_reply',
+        'content_comment',
+        'like_content',
+        'favorite_content',
+        'boost_received',
+        'boost_spent',
+        'boost_spotlight',
+    ];
+
     public function index(Request $request): View
     {
         $q = InboxNotification::query()->where('user_id', $request->user()->id);
+
+        $category = $request->query('category', 'all');
+        if ($category === 'interaction') {
+            $q->whereIn('type', self::INTERACTION_TYPES);
+        } elseif ($category === 'system') {
+            $q->whereNotIn('type', self::INTERACTION_TYPES);
+        }
 
         if ($request->query('unread') === '1') {
             $q->where('is_read', false);

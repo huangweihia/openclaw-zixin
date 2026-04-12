@@ -123,7 +123,7 @@ class UserResource extends BaseAdminResource
         ];
 
         return $table
-            ->columns(array_merge($columns, FilamentUserSchema::autoTableColumns()))
+            ->columns(static::searchableColumns(array_merge($columns, FilamentUserSchema::autoTableColumns())))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

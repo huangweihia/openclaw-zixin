@@ -58,6 +58,42 @@ final class CommentReplyNotifier
         }
     }
 
+    /**
+     * 顶层评论（非回复）通知内容作者。
+     */
+    public function notifyNewRootComment(Comment $comment): void
+    {
+        if ($comment->parent_id !== null) {
+            return;
+        }
+
+        $comment->loadMissing('user');
+        $commenterId = (int) $comment->user_id;
+        $commenterName = $comment->user?->name ?? '用户';
+
+        $commentable = $comment->commentable;
+        if ($commentable === null) {
+            return;
+        }
+
+        $ownerId = $this->contentOwnerUserId($commentable);
+        if ($ownerId <= 0 || $ownerId === $commenterId) {
+            return;
+        }
+
+        $snippet = Str::limit(strip_tags((string) $comment->content), 160);
+        $actionUrl = $this->contentUrl($commentable);
+        $kind = $this->contentKind($commentable);
+
+        InboxNotification::query()->create([
+            'user_id' => $ownerId,
+            'type' => 'content_comment',
+            'title' => '「'.$commenterName.'」评论了你的'.$kind,
+            'content' => $snippet,
+            'action_url' => $actionUrl,
+        ]);
+    }
+
     private function contentOwnerUserId(object $commentable): int
     {
         if ($commentable instanceof Article) {

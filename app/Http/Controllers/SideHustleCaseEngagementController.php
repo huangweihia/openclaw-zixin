@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SideHustleCase;
 use App\Models\UserAction;
+use App\Services\ContentEngagementNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,6 +43,7 @@ class SideHustleCaseEngagementController extends Controller
                 ]);
                 SideHustleCase::query()->whereKey($sideHustleCase->id)->increment('like_count');
                 $message = '点赞成功';
+                app(ContentEngagementNotifier::class)->notifyLiked($user, $sideHustleCase);
             }
 
             $liked = ! $row;
@@ -85,6 +87,7 @@ class SideHustleCaseEngagementController extends Controller
                 ]);
                 SideHustleCase::query()->whereKey($sideHustleCase->id)->increment('favorite_count');
                 $message = '已加入收藏';
+                app(ContentEngagementNotifier::class)->notifyFavorited($user, $sideHustleCase);
             }
 
             $favorited = ! $row;

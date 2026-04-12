@@ -5,8 +5,9 @@
 @section('content')
     @php
         $unreadCount = auth()->user()->inboxNotifications()->where('is_read', false)->count();
+        $cat = request('category', 'all');
     @endphp
-    <div class="max-w-3xl mx-auto">
+    <div class="max-w-5xl mx-auto px-1 sm:px-0">
         <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
             <h1 class="text-2xl font-bold oc-heading m-0">
                 通知中心
@@ -22,7 +23,22 @@
             @endif
         </div>
 
+        <div class="flex flex-wrap gap-2 mb-4">
+            <a href="{{ route('notifications.index', array_filter(['category' => null, 'unread' => request('unread'), 'q' => request('q')])) }}"
+                class="text-sm px-3 py-1.5 rounded-full border oc-border {{ $cat === 'all' ? 'oc-heading font-semibold' : 'oc-muted' }}"
+                style="{{ $cat === 'all' ? 'background: rgba(148,163,184,.15);' : '' }}">全部</a>
+            <a href="{{ route('notifications.index', array_filter(['category' => 'interaction', 'unread' => request('unread'), 'q' => request('q')])) }}"
+                class="text-sm px-3 py-1.5 rounded-full border oc-border {{ $cat === 'interaction' ? 'oc-heading font-semibold' : 'oc-muted' }}"
+                style="{{ $cat === 'interaction' ? 'background: rgba(148,163,184,.15);' : '' }}">评论与互动</a>
+            <a href="{{ route('notifications.index', array_filter(['category' => 'system', 'unread' => request('unread'), 'q' => request('q')])) }}"
+                class="text-sm px-3 py-1.5 rounded-full border oc-border {{ $cat === 'system' ? 'oc-heading font-semibold' : 'oc-muted' }}"
+                style="{{ $cat === 'system' ? 'background: rgba(148,163,184,.15);' : '' }}">系统与其他</a>
+        </div>
+
         <form method="get" action="{{ route('notifications.index') }}" class="flex flex-wrap gap-3 items-center mb-6 oc-surface p-3 rounded-xl">
+            @if ($cat !== 'all')
+                <input type="hidden" name="category" value="{{ $cat }}" />
+            @endif
             <label class="text-sm oc-muted flex items-center gap-2 m-0 cursor-pointer">
                 <input type="checkbox" name="unread" value="1" @checked(request('unread') === '1') onchange="this.form.submit()" />
                 仅未读
@@ -32,10 +48,10 @@
                 name="q"
                 value="{{ request('q') }}"
                 placeholder="搜索标题或正文…"
-                class="oc-input flex-1 min-w-[160px] text-sm"
+                class="oc-input flex-1 min-w-[200px] text-sm"
             />
             <button type="submit" class="btn btn-primary text-sm">搜索</button>
-            @if (request()->anyFilled(['q', 'unread']))
+            @if (request()->anyFilled(['q', 'unread']) || $cat !== 'all')
                 <a href="{{ route('notifications.index') }}" class="oc-link text-sm">重置</a>
             @endif
         </form>
@@ -50,12 +66,19 @@
                             <span class="w-2 shrink-0" aria-hidden="true"></span>
                         @endif
                         <div class="flex-1 min-w-0">
-                            <h2 class="text-base font-semibold oc-heading m-0 mb-1">{{ $n->title }}</h2>
+                            <div class="flex flex-wrap items-start justify-between gap-2 mb-1">
+                                <h2 class="text-base font-semibold oc-heading m-0 flex-1 min-w-0">{{ $n->title }}</h2>
+                                <form method="post" action="{{ route('notifications.destroy', $n) }}" class="inline m-0 shrink-0" onsubmit="return confirm('删除这条通知？');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-sm font-medium text-red-600 hover:underline bg-transparent border-0 cursor-pointer p-0">删除</button>
+                                </form>
+                            </div>
                             @if ($n->content)
-                                <p class="text-sm oc-muted m-0 mb-3 whitespace-pre-wrap">{{ $n->content }}</p>
+                                <p class="text-sm oc-muted m-0 mb-2 whitespace-pre-wrap">{{ $n->content }}</p>
                             @endif
                             <time class="text-xs oc-muted">{{ $n->created_at->format('Y-m-d H:i') }}</time>
-                            <div class="flex flex-wrap gap-3 mt-3">
+                            <div class="flex flex-wrap gap-3 mt-2">
                                 @if ($n->action_url)
                                     <a href="{{ route('notifications.open', $n) }}" class="oc-link text-sm font-medium" style="text-decoration: none;">查看详情</a>
                                 @endif
@@ -65,11 +88,6 @@
                                         <button type="submit" class="oc-link text-sm font-medium bg-transparent border-0 cursor-pointer p-0" style="text-decoration: none;">标为已读</button>
                                     </form>
                                 @endif
-                                <form method="post" action="{{ route('notifications.destroy', $n) }}" class="inline m-0" onsubmit="return confirm('删除这条通知？');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-sm text-red-600 hover:underline bg-transparent border-0 cursor-pointer p-0">删除</button>
-                                </form>
                             </div>
                         </div>
                     </div>
