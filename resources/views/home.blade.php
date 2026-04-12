@@ -198,18 +198,24 @@
                         @foreach ([$featuredCases, $featuredCases] as $grp)
                             @foreach ($grp as $c)
                                 <div class="oc-feature-card rounded-xl p-6 block relative overflow-hidden">
-                                    <a href="{{ route('cases.show', $c) }}" style="text-decoration:none;color:inherit;">
-                                        <div class="kicker mb-3">💼 精品案例</div>
-                                        <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $c->title }}</div>
-                                        <div class="meta">点赞 {{ number_format((int) $c->like_count) }} · 浏览 {{ number_format((int) $c->view_count) }}</div>
-                                    </a>
                                     @if (($c->visibility ?? 'public') === 'vip' && ! $canVip)
+                                        <div style="text-decoration:none;color:inherit;">
+                                            <div class="kicker mb-3">💼 精品案例</div>
+                                            <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $c->title }}</div>
+                                            <div class="meta">点赞 {{ number_format((int) $c->like_count) }} · 浏览 {{ number_format((int) $c->view_count) }}</div>
+                                        </div>
                                         @include('partials.vip-mask', [
                                             'title' => 'VIP 案例',
                                             'desc' => '开通 VIP 后可查看完整案例。',
                                             'cta' => '开通 VIP',
                                             'href' => route('pricing'),
                                         ])
+                                    @else
+                                        <a href="{{ route('cases.show', $c) }}" style="text-decoration:none;color:inherit;">
+                                            <div class="kicker mb-3">💼 精品案例</div>
+                                            <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $c->title }}</div>
+                                            <div class="meta">点赞 {{ number_format((int) $c->like_count) }} · 浏览 {{ number_format((int) $c->view_count) }}</div>
+                                        </a>
                                     @endif
                                 </div>
                             @endforeach
@@ -279,7 +285,6 @@
                             <div class="text-5xl mb-4 shrink-0">{{ $preview['icon'] }}</div>
                             <h3 class="text-2xl font-bold mb-3 text-gray-800 shrink-0 line-clamp-2">{{ $preview['title'] }}</h3>
                             <p class="text-gray-600 mb-0 flex-1 text-sm leading-relaxed line-clamp-4">{{ $preview['summary'] }}</p>
-                            <span class="oc-cta-primary mt-6 shrink-0">开通 VIP 查看</span>
                             @include('partials.vip-mask', [
                                 'title' => 'VIP 专属内容',
                                 'desc' => '开通会员后可查看完整案例、工具与 SOP 内容。',
