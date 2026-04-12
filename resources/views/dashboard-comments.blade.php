@@ -3,9 +3,6 @@
 @section('title', '我的评论 — OpenClaw 智信')
 
 @section('content')
-    <p class="mb-4">
-        <a href="{{ route('dashboard') }}" class="oc-link text-sm font-medium" style="text-decoration: none;">← 返回个人中心</a>
-    </p>
     <h1 class="text-2xl font-bold mb-6 oc-heading">我的评论</h1>
 
     <div class="oc-surface p-6">

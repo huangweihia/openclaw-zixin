@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\WeChatMiniProfileController;
 use App\Http\Controllers\Api\WeChatMiniEmailSubscriptionController;
 use App\Http\Controllers\Api\WeChatMiniSvipSubscriptionController;
 use App\Http\Controllers\Api\WeChatMiniSubscriptionFeedController;
+use App\Http\Controllers\Api\WeChatMiniSubscribeController;
 use App\Http\Controllers\Api\WeChatMiniInboxController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -63,6 +64,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/wechat/mini/posts', [WeChatMiniProfileController::class, 'posts']);
     Route::get('/wechat/mini/svip-subscriptions', [WeChatMiniSvipSubscriptionController::class, 'index']);
     Route::get('/wechat/mini/subscription-feed', [WeChatMiniSubscriptionFeedController::class, 'index']);
+    Route::get('/wechat/mini/subscribe-config', [WeChatMiniSubscribeController::class, 'config'])
+        ->middleware('throttle:60,1');
     Route::get('/wechat/mini/inbox/unread-count', [WeChatMiniInboxController::class, 'unreadCount']);
     Route::get('/wechat/mini/inbox', [WeChatMiniInboxController::class, 'index']);
     Route::post('/wechat/mini/inbox/read-all', [WeChatMiniInboxController::class, 'readAll']);

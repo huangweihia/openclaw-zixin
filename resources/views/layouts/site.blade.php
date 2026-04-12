@@ -128,9 +128,10 @@
     </div>
 
     @unless ($ocSiteEmbed)
-        @include('partials.announcement-marquee', ['placement' => 'bottom'])
         @include('partials.footer')
-        @include('partials.floating-promos')
+        @if (! \Illuminate\Support\Facades\View::hasSection('suppress_floating_promos'))
+            @include('partials.floating-promos')
+        @endif
     @endunless
 
     @vite(['resources/js/blade-skin-mount.js'])

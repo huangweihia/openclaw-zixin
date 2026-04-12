@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('membership:send-expiry-reminders')->dailyAt('09:00');
         $schedule->command('subscriptions:send-daily-digest')->dailyAt('08:30');
+        $schedule->command('wechat-mini:send-membership-expiry-reminders')->dailyAt('10:00');
     }
 
     /** @internal 供调度闭包示例 */

@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Dashboard;
+use App\Http\Middleware\ConfigureFilamentSessionCookie;
 use App\Http\Middleware\SetFilamentLocale;
 use Filament\Forms\Components\Field;
 use Filament\Http\Middleware\Authenticate;
@@ -65,11 +66,14 @@ class AdminPanelProvider extends PanelProvider
         $useSplitHosts = is_string($adminDomain) && $adminDomain !== ''
             && is_string($frontDomain) && $frontDomain !== '';
 
+        $brand = trim((string) env('FILAMENT_BRAND_NAME', ''));
+        $panelBrand = $brand !== '' ? $brand : (config('app.name').' 后台');
+
         $panel = $panel
             ->default()
             ->id('admin')
             ->login()
-            ->brandName(config('app.name').' 后台')
+            ->brandName($panelBrand)
             ->authGuard('web')
             ->authPasswordBroker('users')
             ->colors([
@@ -87,6 +91,7 @@ class AdminPanelProvider extends PanelProvider
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
+                ConfigureFilamentSessionCookie::class,
                 StartSession::class,
                 SetFilamentLocale::class,
                 AuthenticateSession::class,

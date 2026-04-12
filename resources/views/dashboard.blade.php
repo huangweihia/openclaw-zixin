@@ -20,36 +20,36 @@
             class="w-full lg:sticky lg:top-20 oc-surface p-4"
             style="width: var(--ocDashLeft); max-width: 520px;"
         >
-            <h3 class="text-sm font-bold oc-heading mb-3">个人中心</h3>
-            <nav class="space-y-1" aria-label="个人中心菜单">
-                <p class="text-[11px] font-semibold uppercase tracking-wide oc-muted mb-1 px-1">常用</p>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm font-semibold oc-heading" data-tab="profile" style="background: rgba(148,163,184,.12);">
+            <h3 class="text-base font-bold oc-heading mb-4 tracking-tight">个人中心</h3>
+            <nav class="space-y-0.5" aria-label="个人中心菜单">
+                <p class="text-xs font-bold oc-muted mb-2 px-1 tracking-wide" style="letter-spacing: 0.06em;">常用</p>
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] font-semibold oc-heading" data-tab="profile" style="background: rgba(148,163,184,.12);">
                     个人资料
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="subscription">
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="subscription">
                     会员与订阅
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="timeline">
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="timeline">
                     最近动态
                 </button>
-                <p class="text-[11px] font-semibold uppercase tracking-wide oc-muted mb-1 mt-3 px-1">快捷入口</p>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="posts">
+                <p class="text-xs font-bold oc-muted mb-2 mt-4 px-1 tracking-wide" style="letter-spacing: 0.06em;">快捷入口</p>
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="posts">
                     📝 我的发布
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="favorites">
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="favorites">
                     ⭐ 我的收藏
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="history">
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="history">
                     👣 浏览历史
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="comments">
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="comments">
                     💬 我的评论
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="orders">
+                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="orders">
                     💳 我的订单
                 </button>
                 @if ($u->role === 'svip' || $u->isAdmin())
-                    <button type="button" class="oc-dash-tab w-full text-left px-3 py-2 rounded-lg text-sm oc-link" data-tab="svip">
+                    <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="svip">
                         ✨ SVIP 定制
                     </button>
                 @endif
@@ -84,7 +84,7 @@
                     <div class="flex-1 min-w-0 text-center sm:text-left">
                         <div class="flex flex-wrap items-center justify-between gap-3 mb-2 w-full">
                             <h2 class="text-xl md:text-2xl font-bold oc-heading m-0">{{ $u->name }}</h2>
-                            <a href="{{ route('dashboard.edit') }}" class="btn btn-secondary text-sm shrink-0">编辑</a>
+                            <button type="button" id="oc-open-profile-modal" class="btn btn-secondary text-sm shrink-0">编辑</button>
                         </div>
                         <p class="text-sm oc-muted mb-1">{{ $handle }}</p>
                         <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-sm">
@@ -240,54 +240,150 @@
         $embedQs = '?oc_embed=1';
     @endphp
     <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="posts" style="min-height: 70vh;">
-        <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+        <div class="flex items-center gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
             <span class="text-sm font-semibold oc-heading">我的发布</span>
-            <a href="{{ route('user-posts.index') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
         </div>
         <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="我的发布" data-embed-src="{{ route('user-posts.index') }}{{ $embedQs }}"></iframe>
     </div>
     <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="favorites" style="min-height: 70vh;">
-        <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+        <div class="flex items-center gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
             <span class="text-sm font-semibold oc-heading">我的收藏</span>
-            <a href="{{ route('favorites.index') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
         </div>
         <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="我的收藏" data-embed-src="{{ route('favorites.index') }}{{ $embedQs }}"></iframe>
     </div>
     <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="history" style="min-height: 70vh;">
-        <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+        <div class="flex items-center gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
             <span class="text-sm font-semibold oc-heading">浏览历史</span>
-            <a href="{{ route('history.index') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
         </div>
         <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="浏览历史" data-embed-src="{{ route('history.index') }}{{ $embedQs }}"></iframe>
     </div>
     <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="comments" style="min-height: 70vh;">
-        <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+        <div class="flex items-center gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
             <span class="text-sm font-semibold oc-heading">我的评论</span>
-            <a href="{{ route('dashboard.comments') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
         </div>
         <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="我的评论" data-embed-src="{{ route('dashboard.comments') }}{{ $embedQs }}"></iframe>
     </div>
     <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="orders" style="min-height: 70vh;">
-        <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+        <div class="flex items-center gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
             <span class="text-sm font-semibold oc-heading">我的订单</span>
-            <a href="{{ route('dashboard.orders') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
         </div>
         <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="我的订单" data-embed-src="{{ route('dashboard.orders') }}{{ $embedQs }}"></iframe>
     </div>
     @if ($u->role === 'svip' || $u->isAdmin())
         <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="svip" style="min-height: 70vh;">
-            <div class="flex items-center justify-between gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+            <div class="flex items-center gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
                 <span class="text-sm font-semibold oc-heading">SVIP 定制</span>
-                <a href="{{ route('svip-subscriptions.index') }}" target="_blank" rel="noopener noreferrer" class="text-xs oc-link">新窗口打开</a>
             </div>
             <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="SVIP 定制" data-embed-src="{{ route('svip-subscriptions.index') }}{{ $embedQs }}"></iframe>
         </div>
     @endif
         </section>
     </div>
+
+    <div id="oc-profile-modal" class="oc-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="oc-profile-modal-title">
+        <div class="oc-modal max-w-2xl w-full max-h-[90vh] overflow-y-auto relative text-left">
+            <button type="button" id="oc-profile-modal-close" class="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center text-xl leading-none oc-heading border oc-border cursor-pointer" style="background: rgba(255,255,255,.92);" aria-label="关闭">×</button>
+            <h2 id="oc-profile-modal-title" class="text-xl font-bold oc-heading mb-6 pr-12">编辑资料</h2>
+            @include('partials.dashboard-profile-forms')
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
+    <script>
+        (function () {
+            const modal = document.getElementById('oc-profile-modal');
+            const openBtn = document.getElementById('oc-open-profile-modal');
+            const closeBtn = document.getElementById('oc-profile-modal-close');
+            if (!modal) return;
+            const show = () => {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            };
+            const hide = () => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            };
+            openBtn?.addEventListener('click', show);
+            closeBtn?.addEventListener('click', hide);
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) hide();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) hide();
+            });
+        })();
+    </script>
+    <script>
+        (function () {
+            const np = document.getElementById('new-pw');
+            const st = document.getElementById('dash-pw-strength');
+            if (np && st) {
+                np.addEventListener('input', function () {
+                    var n = np.value.length;
+                    if (!n) {
+                        st.textContent = '';
+                        return;
+                    }
+                    if (n < 6) st.textContent = '强度：弱（至少 6 位）';
+                    else if (n <= 10) st.textContent = '强度：中';
+                    else st.textContent = '强度：强';
+                });
+            }
+            const sendBtn = document.getElementById('dash-email-send');
+            const emailEl = document.getElementById('dash-new-email');
+            if (sendBtn && emailEl) {
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                let cooldown = 0;
+                let timer = null;
+                sendBtn.addEventListener('click', async function () {
+                    const email = emailEl.value.trim();
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        alert('请先填写正确的新邮箱');
+                        return;
+                    }
+                    if (cooldown > 0) return;
+                    sendBtn.disabled = true;
+                    try {
+                        const res = await fetch('{{ url('/profile/email/send-code') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Accept: 'application/json',
+                                'X-CSRF-TOKEN': csrf,
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({ email }),
+                        });
+                        const data = await res.json().catch(function () {
+                            return {};
+                        });
+                        if (!res.ok) {
+                            alert(data.errors?.email?.[0] || data.message || '发送失败');
+                            sendBtn.disabled = false;
+                            return;
+                        }
+                        cooldown = 60;
+                        sendBtn.textContent = '已发送（60s）';
+                        timer = setInterval(function () {
+                            cooldown--;
+                            if (cooldown <= 0) {
+                                clearInterval(timer);
+                                sendBtn.textContent = '获取验证码';
+                                sendBtn.disabled = false;
+                            } else {
+                                sendBtn.textContent = '已发送（' + cooldown + 's）';
+                            }
+                        }, 1000);
+                    } catch (e) {
+                        alert('网络错误');
+                        sendBtn.disabled = false;
+                    }
+                });
+            }
+        })();
+    </script>
     <script>
         (function () {
             const shell = document.getElementById('oc-dashboard-shell');

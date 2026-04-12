@@ -16,4 +16,9 @@ return [
 
     'path_prefix' => trim((string) env('ADMIN_PATH_PREFIX', 'admin'), '/'),
 
+    /*
+    | 后台独立 Session Cookie 名（与 SESSION_COOKIE 区分）。留空则与前台共用（不推荐）。
+    */
+    'session_cookie' => env('FILAMENT_SESSION_COOKIE', env('ADMIN_SESSION_COOKIE', 'oc_filament_session')),
+
 ];

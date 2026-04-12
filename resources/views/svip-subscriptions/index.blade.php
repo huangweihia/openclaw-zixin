@@ -3,9 +3,6 @@
 @section('title', 'SVIP 定制订阅 — OpenClaw 智信')
 
 @section('content')
-    <p class="mb-4">
-        <a href="{{ route('dashboard') }}" class="oc-link text-sm font-medium" style="text-decoration: none;">← 返回个人中心</a>
-    </p>
     <h1 class="text-2xl md:text-3xl font-bold mb-6 oc-heading">SVIP 定制订阅</h1>
     <p class="text-sm oc-muted mb-4 max-w-2xl leading-relaxed">
         提交后，运营会结合 <strong>OpenClaw 数据交付能力</strong>与您确认订阅范围与推送节奏；实际计费与合约以双方约定为准，本页<strong>不收集固定金额与天数</strong>。
