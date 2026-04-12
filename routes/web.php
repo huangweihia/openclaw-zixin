@@ -26,6 +26,7 @@ use App\Http\Controllers\AnnouncementWebController;
 use App\Http\Controllers\SvipCustomSubscriptionWebController;
 use App\Http\Controllers\WeComOAuthController;
 use App\Http\Controllers\SideHustleCaseWebController;
+use App\Http\Controllers\SideHustleCaseEngagementController;
 use App\Http\Controllers\SideHustleCaseCommentController;
 use App\Http\Controllers\AiToolWebController;
 use App\Http\Controllers\PrivateTrafficSopWebController;
@@ -146,6 +147,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/articles/{article}/comments', [ArticleCommentController::class, 'store'])->name('articles.comments.store');
 
     Route::post('/projects/{project}/favorite', [ProjectEngagementController::class, 'toggleFavorite'])->name('projects.favorite');
+
+    Route::post('/cases/{sideHustleCase}/like', [SideHustleCaseEngagementController::class, 'toggleLike'])->name('cases.like');
+    Route::post('/cases/{sideHustleCase}/favorite', [SideHustleCaseEngagementController::class, 'toggleFavorite'])->name('cases.favorite');
     Route::post('/projects/{project}/comments', [ProjectCommentController::class, 'store'])->name('projects.comments.store');
 
     Route::post('/posts/{userPost}/like', [UserPostEngagementController::class, 'toggleLike'])->name('posts.like');

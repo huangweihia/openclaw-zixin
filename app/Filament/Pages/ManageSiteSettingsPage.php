@@ -50,6 +50,10 @@ class ManageSiteSettingsPage extends Page implements HasForms
         'mail_batch_enabled',
         'mail_batch_start_hour',
         'mail_batch_end_hour',
+        'mail_sub_default_daily_time',
+        'mail_sub_default_weekly_time',
+        'mail_sub_weekly_send_weekday',
+        'wechat_mini_subscribe_template_ids',
     ];
 
     public ?array $data = [];
@@ -189,8 +193,8 @@ class ManageSiteSettingsPage extends Page implements HasForms
                             ->maxLength(120)
                             ->columnSpanFull(),
                     ]),
-                Forms\Components\Section::make('邮件批处理时间窗')
-                    ->description('整点 0–23。调度发送邮件前应读取这两项，避免夜间打扰。')
+                Forms\Components\Section::make('邮件批处理与订阅摘要')
+                    ->description('摘要类邮件由 Laravel 调度每分钟触发一次命令，仅在「当前时刻 = 用户所选时间」时发送。用户未选时间则使用下方默认 HH:mm。周精选仅在下方「每周发送星期」当天、且到达用户所选时刻时发送。时间窗仍限制命令是否在允许小时内执行。')
                     ->columns(2)
                     ->schema([
                         Forms\Components\Select::make('mail_batch_enabled')
@@ -207,6 +211,38 @@ class ManageSiteSettingsPage extends Page implements HasForms
                             ->numeric()
                             ->minValue(0)
                             ->maxValue(23),
+                        Forms\Components\TextInput::make('mail_sub_default_daily_time')
+                            ->label('每日精选默认发送时刻')
+                            ->placeholder('09:00')
+                            ->helperText('HH:mm，用户未在个人中心填写每日时间时使用。')
+                            ->maxLength(5),
+                        Forms\Components\TextInput::make('mail_sub_default_weekly_time')
+                            ->label('每周精选默认发送时刻')
+                            ->placeholder('10:00')
+                            ->helperText('HH:mm，用户未填写每周时间时使用。')
+                            ->maxLength(5),
+                        Forms\Components\Select::make('mail_sub_weekly_send_weekday')
+                            ->label('每周精选发送星期（ISO）')
+                            ->options([
+                                '1' => '周一',
+                                '2' => '周二',
+                                '3' => '周三',
+                                '4' => '周四',
+                                '5' => '周五',
+                                '6' => '周六',
+                                '7' => '周日',
+                            ])
+                            ->native(false)
+                            ->helperText('与 Carbon dayOfWeekIso 一致：1=周一，7=周日。'),
+                    ]),
+                Forms\Components\Section::make('微信小程序订阅消息')
+                    ->description('当 .env 未配置 WECHAT_MINI_SUBSCRIBE_TEMPLATE_IDS 时，小程序「会员到期提醒」接口会读取此处。逗号分隔模板 ID，最多 3 个，须与公众平台「订阅消息 → 我的模板」一致。')
+                    ->schema([
+                        Forms\Components\TextInput::make('wechat_mini_subscribe_template_ids')
+                            ->label('订阅消息模板 ID（逗号分隔）')
+                            ->maxLength(500)
+                            ->placeholder('例如：AbCdEf123...,XyZ789...')
+                            ->columnSpanFull(),
                     ]),
             ])
             ->statePath('data');

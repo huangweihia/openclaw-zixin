@@ -40,4 +40,17 @@ class AiToolMonetization extends Model
         'channels' => 'array',
         'delivery_standards' => 'array',
     ];
+
+    public function userCanReadFull(?User $user): bool
+    {
+        if (($this->visibility ?? 'public') !== 'vip') {
+            return true;
+        }
+
+        if ($user === null || $user->is_banned) {
+            return false;
+        }
+
+        return $user->canAccessVipExclusiveContent();
+    }
 }

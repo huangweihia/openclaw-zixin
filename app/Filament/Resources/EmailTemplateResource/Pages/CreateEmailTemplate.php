@@ -12,4 +12,13 @@ class CreateEmailTemplate extends CreateRecord
     use RedirectsToIndexAfterSave;
 
     protected static string $resource = EmailTemplateResource::class;
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        return EmailTemplateResource::compileBuilderToStorage($data);
+    }
 }

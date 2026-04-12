@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SideHustleCase;
+use App\Models\UserAction;
 use App\Models\UserPost;
 use App\Models\CommentLike;
 use App\Support\CommentThreadBuilder;
@@ -39,6 +40,28 @@ class SideHustleCaseWebController extends Controller
 
         $cases = $query->paginate(12)->appends($request->query());
 
+        $caseLikedIds = [];
+        $caseFavoritedIds = [];
+        if ($user = $request->user()) {
+            $morph = (new SideHustleCase)->getMorphClass();
+            $ids = $cases->pluck('id')->all();
+            if ($ids !== []) {
+                $acts = UserAction::query()
+                    ->where('user_id', $user->id)
+                    ->where('actionable_type', $morph)
+                    ->whereIn('actionable_id', $ids)
+                    ->whereIn('type', ['like', 'favorite'])
+                    ->get(['actionable_id', 'type']);
+                foreach ($acts as $act) {
+                    if ($act->type === 'like') {
+                        $caseLikedIds[(int) $act->actionable_id] = true;
+                    } else {
+                        $caseFavoritedIds[(int) $act->actionable_id] = true;
+                    }
+                }
+            }
+        }
+
         $userCasePosts = UserPost::query()
             ->publicFeed()
             ->where('type', 'case')
@@ -52,6 +75,8 @@ class SideHustleCaseWebController extends Controller
             'cases' => $cases,
             'currentCategory' => $cat,
             'userCasePosts' => $userCasePosts,
+            'caseLikedIds' => $caseLikedIds,
+            'caseFavoritedIds' => $caseFavoritedIds,
         ]);
     }
 
@@ -71,7 +96,7 @@ class SideHustleCaseWebController extends Controller
             $teaserHtml = Str::markdown($teaserPlain);
             $mask = SiteGateMask::forVipExclusive($request->user(), $request->fullUrl());
 
-            return view('cases.show', [
+            return view('cases.show', array_merge([
                 'case' => $sideHustleCase,
                 'canReadFull' => false,
                 'teaserHtml' => $teaserHtml,
@@ -91,7 +116,7 @@ class SideHustleCaseWebController extends Controller
                     'query' => $request->query(),
                 ]),
                 'likedCommentIds' => [],
-            ]);
+            ], $this->caseUserEngagement($request, $sideHustleCase)));
         }
 
         abort_unless($canRead, 403);
@@ -130,7 +155,7 @@ class SideHustleCaseWebController extends Controller
                 ->all();
         }
 
-        return view('cases.show', [
+        return view('cases.show', array_merge([
             'case' => $sideHustleCase,
             'canReadFull' => true,
             'bodyHtml' => $bodyHtml,
@@ -138,6 +163,34 @@ class SideHustleCaseWebController extends Controller
             'recommendCases' => $recommendCases,
             'comments' => $comments,
             'likedCommentIds' => $likedCommentIds,
-        ]);
+        ], $this->caseUserEngagement($request, $sideHustleCase)));
+    }
+
+    /**
+     * @return array{userLiked: bool, userFavorited: bool}
+     */
+    private function caseUserEngagement(Request $request, SideHustleCase $case): array
+    {
+        $user = $request->user();
+        if ($user === null) {
+            return ['userLiked' => false, 'userFavorited' => false];
+        }
+
+        $m = $case->getMorphClass();
+
+        return [
+            'userLiked' => UserAction::query()
+                ->where('user_id', $user->id)
+                ->where('actionable_type', $m)
+                ->where('actionable_id', $case->id)
+                ->where('type', 'like')
+                ->exists(),
+            'userFavorited' => UserAction::query()
+                ->where('user_id', $user->id)
+                ->where('actionable_type', $m)
+                ->where('actionable_id', $case->id)
+                ->where('type', 'favorite')
+                ->exists(),
+        ];
     }
 }

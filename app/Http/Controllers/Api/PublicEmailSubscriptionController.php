@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\EmailSubscription;
+use App\Services\SubscriptionEmailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 /**
@@ -57,6 +59,15 @@ class PublicEmailSubscriptionController extends Controller
             $sub->unsubscribe_token = \Illuminate\Support\Str::random(48);
         }
         $sub->save();
+
+        try {
+            app(SubscriptionEmailService::class)->sendSubscriptionSaved($sub, $user, $wasNew);
+        } catch (\Throwable $e) {
+            Log::warning('subscription confirmation email skipped', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'ok' => true,

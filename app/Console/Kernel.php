@@ -14,7 +14,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('membership:send-expiry-reminders')->dailyAt('09:00');
-        $schedule->command('subscriptions:send-daily-digest')->dailyAt('08:30');
+        // 订阅摘要按用户个人中心选择的时刻（topic_schedule）发送：调度每分钟触发，命令内比对当前 H:i
+        $schedule->command('subscriptions:send-daily-digest')->everyMinute();
+        $schedule->command('subscriptions:send-weekly-digest')->everyMinute();
         $schedule->command('wechat-mini:send-membership-expiry-reminders')->dailyAt('10:00');
     }
 

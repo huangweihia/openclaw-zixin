@@ -3,7 +3,6 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Dashboard;
-use App\Http\Middleware\ConfigureFilamentSessionCookie;
 use App\Http\Middleware\SetFilamentLocale;
 use Filament\Forms\Components\Field;
 use Filament\Http\Middleware\Authenticate;
@@ -91,7 +90,6 @@ class AdminPanelProvider extends PanelProvider
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
-                ConfigureFilamentSessionCookie::class,
                 StartSession::class,
                 SetFilamentLocale::class,
                 AuthenticateSession::class,

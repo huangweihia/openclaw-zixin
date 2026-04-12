@@ -73,7 +73,30 @@ class EmailLogResource extends BaseAdminResource
                     ->label('用户')
                     ->searchable()
                     ->placeholder('—'),
-                Tables\Columns\TextColumn::make('template_key')->limit(40)->toggleable(),
+                Tables\Columns\TextColumn::make('template_key')
+                    ->label('模板键')
+                    ->limit(40)
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('meta')
+                    ->label('元数据')
+                    ->formatStateUsing(function ($state): string {
+                        if (! is_array($state) || $state === []) {
+                            return '—';
+                        }
+
+                        return (string) json_encode($state, JSON_UNESCAPED_UNICODE);
+                    })
+                    ->limit(80)
+                    ->tooltip(function (EmailLog $record): ?string {
+                        $m = $record->meta;
+                        if (! is_array($m) || $m === []) {
+                            return null;
+                        }
+
+                        return json_encode($m, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) ?: null;
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('to')->limit(36)->searchable(),
                 Tables\Columns\TextColumn::make('subject')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('status')
@@ -95,6 +118,20 @@ class EmailLogResource extends BaseAdminResource
                         'sent' => '已发送',
                         'failed' => '失败',
                         'pending' => '待发送',
+                    ]),
+                Tables\Filters\SelectFilter::make('template_key')
+                    ->label('模板键')
+                    ->options([
+                        'daily_digest' => '每日摘要',
+                        'weekly_digest' => '每周摘要',
+                        'subscription_saved' => '订阅确认',
+                        'subscription_saved_fallback' => '订阅确认（兜底）',
+                        'register_welcome' => '注册欢迎',
+                        'register_verification' => '注册验证码',
+                        'profile_email_change_code' => '修改邮箱验证码',
+                        'mini_bind_email' => '小程序绑定邮箱',
+                        'membership_expiry_reminder' => '会员到期提醒',
+                        'admin_mail_test' => '后台发信测试',
                     ]),
             ])
             ->actions([
@@ -131,6 +168,16 @@ class EmailLogResource extends BaseAdminResource
                 ->icon('heroicon-o-exclamation-triangle')
                 ->collapsed()
                 ->schema([
+                    Infolists\Components\TextEntry::make('meta')
+                        ->label('扩展元数据（订阅 ID、计划时刻等）')
+                        ->formatStateUsing(function ($state): string {
+                            if (! is_array($state) || $state === []) {
+                                return '—';
+                            }
+
+                            return (string) json_encode($state, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                        })
+                        ->columnSpanFull(),
                     Infolists\Components\TextEntry::make('error_message')
                         ->label('错误信息')
                         ->placeholder('无')

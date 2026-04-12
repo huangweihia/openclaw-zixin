@@ -14,7 +14,8 @@ class UserPostController extends Controller
         $posts = UserPost::query()
             ->where('user_id', $request->user()->id)
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         return view('user-posts.index', ['posts' => $posts]);
     }

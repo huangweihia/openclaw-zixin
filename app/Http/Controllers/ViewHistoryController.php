@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\SideHustleCase;
 use App\Models\UserPost;
 use App\Models\ViewHistory;
+use App\Support\OcEmbed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -43,7 +44,7 @@ class ViewHistoryController extends Controller
         $histories = $query
             ->orderByDesc('viewed_at')
             ->paginate(20)
-            ->appends($request->query());
+            ->withQueryString();
 
         $histories->getCollection()->loadMorph('viewable', [
             Article::class => ['category'],
@@ -72,6 +73,6 @@ class ViewHistoryController extends Controller
     {
         ViewHistory::query()->where('user_id', $request->user()->id)->delete();
 
-        return redirect()->route('history.index')->with('success', '已清空浏览历史');
+        return redirect()->route('history.index', OcEmbed::queryParams($request))->with('success', '已清空浏览历史');
     }
 }

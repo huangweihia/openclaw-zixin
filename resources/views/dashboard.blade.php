@@ -20,36 +20,36 @@
             class="w-full lg:sticky lg:top-20 oc-surface p-4"
             style="width: var(--ocDashLeft); max-width: 520px;"
         >
-            <h3 class="text-base font-bold oc-heading mb-4 tracking-tight">个人中心</h3>
+            <h3 class="text-lg font-bold oc-heading mb-4 tracking-tight">个人中心</h3>
             <nav class="space-y-0.5" aria-label="个人中心菜单">
-                <p class="text-xs font-bold oc-muted mb-2 px-1 tracking-wide" style="letter-spacing: 0.06em;">常用</p>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] font-semibold oc-heading" data-tab="profile" style="background: rgba(148,163,184,.12);">
+                <p class="text-sm font-bold oc-muted mb-2 px-1 tracking-wide" style="letter-spacing: 0.04em;">常用</p>
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug font-semibold oc-heading" data-tab="profile" style="background: rgba(148,163,184,.12);">
                     个人资料
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="subscription">
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="subscription">
                     会员与订阅
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="timeline">
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="timeline">
                     最近动态
                 </button>
-                <p class="text-xs font-bold oc-muted mb-2 mt-4 px-1 tracking-wide" style="letter-spacing: 0.06em;">快捷入口</p>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="posts">
+                <p class="text-sm font-bold oc-muted mb-2 mt-4 px-1 tracking-wide" style="letter-spacing: 0.04em;">快捷入口</p>
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="posts">
                     📝 我的发布
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="favorites">
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="favorites">
                     ⭐ 我的收藏
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="history">
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="history">
                     👣 浏览历史
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="comments">
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="comments">
                     💬 我的评论
                 </button>
-                <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="orders">
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="orders">
                     💳 我的订单
                 </button>
                 @if ($u->role === 'svip' || $u->isAdmin())
-                    <button type="button" class="oc-dash-tab w-full text-left px-3 py-2.5 rounded-lg text-[15px] oc-link" data-tab="svip">
+                    <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="svip">
                         ✨ SVIP 定制
                     </button>
                 @endif

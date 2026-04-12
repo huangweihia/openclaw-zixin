@@ -62,7 +62,7 @@
                     @endforeach
                 </div>
 
-                <div class="mt-6">{{ $orders->links() }}</div>
+                <div class="mt-6">{{ $orders->withQueryString()->links() }}</div>
             @endif
         </div>
     </div>

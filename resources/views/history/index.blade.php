@@ -3,6 +3,9 @@
 @section('title', '浏览历史 — OpenClaw 智信')
 
 @section('content')
+    @php
+        $ocHistQ = \App\Support\OcEmbed::mergeQuery([], request());
+    @endphp
     <div class="max-w-4xl mx-auto">
         <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
             <div>
@@ -21,7 +24,7 @@
             <div class="oc-flash oc-flash--success mb-4 text-sm" role="status">{{ session('success') }}</div>
         @endif
 
-        <form method="get" action="{{ route('history.index') }}" class="oc-surface p-4 mb-6 flex flex-wrap gap-3 items-end">
+        <form method="get" action="{{ route('history.index', $ocHistQ) }}" class="oc-surface p-4 mb-6 flex flex-wrap gap-3 items-end">
             <div class="oc-field mb-0">
                 <label class="oc-label text-xs" for="h-type">内容类型</label>
                 <select name="type" id="h-type" class="oc-input text-sm" onchange="this.form.submit()">
@@ -96,6 +99,6 @@
             @endforelse
         </div>
 
-        <div class="mt-6">{{ $histories->links() }}</div>
+        <div class="mt-6">{{ $histories->withQueryString()->links() }}</div>
     </div>
 @endsection

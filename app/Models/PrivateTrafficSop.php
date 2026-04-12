@@ -40,4 +40,17 @@ class PrivateTrafficSop extends Model
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
+
+    public function userCanReadFull(?User $user): bool
+    {
+        if (($this->visibility ?? 'public') !== 'vip') {
+            return true;
+        }
+
+        if ($user === null || $user->is_banned) {
+            return false;
+        }
+
+        return $user->canAccessVipExclusiveContent();
+    }
 }

@@ -6,6 +6,7 @@ use App\Models\Comment;
 use App\Models\CommentLike;
 use App\Models\CommentReport;
 use App\Models\PrivateTrafficSop;
+use App\Services\CommentReplyNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,6 +43,7 @@ class SopCommentController extends Controller
         ]);
 
         $parentId = null;
+        $parentForNotify = null;
         if (! empty($data['parent_id'])) {
             $parent = Comment::query()->findOrFail($data['parent_id']);
             if (
@@ -55,6 +57,7 @@ class SopCommentController extends Controller
                 return back()->with('error', '回复目标无效')->withInput();
             }
             $parentId = $parent->threadRoot()->id;
+            $parentForNotify = $parent;
         }
 
         $comment = $privateTrafficSop->comments()->create([
@@ -63,6 +66,10 @@ class SopCommentController extends Controller
             'content' => $data['content'],
         ]);
         $comment->load('user');
+
+        if ($parentForNotify !== null) {
+            app(CommentReplyNotifier::class)->notify($comment, $parentForNotify);
+        }
 
         if ($this->wantsCommentJson($request)) {
             $comment->setRelation('replies', collect());
@@ -112,6 +119,8 @@ class SopCommentController extends Controller
             'content' => $data['content'],
         ]);
         $reply->load('user');
+
+        app(CommentReplyNotifier::class)->notify($reply, $comment);
 
         if ($this->wantsCommentJson($request)) {
             return response()->json([

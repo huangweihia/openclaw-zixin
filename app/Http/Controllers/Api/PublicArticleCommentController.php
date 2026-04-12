@@ -23,8 +23,7 @@ class PublicArticleCommentController extends Controller
 
         /** @var User|null $user */
         $user = auth('sanctum')->user();
-        $hasVipAccess = $user instanceof User && $user->hasMemberMenuPrivileges();
-        if ($article->is_vip && ! $hasVipAccess) {
+        if (! $article->userCanReadFull($user instanceof User ? $user : null)) {
             return response()->json([
                 'success' => true,
                 'data' => [],

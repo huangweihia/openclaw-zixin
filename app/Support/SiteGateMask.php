@@ -18,6 +18,17 @@ final class SiteGateMask
     public static function forArticle(Article $article, ?User $user, string $returnUrl): array
     {
         $p = route('pricing');
+        // 与 Article::userCanReadFull 一致：先 is_vip（VIP 档），再仅 is_vip_only（SVIP 档）
+        if ($article->is_vip) {
+            return [
+                'level' => 'vip',
+                'title' => 'VIP 专属正文',
+                'desc' => '开通 VIP 后可阅读全文。',
+                'cta' => $user ? '解锁 VIP' : '登录后开通',
+                'href' => $user ? ($p.'#plan-vip') : route('login', ['return' => $returnUrl]),
+            ];
+        }
+
         if ($article->is_vip_only) {
             return [
                 'level' => 'svip',
@@ -30,9 +41,9 @@ final class SiteGateMask
 
         return [
             'level' => 'vip',
-            'title' => 'VIP 专属正文',
-            'desc' => '开通 VIP 后可阅读全文。',
-            'cta' => $user ? '解锁 VIP' : '登录后开通',
+            'title' => '会员专属正文',
+            'desc' => '开通会员后可阅读全文。',
+            'cta' => $user ? '解锁会员' : '登录后开通',
             'href' => $user ? ($p.'#plan-vip') : route('login', ['return' => $returnUrl]),
         ];
     }

@@ -13,11 +13,13 @@ class EmailTemplate extends Model
         'content',
         'plain_text',
         'variables',
+        'builder_layout',
         'is_active',
     ];
 
     protected $casts = [
         'variables' => 'array',
+        'builder_layout' => 'array',
         'is_active' => 'boolean',
     ];
 }

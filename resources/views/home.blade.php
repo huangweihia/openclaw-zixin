@@ -169,11 +169,31 @@
                     <div class="oc-testimonial-slider"><div class="oc-testimonial-track">
                         @foreach ([$featuredArticles, $featuredArticles] as $grp)
                             @foreach ($grp as $a)
-                                <a href="{{ route('articles.show', $a) }}" class="oc-feature-card rounded-xl p-6 block relative overflow-hidden" style="text-decoration:none;color:inherit;">
-                                    <div class="kicker mb-3">📝 精品文章</div>
-                                    <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $a->title }}</div>
-                                    <div class="meta">点赞 {{ number_format((int) $a->like_count) }} · 浏览 {{ number_format((int) $a->view_count) }}</div>
-                                </a>
+                                @php
+                                    $featArtLocked = ! $a->userCanReadFull(auth()->user());
+                                @endphp
+                                <div class="oc-feature-card rounded-xl p-6 block relative overflow-hidden">
+                                    @if ($featArtLocked)
+                                        <div class="block h-full" style="text-decoration:none;color:inherit;">
+                                    @else
+                                        <a href="{{ route('articles.show', $a) }}" class="block h-full" style="text-decoration:none;color:inherit;">
+                                    @endif
+                                        <div class="kicker mb-3">📝 精品文章</div>
+                                        <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $a->title }}</div>
+                                        <div class="meta">点赞 {{ number_format((int) $a->like_count) }} · 浏览 {{ number_format((int) $a->view_count) }}</div>
+                                    @if ($featArtLocked)
+                                        </div>
+                                        <x-vip-content-lock
+                                            :level="$a->is_vip_only ? 'svip' : 'vip'"
+                                            :title="$a->is_vip_only ? 'SVIP 专属内容' : 'VIP 专属内容'"
+                                            :desc="$a->is_vip_only ? '开通 SVIP 后可查看全文。' : '开通 VIP 后可查看全文。'"
+                                            :cta="$a->is_vip_only ? '开通 SVIP' : '开通 VIP 阅读全文'"
+                                            :href="route('pricing')"
+                                        />
+                                    @else
+                                        </a>
+                                    @endif
+                                </div>
                             @endforeach
                         @endforeach
                     </div></div>
@@ -183,11 +203,30 @@
                     <div class="oc-testimonial-slider"><div class="oc-testimonial-track">
                         @foreach ([$featuredProjects, $featuredProjects] as $grp)
                             @foreach ($grp as $p)
-                                <a href="{{ route('projects.show', $p) }}" class="oc-feature-card rounded-xl p-6 block relative overflow-hidden" style="text-decoration:none;color:inherit;">
-                                    <div class="kicker mb-3">📦 精品项目</div>
-                                    <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $p->name }}</div>
-                                    <div class="meta">Star {{ number_format((int) $p->stars) }} · Fork {{ number_format((int) $p->forks) }}</div>
-                                </a>
+                                @php
+                                    $featProjLocked = ! $p->userCanReadFull(auth()->user());
+                                @endphp
+                                <div class="oc-feature-card rounded-xl p-6 block relative overflow-hidden">
+                                    @if ($featProjLocked)
+                                        <div class="block h-full" style="text-decoration:none;color:inherit;">
+                                    @else
+                                        <a href="{{ route('projects.show', $p) }}" class="block h-full" style="text-decoration:none;color:inherit;">
+                                    @endif
+                                        <div class="kicker mb-3">📦 精品项目</div>
+                                        <div class="font-semibold text-lg leading-7 line-clamp-2 min-h-[56px]">{{ $p->name }}</div>
+                                        <div class="meta">Star {{ number_format((int) $p->stars) }} · Fork {{ number_format((int) $p->forks) }}</div>
+                                    @if ($featProjLocked)
+                                        </div>
+                                        <x-vip-content-lock
+                                            title="VIP 专属项目"
+                                            desc="开通 VIP 后可查看项目详情与讨论。"
+                                            cta="开通 VIP 查看项目"
+                                            :href="route('pricing')"
+                                        />
+                                    @else
+                                        </a>
+                                    @endif
+                                </div>
                             @endforeach
                         @endforeach
                     </div></div>
@@ -250,21 +289,34 @@
         </div>
     </section>
     
-    <!-- 全站动态已整合至个人中心「最近动态」 -->
+    <!-- 全站动态：首页与个人中心「最近动态」均可查看 -->
     <section class="py-14 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">📢 全站动态</h2>
-            <p class="text-gray-600 text-sm md:text-base mb-4">
-                会员开通等全站动态已移至个人中心，与「最近动态」一起查看。
-            </p>
-            @auth
-                <a href="{{ route('dashboard') }}#timeline" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:opacity-95">
-                    前往个人中心
-                </a>
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2 text-center">📢 全站动态</h2>
+            <p class="text-gray-600 text-sm text-center mb-8">近期会员开通记录（脱敏展示）</p>
+            @if ($vipActivities->isEmpty())
+                <p class="text-center text-gray-500 text-sm m-0">暂无动态数据。</p>
             @else
-                <a href="{{ route('login') }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:opacity-95">
-                    登录后查看
-                </a>
+                <ul class="max-w-3xl mx-auto m-0 p-0 list-none bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100 overflow-hidden">
+                    @foreach ($vipActivities as $activity)
+                        <li class="flex items-center justify-between gap-4 py-4 px-5">
+                            <div class="min-w-0 text-left">
+                                <div class="font-semibold text-gray-800 text-sm">{{ $activity->name }}</div>
+                                <div class="text-xs text-gray-500">开通了{{ $activity->plan_text }}</div>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <div class="text-sm font-bold text-indigo-600">¥{{ number_format((float) $activity->amount) }}</div>
+                                <div class="text-xs text-gray-400">{{ $activity->created_at->diffForHumans() }}</div>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+            @auth
+                <p class="text-center text-xs text-gray-500 mt-6 mb-0">
+                    个人中心「最近动态」中也可查看同一时间线。
+                    <a href="{{ route('dashboard') }}#timeline" class="text-indigo-600 font-medium" style="text-decoration:none;">去个人中心 →</a>
+                </p>
             @endauth
         </div>
     </section>

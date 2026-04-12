@@ -13,11 +13,11 @@
     <div class="oc-surface p-4 mb-8">
         <div class="flex flex-wrap gap-2">
             <span class="text-sm font-medium oc-muted self-center">类型</span>
-            <a href="{{ route('favorites.index') }}" class="oc-filter-pill {{ ($currentType ?? '') === '' ? 'oc-filter-pill--active' : '' }}">全部</a>
-            <a href="{{ route('favorites.index', ['type' => 'article']) }}" class="oc-filter-pill {{ ($currentType ?? '') === 'article' ? 'oc-filter-pill--active' : '' }}">文章</a>
-            <a href="{{ route('favorites.index', ['type' => 'project']) }}" class="oc-filter-pill {{ ($currentType ?? '') === 'project' ? 'oc-filter-pill--active' : '' }}">项目</a>
-            <a href="{{ route('favorites.index', ['type' => 'case']) }}" class="oc-filter-pill {{ ($currentType ?? '') === 'case' ? 'oc-filter-pill--active' : '' }}">案例</a>
-            <a href="{{ route('favorites.index', ['type' => 'post']) }}" class="oc-filter-pill {{ ($currentType ?? '') === 'post' ? 'oc-filter-pill--active' : '' }}">投稿</a>
+            <a href="{{ route('favorites.index', \App\Support\OcEmbed::mergeQuery([], request())) }}" class="oc-filter-pill {{ ($currentType ?? '') === '' ? 'oc-filter-pill--active' : '' }}">全部</a>
+            <a href="{{ route('favorites.index', \App\Support\OcEmbed::mergeQuery(['type' => 'article'], request())) }}" class="oc-filter-pill {{ ($currentType ?? '') === 'article' ? 'oc-filter-pill--active' : '' }}">文章</a>
+            <a href="{{ route('favorites.index', \App\Support\OcEmbed::mergeQuery(['type' => 'project'], request())) }}" class="oc-filter-pill {{ ($currentType ?? '') === 'project' ? 'oc-filter-pill--active' : '' }}">项目</a>
+            <a href="{{ route('favorites.index', \App\Support\OcEmbed::mergeQuery(['type' => 'case'], request())) }}" class="oc-filter-pill {{ ($currentType ?? '') === 'case' ? 'oc-filter-pill--active' : '' }}">案例</a>
+            <a href="{{ route('favorites.index', \App\Support\OcEmbed::mergeQuery(['type' => 'post'], request())) }}" class="oc-filter-pill {{ ($currentType ?? '') === 'post' ? 'oc-filter-pill--active' : '' }}">投稿</a>
         </div>
     </div>
 
@@ -73,7 +73,7 @@
             @endforeach
         </div>
         <div class="mt-10 flex justify-center">
-            {{ $actions->onEachSide(1)->links() }}
+            {{ $actions->onEachSide(1)->withQueryString()->links() }}
         </div>
     @endif
 @endsection

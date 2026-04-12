@@ -17,18 +17,32 @@
 
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         @forelse ($tools as $tool)
-            <a href="{{ route('tools.show', $tool) }}" class="oc-surface p-5 block rounded-xl oc-quick-tile" style="text-decoration: none;">
-                <div class="flex justify-between gap-2 mb-2">
-                    <span class="text-xs oc-muted">{{ $tool->category }} · {{ $tool->pricing_model }}</span>
-                    @if ($tool->visibility === 'vip')
-                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded" style="background: color-mix(in srgb, var(--primary) 20%, transparent); color: var(--primary);">VIP</span>
-                    @endif
-                </div>
-                <h2 class="text-base font-bold oc-heading m-0">{{ $tool->tool_name }}</h2>
-                @if ($tool->tool_url)
-                    <p class="text-xs oc-muted truncate mt-2 mb-0">{{ $tool->tool_url }}</p>
+            @php
+                $toolCardLocked = ! $tool->userCanReadFull(auth()->user());
+            @endphp
+            <div class="oc-surface p-5 rounded-xl oc-quick-tile relative overflow-hidden">
+                @if ($toolCardLocked)
+                    <div class="block" style="text-decoration: none; color: inherit;">
+                @else
+                    <a href="{{ route('tools.show', $tool) }}" class="block" style="text-decoration: none; color: inherit;">
                 @endif
-            </a>
+                    <div class="flex justify-between gap-2 mb-2">
+                        <span class="text-xs oc-muted">{{ $tool->category }} · {{ $tool->pricing_model }}</span>
+                        @if ($tool->visibility === 'vip')
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded" style="background: color-mix(in srgb, var(--primary) 20%, transparent); color: var(--primary);">VIP</span>
+                        @endif
+                    </div>
+                    <h2 class="text-base font-bold oc-heading m-0">{{ $tool->tool_name }}</h2>
+                    @if ($tool->tool_url)
+                        <p class="text-xs oc-muted truncate mt-2 mb-0">{{ $tool->tool_url }}</p>
+                    @endif
+                @if ($toolCardLocked)
+                    </div>
+                    <x-vip-content-lock title="VIP 专属工具" desc="开通 VIP 后可查看完整变现说明与模板。" cta="开通 VIP 阅读全文" :href="route('pricing')" />
+                @else
+                    </a>
+                @endif
+            </div>
         @empty
             <div class="oc-surface p-8 text-center text-sm oc-muted sm:col-span-2 lg:col-span-3">暂无工具条目，请稍后再来或由管理员在后台添加。</div>
         @endforelse

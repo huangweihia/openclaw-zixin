@@ -46,6 +46,8 @@ class HomeController extends Controller
             && Schema::hasTable('personality_questions')
             && PersonalityQuestion::query()->exists();
 
+        $vipActivities = VipActivityFeed::recent(20);
+
         return view('home', compact(
             'homeStats',
             'vipPreviews',
@@ -56,7 +58,8 @@ class HomeController extends Controller
             'featuredCases',
             'canVip',
             'canSvip',
-            'personalityQuizAvailable'
+            'personalityQuizAvailable',
+            'vipActivities'
         ));
     }
 
@@ -333,7 +336,7 @@ class HomeController extends Controller
             ->orderByDesc('like_count')
             ->orderByDesc('view_count')
             ->limit(8)
-            ->get(['id', 'title', 'slug', 'like_count', 'view_count']);
+            ->get(['id', 'title', 'slug', 'like_count', 'view_count', 'is_vip', 'is_vip_only']);
     }
 
     private function featuredProjects()
@@ -342,7 +345,7 @@ class HomeController extends Controller
             ->orderByDesc('stars')
             ->orderByDesc('forks')
             ->limit(8)
-            ->get(['id', 'name', 'stars', 'forks']);
+            ->get(['id', 'name', 'stars', 'forks', 'is_vip']);
     }
 
     private function featuredCases()

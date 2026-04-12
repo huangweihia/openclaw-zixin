@@ -6,7 +6,10 @@ use App\Models\Article;
 use App\Models\EmailSetting;
 use App\Models\EmailSubscription;
 use App\Models\SiteSetting;
+use App\Services\SubscriptionEmailService;
 use App\Support\EmailLogWriter;
+use App\Support\SubscriptionDigestPlaceholders;
+use App\Support\SubscriptionDigestSchedule;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
@@ -32,12 +35,16 @@ class SendDailyEmailSubscriptionsDigest extends Command
             return self::SUCCESS;
         }
 
+        if (! SubscriptionDigestSchedule::hasDailyRecipientsNow()) {
+            return self::SUCCESS;
+        }
+
         $site = SiteSetting::getValue('site_name', 'OpenClaw 智信');
         $articles = Article::query()
             ->where('is_published', true)
             ->orderByDesc('published_at')
             ->limit(8)
-            ->get(['title', 'slug', 'summary']);
+            ->get();
 
         if ($articles->isEmpty()) {
             $this->info('无已发布文章，跳过发送。');
@@ -51,49 +58,65 @@ class SendDailyEmailSubscriptionsDigest extends Command
             return '<li><a href="'.e($u).'">'.e($a->title).'</a>'.($a->summary ? ' — '.e(Str::limit($a->summary, 80)) : '').'</li>';
         })->implode('');
 
-        $html = '<p>'.e($site).' 每日精选：</p><ul>'.$lines.'</ul><p style="font-size:12px;color:#64748b">此为自动邮件，退订请登录站点邮箱订阅设置。</p>';
+        $articleListHtml = '<ul>'.$lines.'</ul>';
+        $dateStr = now()->format('Y-m-d');
+        $placeholders = SubscriptionDigestPlaceholders::build($site, $articleListHtml, $dateStr, $articles);
+        $service = app(SubscriptionEmailService::class);
+        $tplKey = $service->resolveTemplateKey(EmailSubscription::TOPIC_DAILY);
+        $rendered = $service->render($tplKey, $placeholders);
+        if ($rendered) {
+            $html = $rendered['html'];
+            $digestSubject = $rendered['subject'];
+        } else {
+            $html = '<p>'.e($site).' 每日精选：</p>'.$articleListHtml.'<p style="font-size:12px;color:#64748b">此为自动邮件，退订请登录站点邮箱订阅设置。</p>';
+            $digestSubject = $site.' · 每日内容精选';
+        }
 
         $sent = 0;
         $batchSize = max(20, min(1000, (int) (EmailSetting::query()->where('key', 'mail_sub_batch_size')->value('value') ?? 200)));
         $dailyCap = max(0, (int) (EmailSetting::query()->where('key', 'mail_sub_daily_cap')->value('value') ?? 0));
-        $currentHour = now()->format('H');
+        $slot = SubscriptionDigestSchedule::currentClockSlot();
         $processed = 0;
         EmailSubscription::query()
             ->where('is_unsubscribed', false)
             ->whereJsonContains('subscribed_to', EmailSubscription::TOPIC_DAILY)
             ->orderBy('id')
-            ->chunkById($batchSize, function ($chunk) use ($html, $site, &$sent, &$processed, $dailyCap, $currentHour) {
+            ->chunkById($batchSize, function ($chunk) use ($html, &$sent, &$processed, $dailyCap, $digestSubject, $slot) {
                 foreach ($chunk as $sub) {
                     if ($dailyCap > 0 && $processed >= $dailyCap) {
                         return false;
                     }
-                    $dailyTime = trim((string) data_get($sub->topic_schedule, EmailSubscription::TOPIC_DAILY, ''));
-                    if ($dailyTime !== '' && preg_match('/^\d{2}:\d{2}$/', $dailyTime)) {
-                        if (substr($dailyTime, 0, 2) !== $currentHour) {
-                            continue;
-                        }
+                    if (SubscriptionDigestSchedule::effectiveDailySlot($sub->topic_schedule) !== $slot) {
+                        continue;
                     }
                     $email = trim((string) $sub->email);
                     if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                         continue;
                     }
+                    $logMeta = [
+                        'topic' => 'daily',
+                        'scheduled_slot' => SubscriptionDigestSchedule::effectiveDailySlot($sub->topic_schedule),
+                        'email_subscription_id' => $sub->id,
+                    ];
                     try {
-                        $subject = $site.' · 每日内容精选';
-                        Mail::html($html, function ($message) use ($email, $site) {
-                            $message->to($email)->subject($site.' · 每日内容精选');
+                        $subject = $digestSubject;
+                        Mail::html($html, function ($message) use ($email, $subject) {
+                            $message->to($email)->subject($subject);
                         });
-                        EmailLogWriter::sent($sub->user_id ? (int) $sub->user_id : null, $email, $subject, 'daily_digest');
+                        EmailLogWriter::sent($sub->user_id ? (int) $sub->user_id : null, $email, $subject, 'daily_digest', $logMeta);
                         $sent++;
                         $processed++;
                     } catch (\Throwable $e) {
-                        EmailLogWriter::failed($sub->user_id ? (int) $sub->user_id : null, $email, $site.' · 每日内容精选', $e->getMessage(), 'daily_digest');
+                        EmailLogWriter::failed($sub->user_id ? (int) $sub->user_id : null, $email, $digestSubject, $e->getMessage(), 'daily_digest', $logMeta);
                         $this->warn('发送失败 '.$email.'：'.$e->getMessage());
                         $processed++;
                     }
                 }
             });
 
-        $this->info("已尝试发送 {$sent} 封每日摘要。");
+        if ($sent > 0) {
+            $this->info("本分钟已发送 {$sent} 封每日摘要（时刻 {$slot}）。");
+        }
 
         return self::SUCCESS;
     }

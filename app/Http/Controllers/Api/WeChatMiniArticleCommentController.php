@@ -23,7 +23,7 @@ class WeChatMiniArticleCommentController extends Controller
 
         /** @var User $user */
         $user = $request->user();
-        $canReadFull = ! $article->is_vip || $user->hasMemberMenuPrivileges();
+        $canReadFull = $article->userCanReadFull($user);
         if (! $canReadFull) {
             return response()->json([
                 'message' => '本文为会员专享，阅读全文后方可评论',

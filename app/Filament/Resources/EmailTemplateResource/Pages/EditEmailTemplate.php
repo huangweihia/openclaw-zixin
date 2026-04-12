@@ -12,4 +12,13 @@ class EditEmailTemplate extends EditRecord
     use RedirectsToIndexAfterSave;
 
     protected static string $resource = EmailTemplateResource::class;
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return EmailTemplateResource::compileBuilderToStorage($data);
+    }
 }

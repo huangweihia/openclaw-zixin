@@ -51,6 +51,6 @@
             @endforelse
         </div>
 
-        <div class="mt-6">{{ $posts->links() }}</div>
+        <div class="mt-6">{{ $posts->withQueryString()->links() }}</div>
     </div>
 @endsection

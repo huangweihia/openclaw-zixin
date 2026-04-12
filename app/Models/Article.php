@@ -61,7 +61,10 @@ class Article extends Model
     }
 
     /**
-     * 是否可读全文：无门槛文；VIP 文需 VIP/SVIP/管理员；is_vip_only（SVIP 咨询等）需 SVIP/管理员。
+     * 是否可读全文：无门槛文；标 is_vip 的会员专享文需 VIP/SVIP/管理员；
+     * 仅标 is_vip_only（未标 is_vip）的为 SVIP 专享，需 SVIP/管理员。
+     *
+     * 注意：须先判断 is_vip，避免后台同时勾选 is_vip + is_vip_only 时把 VIP 用户挡在门外。
      */
     public function userCanReadFull(?User $user): bool
     {
@@ -73,12 +76,12 @@ class Article extends Model
             return false;
         }
 
-        if ($this->is_vip_only) {
-            return $user->canAccessSvipExclusiveContent();
-        }
-
         if ($this->is_vip) {
             return $user->canAccessVipExclusiveContent();
+        }
+
+        if ($this->is_vip_only) {
+            return $user->canAccessSvipExclusiveContent();
         }
 
         return true;

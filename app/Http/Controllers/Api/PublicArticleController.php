@@ -160,12 +160,16 @@ class PublicArticleController extends Controller
             'vip_hint' => $canReadFull
                 ? null
                 : ($user
-                    ? ($article->is_vip_only
-                        ? '本文为 SVIP 会员专享，请升级后阅读全文。'
-                        : '本文为 VIP 会员专享，请开通会员后阅读全文。')
-                    : ($article->is_vip_only
-                        ? '本文为 SVIP 会员专享，请登录并升级后阅读全文。'
-                        : '本文为 VIP 会员专享，请登录并开通会员后阅读全文。')),
+                    ? ($article->is_vip
+                        ? '本文为 VIP 会员专享，请开通会员后阅读全文。'
+                        : ($article->is_vip_only
+                            ? '本文为 SVIP 会员专享，请升级后阅读全文。'
+                            : '本文为会员专享，请开通会员后阅读全文。'))
+                    : ($article->is_vip
+                        ? '本文为 VIP 会员专享，请登录并开通会员后阅读全文。'
+                        : ($article->is_vip_only
+                            ? '本文为 SVIP 会员专享，请登录并升级后阅读全文。'
+                            : '本文为会员专享，请登录并开通会员后阅读全文。'))),
         ];
 
         return response()->json([

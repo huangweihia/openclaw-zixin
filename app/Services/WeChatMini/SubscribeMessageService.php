@@ -3,6 +3,7 @@
 namespace App\Services\WeChatMini;
 
 use App\Models\User;
+use App\Support\WeChatMiniSubscribeTemplateIds;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -134,17 +135,14 @@ class SubscribeMessageService
         return $out;
     }
 
-    /** 服务端 send 使用的模板 ID；单独 env 优先，否则取逗号列表第一项 */
+    /** 服务端 send 使用的模板 ID；单独 env 优先，否则取 env/站点设置合并列表第一项 */
     public function membershipExpiryTemplateId(): string
     {
         $id = trim((string) config('wechat.mini_subscribe_membership_expiry_template_id', ''));
         if ($id !== '') {
             return $id;
         }
-        $list = config('wechat.mini_subscribe_template_ids', []);
-        if (! is_array($list) || $list === []) {
-            return '';
-        }
+        $list = WeChatMiniSubscribeTemplateIds::forRequestSubscribeMessage();
         $first = trim((string) ($list[0] ?? ''));
 
         return $first;

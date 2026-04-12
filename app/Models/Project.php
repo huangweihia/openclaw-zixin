@@ -44,4 +44,18 @@ class Project extends Model
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
+
+    /** VIP 项目需 VIP/SVIP/管理员可读详情（与文章 VIP 门槛一致）。 */
+    public function userCanReadFull(?User $user): bool
+    {
+        if (! $this->is_vip) {
+            return true;
+        }
+
+        if ($user === null || $user->is_banned) {
+            return false;
+        }
+
+        return $user->canAccessVipExclusiveContent();
+    }
 }

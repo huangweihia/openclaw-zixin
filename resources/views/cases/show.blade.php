@@ -16,6 +16,25 @@
                     </p>
                 </header>
 
+                <div class="flex flex-wrap gap-3 mb-6">
+                    @auth
+                        <form method="post" action="{{ route('cases.like', $case) }}" class="oc-engage-ajax">
+                            @csrf
+                            <button type="submit" class="btn {{ ($userLiked ?? false) ? 'btn-primary' : 'btn-secondary' }}" data-on-text="❤️ 已赞" data-off-text="🤍 点赞">
+                                {{ ($userLiked ?? false) ? '❤️ 已赞' : '🤍 点赞' }} · {{ number_format((int) $case->like_count) }}
+                            </button>
+                        </form>
+                        <form method="post" action="{{ route('cases.favorite', $case) }}" class="oc-engage-ajax">
+                            @csrf
+                            <button type="submit" class="btn {{ ($userFavorited ?? false) ? 'btn-primary' : 'btn-secondary' }}" data-on-text="⭐ 已收藏" data-off-text="☆ 收藏">
+                                {{ ($userFavorited ?? false) ? '⭐ 已收藏' : '☆ 收藏' }}
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ route('login', ['return' => request()->path()]) }}" class="btn btn-secondary text-sm">登录后点赞 / 收藏</a>
+                    @endauth
+                </div>
+
                 <div class="oc-surface p-6 md:p-8 space-y-6">
                     @if ($canReadFull ?? true)
                         <section class="article-content text-sm leading-relaxed" style="color: var(--dark);">

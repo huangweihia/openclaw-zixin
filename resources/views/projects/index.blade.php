@@ -47,20 +47,37 @@
     @else
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($projects as $project)
-                <a href="{{ route('projects.show', $project) }}" class="oc-article-card">
-                    <div class="oc-card-thumb flex items-center justify-center text-2xl" style="background: var(--light);">📦</div>
-                    <div class="p-5">
-                        <h2 class="text-lg font-bold line-clamp-2 oc-heading mb-2">{{ $project->name }}</h2>
-                        <p class="text-sm line-clamp-2 oc-muted mb-4">{{ \Illuminate\Support\Str::limit(strip_tags($project->description ?? ''), 120) }}</p>
-                        <div class="flex flex-wrap gap-2 text-xs oc-muted">
-                            @if ($project->language)
-                                <span class="px-2 py-0.5 rounded" style="background: var(--light);">{{ $project->language }}</span>
-                            @endif
-                            <span>⭐ {{ number_format($project->stars) }}</span>
-                            <span>⑂ {{ number_format($project->forks) }}</span>
+                @php
+                    $projCardLocked = ! $project->userCanReadFull(auth()->user());
+                @endphp
+                <div class="oc-article-card relative overflow-hidden">
+                    @if ($projCardLocked)
+                        <div class="block text-inherit no-underline">
+                    @else
+                        <a href="{{ route('projects.show', $project) }}" class="block text-inherit no-underline">
+                    @endif
+                        <div class="oc-card-thumb flex items-center justify-center text-2xl" style="background: var(--light);">📦</div>
+                        <div class="p-5">
+                            <h2 class="text-lg font-bold line-clamp-2 oc-heading mb-2">{{ $project->name }}</h2>
+                            <p class="text-sm line-clamp-2 oc-muted mb-4">{{ \Illuminate\Support\Str::limit(strip_tags($project->description ?? ''), 120) }}</p>
+                            <div class="flex flex-wrap gap-2 text-xs oc-muted">
+                                @if ($project->language)
+                                    <span class="px-2 py-0.5 rounded" style="background: var(--light);">{{ $project->language }}</span>
+                                @endif
+                                @if ($project->is_vip)
+                                    <span class="px-2 py-0.5 rounded font-semibold" style="background: rgba(245, 158, 11, 0.15); color: #b45309;">VIP</span>
+                                @endif
+                                <span>⭐ {{ number_format($project->stars) }}</span>
+                                <span>⑂ {{ number_format($project->forks) }}</span>
+                            </div>
                         </div>
-                    </div>
-                </a>
+                    @if ($projCardLocked)
+                        </div>
+                        <x-vip-content-lock title="VIP 专属项目" desc="开通 VIP 后可查看项目详情与讨论。" cta="开通 VIP 查看项目" :href="route('pricing')" />
+                    @else
+                        </a>
+                    @endif
+                </div>
             @endforeach
         </div>
         <div class="mt-10 flex justify-center">

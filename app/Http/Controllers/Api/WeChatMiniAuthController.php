@@ -135,8 +135,11 @@ class WeChatMiniAuthController extends Controller
         $user->refresh();
 
         $tokenName = 'wechat-mini';
-        $user->tokens()->where('name', $tokenName)->delete();
+        // 不再「每次登录删光旧 Token」：否则用户换设备登录、或在开发者工具里再次点登录，
+        // 会使其它端仍握在手里的 Token 立刻 401，体感像「登录莫名过期」。
+        // 改为签发新 Token，并只淘汰最旧的若干条，兼顾多端在线与表体积。
         $plain = $user->createToken($tokenName)->plainTextToken;
+        $this->pruneExcessWeChatMiniTokens($user, $tokenName, 15);
 
         return response()->json([
             'token' => $plain,
@@ -377,5 +380,30 @@ class WeChatMiniAuthController extends Controller
         }
 
         return (int) now()->startOfDay()->diffInDays($user->subscription_ends_at->copy()->startOfDay());
+    }
+
+    /**
+     * 保留同名 Token 最近 $keep 条，删除更旧的（personal_access_tokens）。
+     */
+    private function pruneExcessWeChatMiniTokens(User $user, string $tokenName, int $keep): void
+    {
+        if ($keep < 1) {
+            return;
+        }
+
+        $ids = $user->tokens()
+            ->where('name', $tokenName)
+            ->orderByDesc('id')
+            ->limit($keep)
+            ->pluck('id');
+
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        $user->tokens()
+            ->where('name', $tokenName)
+            ->whereNotIn('id', $ids->all())
+            ->delete();
     }
 }

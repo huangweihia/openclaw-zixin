@@ -14,11 +14,13 @@ class EmailLog extends Model
         'subject',
         'status',
         'error_message',
+        'meta',
         'sent_at',
     ];
 
     protected $casts = [
         'sent_at' => 'datetime',
+        'meta' => 'array',
     ];
 
     public function user(): BelongsTo

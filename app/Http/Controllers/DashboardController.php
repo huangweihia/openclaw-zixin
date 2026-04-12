@@ -105,7 +105,8 @@ class DashboardController extends Controller
             ->where('is_hidden', false)
             ->with('commentable')
             ->latest()
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         return view('dashboard-comments', compact('items'));
     }
