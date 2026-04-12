@@ -28,8 +28,11 @@ else
   git reset --hard "${REMOTE}/${BRANCH}"
 fi
 
-echo "[2/4] php artisan migrate --force"
+echo "[2/4] php artisan migrate --force + storage 可写（file session 不可写会 419）"
 artisan migrate --force
+docker compose -f "$COMPOSE_FILE" exec -T --user 0 php sh -lc \
+  'mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs bootstrap/cache && chown -R www-data:www-data storage bootstrap/cache && chmod -R ug+rwX storage bootstrap/cache' \
+  || true
 
 echo "[3/4] php artisan optimize:clear"
 artisan optimize:clear

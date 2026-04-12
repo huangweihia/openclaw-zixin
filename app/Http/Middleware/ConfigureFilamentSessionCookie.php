@@ -63,12 +63,8 @@ class ConfigureFilamentSessionCookie
         }
 
         if ($request->is('livewire/*')) {
-            $ref = (string) $request->headers->get('referer', '');
-            if ($ref !== '' && str_contains($ref, '/'.$adminBase)) {
-                return true;
-            }
-
-            return $this->requestHasFilamentSessionCookie($request);
+            // 同域路径型后台：全站仅 Filament 使用 Livewire，不再依赖 Referer/Cookie 猜测，避免 419
+            return true;
         }
 
         return false;

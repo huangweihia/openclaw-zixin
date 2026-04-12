@@ -14,6 +14,7 @@ use App\Services\AdPresentationService;
 use App\Support\SiteViewComposer;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -32,6 +33,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (! $this->app->runningInConsole()) {
+            $root = rtrim((string) config('app.url'), '/');
+            if ($root !== '') {
+                URL::forceRootUrl($root);
+            }
+        }
+
         AdminNavItem::observe(AdminNavItemObserver::class);
         AdminNavSection::observe(AdminNavSectionObserver::class);
         AdSlot::observe(AdSlotObserver::class);
