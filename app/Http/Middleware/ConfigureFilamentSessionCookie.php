@@ -7,11 +7,10 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Filament 面板使用独立 Session Cookie，与前台 web 会话分离。
- * 必须在 StartSession 之前执行。
+ * Filament 可选独立 Session Cookie（与前台 SESSION_COOKIE 区分）。
+ * 须在 EncryptCookies 与 StartSession 之前执行，以便 Cookie 加解密与会话名一致。
  *
- * Livewire 的 POST /livewire/update 走全局 web 中间件，若不切换 Cookie，
- * 会与 Filament 页的会话不一致，导致后台登录/操作出现 419（CSRF）。
+ * 若配置了独立 Cookie 但未命中本中间件条件，Livewire POST 会落到默认会话 → 419。
  */
 class ConfigureFilamentSessionCookie
 {

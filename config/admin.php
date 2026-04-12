@@ -17,8 +17,10 @@ return [
     'path_prefix' => trim((string) env('ADMIN_PATH_PREFIX', 'admin'), '/'),
 
     /*
-    | 后台独立 Session Cookie 名（与 SESSION_COOKIE 区分）。留空则与前台共用（不推荐）。
+    | 后台独立 Session Cookie 名（与 SESSION_COOKIE 区分）。
+    | 留空则与前台共用同一会话（推荐，避免 Filament/Livewire 与 EncryptCookies 顺序导致 419）。
+    | 必须前后台会话隔离时再设置 FILAMENT_SESSION_COOKIE。
     */
-    'session_cookie' => env('FILAMENT_SESSION_COOKIE', env('ADMIN_SESSION_COOKIE', 'oc_filament_session')),
+    'session_cookie' => env('FILAMENT_SESSION_COOKIE', env('ADMIN_SESSION_COOKIE', '')),
 
 ];
