@@ -68,7 +68,7 @@ class PaymentController extends Controller
         $orderSummary = null;
         if ($order->product_type === 'point_package' && Schema::hasTable('point_packages')) {
             $pkg = PointPackage::query()->find((int) $order->product_id);
-            $orderSummary = $pkg ? ($pkg->name.' · '.$pkg->points_amount.' 积分') : '积分套餐';
+            $orderSummary = $pkg ? ($pkg->name.' · '.$pkg->totalPointsNow().' 积分（含赠送）') : '积分套餐';
         }
 
         return view('payments.result', [
@@ -94,6 +94,7 @@ class PaymentController extends Controller
             abort_unless(Schema::hasTable('point_packages'), 400);
             $pkg = PointPackage::query()->whereKey((int) $order->product_id)->where('is_active', true)->first();
             abort_unless($pkg !== null, 400);
+            abort_unless($pkg->isAvailableNow(), 400, '该积分套餐已过期或未生效');
 
             DB::transaction(function () use ($order, $user, $pkg) {
                 $order->forceFill([
@@ -104,7 +105,7 @@ class PaymentController extends Controller
 
                 PointsService::earn(
                     $user,
-                    (int) $pkg->points_amount,
+                    (int) $pkg->totalPointsNow(),
                     'point_purchase',
                     '购买积分套餐：'.$pkg->name,
                     Order::class,

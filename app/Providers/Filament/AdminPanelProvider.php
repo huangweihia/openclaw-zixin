@@ -74,7 +74,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->login()
             ->brandName($panelBrand)
-            ->authGuard('web')
+            ->authGuard('admin')
             ->authPasswordBroker('users')
             ->colors([
                 'primary' => Color::Sky,

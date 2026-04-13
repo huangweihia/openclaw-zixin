@@ -16,6 +16,8 @@ return [
     \App\Filament\Resources\ViewHistoryResource::class => 'view-histories',
     \App\Filament\Resources\UserResource::class => 'users',
     \App\Filament\Resources\PointResource::class => 'points-ledger',
+    \App\Filament\Resources\PointPackageResource::class => 'point-packages',
+    \App\Filament\Resources\ContentBoostResource::class => 'content-boosts',
     \App\Filament\Resources\RefundRequestResource::class => 'refund-requests',
     \App\Filament\Resources\InvoiceRequestResource::class => 'invoice-requests',
     \App\Filament\Resources\CommentReportResource::class => 'comment-reports',

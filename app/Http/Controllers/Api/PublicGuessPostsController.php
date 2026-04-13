@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * 「猜你感兴趣」：仅用户投稿；10 条，必含当前池内加热权重最高的一条。
+ * 「猜你感兴趣」：仅用户投稿；返回 5 条，必含当前池内加热权重最高的一条。
  */
 class PublicGuessPostsController extends Controller
 {
@@ -29,7 +29,7 @@ class PublicGuessPostsController extends Controller
             ->orderByDesc('boost_weight')
             ->orderByDesc('heat_score')
             ->orderByDesc('like_count')
-            ->limit(200);
+            ->limit(260);
 
         $pool = $q->get();
         if ($excludePostId > 0) {
@@ -53,7 +53,7 @@ class PublicGuessPostsController extends Controller
 
         $pick = [];
         $candidates = $weighted->all();
-        $need = min(9, count($candidates));
+        $need = min(4, count($candidates));
         for ($i = 0; $i < $need; $i++) {
             $sum = array_sum(array_column($candidates, 'w'));
             if ($sum <= 0) {
@@ -71,7 +71,15 @@ class PublicGuessPostsController extends Controller
             }
         }
 
-        $merged = collect([$topBoost])->merge($pick)->unique('id')->take(10)->values();
+        $merged = collect([$topBoost])->merge($pick)->unique('id')->values();
+        if ($merged->count() < 5) {
+            $extra = $rest
+                ->sortByDesc(fn (UserPost $p) => [$p->boost_weight, $p->heat_score, $p->like_count])
+                ->filter(fn (UserPost $p) => ! $merged->contains(fn (UserPost $m) => (int) $m->id === (int) $p->id))
+                ->take(5 - $merged->count());
+            $merged = $merged->merge($extra)->values();
+        }
+        $merged = $merged->take(5)->values();
 
         $items = $merged->map(function (UserPost $p) {
             return [

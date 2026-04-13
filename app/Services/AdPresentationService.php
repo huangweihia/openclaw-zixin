@@ -96,7 +96,7 @@ class AdPresentationService
     }
 
     /**
-     * 所有「广告位类型 = float」的版位各自解析一条兜底素材，用于右下角等浮动区。
+     * 仅返回 1 条浮动广告，避免同页出现多块角标素材。
      *
      * @return list<array<string, mixed>>
      */
@@ -104,9 +104,13 @@ class AdPresentationService
     {
         $slots = AdSlot::query()
             ->where('is_active', true)
+            ->where(function ($q) {
+                $q->where('type', 'float')
+                    ->orWhereIn('position', ['left', 'right', 'top', 'bottom']);
+            })
             ->orderByDesc('sort')
             ->orderBy('id')
-            ->limit(5)
+            ->limit(20)
             ->get();
 
         $out = [];
@@ -114,6 +118,7 @@ class AdPresentationService
             $pack = $this->resolveSlot($slot);
             if ($pack !== null) {
                 $out[] = $pack;
+                break;
             }
         }
 

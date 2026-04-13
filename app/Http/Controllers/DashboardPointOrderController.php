@@ -17,6 +17,7 @@ class DashboardPointOrderController extends Controller
         ]);
 
         $pkg = PointPackage::query()->whereKey($data['point_package_id'])->where('is_active', true)->firstOrFail();
+        abort_unless($pkg->isAvailableNow(), 422, '该积分套餐当前不可购买');
 
         $orderNo = 'PT'.now()->format('YmdHis').Str::upper(Str::random(6));
 
@@ -27,7 +28,7 @@ class DashboardPointOrderController extends Controller
             'product_id' => $pkg->id,
             'amount' => $pkg->price_yuan,
             'status' => 'pending',
-            'remark' => 'point_package:'.$pkg->points_amount,
+            'remark' => 'point_package:'.$pkg->totalPointsNow(),
         ]);
 
         return redirect()->route('payments.result', ['order_no' => $order->order_no]);

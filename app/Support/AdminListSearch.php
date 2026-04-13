@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Models\AdminResourceSearchConfig;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
@@ -18,20 +17,30 @@ final class AdminListSearch
     public static function markSearchable(string $resourceFqcn, string $modelFqcn, array $columns): array
     {
         $names = self::resolvedSearchColumnNames($resourceFqcn, $modelFqcn);
-        if ($names === []) {
-            return $columns;
-        }
+        $tableCols = self::tableColumns($modelFqcn);
 
-        return array_map(function ($column) use ($names) {
+        return array_map(function ($column) use ($names, $tableCols) {
             if (! $column instanceof TextColumn) {
                 return $column;
             }
+
             $n = $column->getName();
-            if (! in_array($n, $names, true)) {
+            if ($names !== []) {
+                if (in_array($n, $names, true)) {
+                    return $column->searchable();
+                }
+
                 return $column;
             }
 
-            return $column->searchable();
+            // 无手工配置时：默认自动开启
+            // 1) 主表真实列名（避免 getStateUsing 的虚拟字段）
+            // 2) 关系列（如 user.name）
+            if (str_contains($n, '.') || in_array($n, $tableCols, true)) {
+                return $column->searchable();
+            }
+
+            return $column;
         }, $columns);
     }
 
@@ -40,14 +49,8 @@ final class AdminListSearch
      */
     public static function resolvedSearchColumnNames(string $resourceFqcn, string $modelFqcn): array
     {
-        if (Schema::hasTable('admin_resource_search_configs')) {
-            $row = AdminResourceSearchConfig::query()->where('resource_class', $resourceFqcn)->first();
-            if ($row !== null && is_array($row->search_column_names) && $row->search_column_names !== []) {
-                return array_values(array_filter(array_map('strval', $row->search_column_names)));
-            }
-        }
-
-        return self::inferFromSchema($modelFqcn);
+        // 统一自动模式：不再要求“列表搜索条件”手工配置。
+        return [];
     }
 
     /**
@@ -92,5 +95,25 @@ final class AdminListSearch
         }
 
         return in_array($type, ['datetime', 'date', 'time'], true);
+    }
+
+    /**
+     * @param class-string $modelFqcn
+     * @return list<string>
+     */
+    private static function tableColumns(string $modelFqcn): array
+    {
+        if (! class_exists($modelFqcn) || ! is_subclass_of($modelFqcn, Model::class)) {
+            return [];
+        }
+
+        /** @var Model $instance */
+        $instance = new $modelFqcn;
+        $table = $instance->getTable();
+        if (! Schema::hasTable($table)) {
+            return [];
+        }
+
+        return array_values(Schema::getColumnListing($table));
     }
 }

@@ -34,9 +34,20 @@
                             <div>
                                 <div class="font-semibold oc-heading">{{ $pkg->name ?? '套餐 #'.$pkg->id }}</div>
                                 <div class="text-sm oc-muted mt-1">
-                                    到账 <span class="font-semibold oc-heading">{{ number_format((int) $pkg->points_amount) }}</span> 积分
+                                    到账 <span class="font-semibold oc-heading">{{ number_format((int) $pkg->totalPointsNow()) }}</span> 积分
+                                    @if ((int) ($pkg->bonus_points ?? 0) > 0)
+                                        （含赠送 {{ number_format((int) $pkg->bonus_points) }}）
+                                    @endif
                                     · ¥{{ number_format((float) $pkg->price_yuan, 2) }}
                                 </div>
+                                @if ($pkg->active_from || $pkg->active_until)
+                                    <div class="text-xs oc-muted mt-1">
+                                        有效期：
+                                        {{ $pkg->active_from?->format('Y-m-d H:i') ?? '即刻' }}
+                                        ~
+                                        {{ $pkg->active_until?->format('Y-m-d H:i') ?? '长期' }}
+                                    </div>
+                                @endif
                             </div>
                             <form method="post" action="{{ route('dashboard.point-orders.store') }}" class="m-0">
                                 @csrf

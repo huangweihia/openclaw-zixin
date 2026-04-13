@@ -53,7 +53,10 @@ class AdminResourceSearchConfigResource extends BaseAdminResource
             }
             $fqcn = 'App\\Filament\\Resources\\'.$base;
             if (class_exists($fqcn)) {
-                $out[$fqcn] = $base;
+                $label = method_exists($fqcn, 'getModelLabel')
+                    ? (string) $fqcn::getModelLabel()
+                    : '';
+                $out[$fqcn] = $label !== '' ? $label.'（'.$base.'）' : $base;
             }
         }
         ksort($out);
@@ -69,6 +72,7 @@ class AdminResourceSearchConfigResource extends BaseAdminResource
                 ->required()
                 ->searchable()
                 ->options(fn () => static::filamentResourceClassOptions())
+                ->helperText('用途：控制该资源列表页右上角“搜索框”默认能搜哪些字段。')
                 ->disabledOn('edit'),
             Forms\Components\TagsInput::make('search_column_names')
                 ->label('参与全局搜索的列名')
