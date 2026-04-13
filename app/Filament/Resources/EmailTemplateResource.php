@@ -225,7 +225,7 @@ class EmailTemplateResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('subject')->limit(40)->toggleable(),
                 Tables\Columns\IconColumn::make('is_active')->label('启用')->boolean(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

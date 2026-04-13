@@ -116,7 +116,7 @@ class PointResource extends BaseAdminResource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('description')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(),
-            ])
+            ]))
             ->defaultSort('created_at', 'desc')
             ->actions([
                 Tables\Actions\ViewAction::make(),

@@ -133,7 +133,7 @@ class OpenclawTaskLogResource extends BaseAdminResource
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ]))
             ->defaultSort('started_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('task_type')

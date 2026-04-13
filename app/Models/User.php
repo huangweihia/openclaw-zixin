@@ -262,4 +262,18 @@ class User extends Authenticatable implements FilamentUser
 
         return false;
     }
+
+    /** 我关注的人（followee） */
+    public function following(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'user_follows', 'follower_id', 'followee_id')
+            ->withTimestamps();
+    }
+
+    /** 关注我的人（follower） */
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'user_follows', 'followee_id', 'follower_id')
+            ->withTimestamps();
+    }
 }

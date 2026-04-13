@@ -75,7 +75,7 @@ class PersonalityQuestionResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('sort_order')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('is_active')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

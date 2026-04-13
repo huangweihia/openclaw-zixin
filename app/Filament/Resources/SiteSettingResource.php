@@ -60,7 +60,7 @@ class SiteSettingResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('key')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('value')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

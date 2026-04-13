@@ -71,7 +71,7 @@ class PersonalityTypeResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('image_url')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('pattern')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

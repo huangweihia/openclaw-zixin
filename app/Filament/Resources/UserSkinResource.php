@@ -79,7 +79,7 @@ class UserSkinResource extends BaseAdminResource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('activated_at')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

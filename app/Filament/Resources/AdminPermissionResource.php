@@ -82,7 +82,7 @@ class AdminPermissionResource extends BaseAdminResource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ]))
             ->groups([
                 Group::make('module')
                     ->label('按模块分组')

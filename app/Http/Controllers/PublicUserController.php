@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class PublicUserController extends Controller
 {
@@ -17,13 +18,24 @@ class PublicUserController extends Controller
             default => '用户',
         };
 
+        $me = Auth::user();
+        $hasFollows = Schema::hasTable('user_follows');
+        $isSelf = Auth::check() && (int) Auth::id() === (int) $user->id;
+        $isFollowing = $hasFollows && $me && ! $isSelf
+            ? $me->following()->whereKey($user->id)->exists()
+            : false;
+
         return response()->json([
             'id' => $user->id,
             'name' => $user->name,
             'avatar' => $user->avatar,
             'bio' => $user->bio,
             'role_label' => $roleLabel,
-            'is_self' => Auth::check() && (int) Auth::id() === (int) $user->id,
+            'is_self' => $isSelf,
+            'followers_count' => $hasFollows ? $user->followers()->count() : 0,
+            'following_count' => $hasFollows ? $user->following()->count() : 0,
+            'can_follow' => Auth::check() && ! $isSelf && $hasFollows,
+            'is_following' => $isFollowing,
         ]);
     }
 }

@@ -88,7 +88,7 @@ class SiteTestimonialResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('avatar_initial')->label('头像首字')->toggleable(),
                 Tables\Columns\TextColumn::make('gradient_from')->label('渐变起始')->limit(24)->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')->label('创建时间')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

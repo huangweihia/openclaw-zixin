@@ -19,9 +19,24 @@
                         style="color: var(--primary);">{{ $article->category->name }}</a>
                 @endif
                 <h1 class="text-3xl md:text-4xl font-bold mb-4" style="color: var(--dark);">{{ $article->title }}</h1>
-                <div class="flex flex-wrap gap-4 text-sm" style="color: var(--gray);">
+                <div class="flex flex-wrap gap-4 text-sm items-center" style="color: var(--gray);">
                     @if ($article->author)
-                        <span style="color: var(--dark);">{{ $article->author->name }}</span>
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-2 border-0 bg-transparent cursor-pointer p-0 text-left"
+                            data-oc-user-card="{{ $article->author_id }}"
+                            aria-label="查看作者 {{ $article->author->name }} 的资料"
+                        >
+                            @if (! empty($article->author->avatar))
+                                <img src="{{ $article->author->avatar }}" alt="" class="w-8 h-8 rounded-full object-cover" loading="lazy" />
+                            @else
+                                <span
+                                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                                    style="background: var(--gradient-primary);"
+                                >{{ mb_substr($article->author->name, 0, 1) }}</span>
+                            @endif
+                            <span style="color: var(--dark);">{{ $article->author->name }}</span>
+                        </button>
                     @endif
                     <span>{{ $article->published_at?->format('Y-m-d H:i') }}</span>
                     <span>阅读 {{ number_format($article->view_count) }}</span>

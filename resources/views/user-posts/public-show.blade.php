@@ -15,8 +15,28 @@
                 @endif
             </div>
             <h1 class="text-2xl md:text-3xl font-bold oc-heading mb-2">{{ $post->title }}</h1>
-            <div class="text-sm oc-muted flex flex-wrap gap-3">
-                <span>{{ $post->author?->name ?? '用户' }}</span>
+            <div class="text-sm oc-muted flex flex-wrap gap-3 items-center">
+                @if ($post->author)
+                    <button
+                        type="button"
+                        class="inline-flex items-center gap-2 border-0 bg-transparent cursor-pointer p-0 oc-link font-medium"
+                        style="text-decoration: none;"
+                        data-oc-user-card="{{ $post->user_id }}"
+                        aria-label="查看 {{ $post->author->name }} 的资料"
+                    >
+                        @if (! empty($post->author->avatar))
+                            <img src="{{ $post->author->avatar }}" alt="" class="w-8 h-8 rounded-full object-cover" loading="lazy" />
+                        @else
+                            <span
+                                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                                style="background: var(--gradient-primary);"
+                            >{{ mb_substr($post->author->name, 0, 1) }}</span>
+                        @endif
+                        <span>{{ $post->author->name }}</span>
+                    </button>
+                @else
+                    <span>用户</span>
+                @endif
                 <span>{{ $post->audited_at?->format('Y-m-d H:i') ?? $post->updated_at->format('Y-m-d H:i') }}</span>
                 <span>阅读 {{ number_format($post->view_count) }}</span>
             </div>

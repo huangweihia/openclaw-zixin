@@ -71,7 +71,7 @@ class MemberPremiumResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('content')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('download_link')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

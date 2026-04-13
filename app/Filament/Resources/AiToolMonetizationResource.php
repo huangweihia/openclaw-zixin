@@ -73,7 +73,7 @@ class AiToolMonetizationResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('available_in_china')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('pricing_model')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

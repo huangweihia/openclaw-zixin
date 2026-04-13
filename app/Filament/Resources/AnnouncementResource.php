@@ -68,7 +68,7 @@ class AnnouncementResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('is_floating')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('cover_image')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

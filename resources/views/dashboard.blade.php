@@ -50,6 +50,12 @@
                 <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="points">
                     🪙 积分与充值
                 </button>
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="followers">
+                    👥 我的粉丝
+                </button>
+                <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="following">
+                    ➕ 我的关注
+                </button>
                 @if ($u->role === 'svip' || $u->isAdmin())
                     <button type="button" class="oc-dash-tab w-full text-left px-2.5 py-3 rounded-lg text-[17px] leading-snug oc-link" data-tab="svip">
                         ✨ SVIP 定制
@@ -142,6 +148,26 @@
                             <div class="text-xs oc-muted">积分</div>
                             <div class="text-xl font-bold oc-heading">{{ number_format((int) ($u->points_balance ?? 0)) }}</div>
                         </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-3 max-w-xl mx-auto sm:mx-0">
+                        <button
+                            type="button"
+                            class="oc-stat-card rounded-xl p-4 text-center oc-dash-tab w-full border-0 cursor-pointer"
+                            data-tab="followers"
+                        >
+                            <div class="text-lg mb-1">👥</div>
+                            <div class="text-xs oc-muted">粉丝</div>
+                            <div class="text-xl font-bold oc-heading">{{ number_format((int) ($followersCount ?? 0)) }}</div>
+                        </button>
+                        <button
+                            type="button"
+                            class="oc-stat-card rounded-xl p-4 text-center oc-dash-tab w-full border-0 cursor-pointer"
+                            data-tab="following"
+                        >
+                            <div class="text-lg mb-1">➕</div>
+                            <div class="text-xs oc-muted">关注</div>
+                            <div class="text-xl font-bold oc-heading">{{ number_format((int) ($followingCount ?? 0)) }}</div>
+                        </button>
                     </div>
                 </div>
 
@@ -266,6 +292,18 @@
         </div>
         <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="积分与充值" data-embed-src="{{ route('dashboard.points') }}{{ $embedQs }}"></iframe>
     </div>
+    <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="followers" style="min-height: 70vh;">
+        <div class="flex items-center gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+            <span class="text-sm font-semibold oc-heading">我的粉丝</span>
+        </div>
+        <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="我的粉丝" data-embed-src="{{ route('dashboard.followers') }}{{ $embedQs }}"></iframe>
+    </div>
+    <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="following" style="min-height: 70vh;">
+        <div class="flex items-center gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
+            <span class="text-sm font-semibold oc-heading">我的关注</span>
+        </div>
+        <iframe class="w-full flex-1 border-0 min-h-[65vh]" title="我的关注" data-embed-src="{{ route('dashboard.following') }}{{ $embedQs }}"></iframe>
+    </div>
     @if ($u->role === 'svip' || $u->isAdmin())
         <div class="oc-dash-panel oc-surface overflow-hidden hidden flex flex-col" data-panel="svip" style="min-height: 70vh;">
             <div class="flex items-center gap-2 px-4 py-2 border-b oc-border shrink-0" style="background: rgba(148,163,184,.08);">
@@ -384,7 +422,7 @@
             tabs.forEach((t) => t.addEventListener('click', () => setActive(t.getAttribute('data-tab'))));
             const params = new URLSearchParams(window.location.search);
             const tabParam = params.get('tab');
-            const allowed = ['profile', 'subscription', 'timeline', 'posts', 'favorites', 'history', 'comments', 'orders', 'points', 'svip'];
+            const allowed = ['profile', 'subscription', 'timeline', 'posts', 'favorites', 'history', 'comments', 'orders', 'points', 'followers', 'following', 'svip'];
             let initialTab = 'profile';
             if (tabParam && allowed.includes(tabParam)) {
                 initialTab = tabParam;

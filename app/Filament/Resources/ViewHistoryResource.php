@@ -98,7 +98,7 @@ class ViewHistoryResource extends BaseAdminResource
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('viewed_at')->dateTime()->sortable()->toggleable(),
-            ])
+            ]))
             ->defaultSort('viewed_at', 'desc')
             ->actions([
                 Tables\Actions\ViewAction::make(),

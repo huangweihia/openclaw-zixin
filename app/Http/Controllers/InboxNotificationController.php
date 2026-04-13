@@ -18,6 +18,7 @@ class InboxNotificationController extends Controller
         'boost_received',
         'boost_spent',
         'boost_spotlight',
+        'follow_received',
     ];
 
     public function index(Request $request): View

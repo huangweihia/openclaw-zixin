@@ -24,22 +24,33 @@
     @else
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($posts as $post)
-                <a href="{{ route('posts.show', $post) }}" class="oc-article-card">
-                    <div class="oc-card-thumb flex items-center justify-center text-2xl" style="background: var(--light);">
-                        📝
-                    </div>
-                    <div class="p-5">
-                        <div class="flex items-start justify-between gap-2 mb-2">
-                            <h2 class="text-lg font-bold line-clamp-2 oc-heading m-0">{{ $post->title }}</h2>
-                            <span class="text-xs shrink-0 px-2 py-0.5 rounded-full font-semibold oc-muted border border-slate-200">{{ $typeLabels[$post->type] ?? $post->type }}</span>
+                <div class="oc-article-card flex flex-col h-full">
+                    <a href="{{ route('posts.show', $post) }}" class="block flex-1 min-h-0" style="text-decoration: none; color: inherit;">
+                        <div class="oc-card-thumb flex items-center justify-center text-2xl" style="background: var(--light);">
+                            📝
                         </div>
-                        <p class="text-sm line-clamp-2 oc-muted mb-4 m-0">{{ \Illuminate\Support\Str::limit(strip_tags($post->content), 120) }}</p>
-                        <div class="flex justify-between text-xs oc-muted">
-                            <span>{{ $post->author?->name ?? '用户' }}</span>
-                            <span>👁 {{ number_format($post->view_count) }} · ❤️ {{ number_format($post->like_count) }} · 💬 {{ number_format($post->comment_count) }}</span>
+                        <div class="p-5 pb-2">
+                            <div class="flex items-start justify-between gap-2 mb-2">
+                                <h2 class="text-lg font-bold line-clamp-2 oc-heading m-0">{{ $post->title }}</h2>
+                                <span class="text-xs shrink-0 px-2 py-0.5 rounded-full font-semibold oc-muted border border-slate-200">{{ $typeLabels[$post->type] ?? $post->type }}</span>
+                            </div>
+                            <p class="text-sm line-clamp-2 oc-muted mb-0 m-0">{{ \Illuminate\Support\Str::limit(strip_tags($post->content), 120) }}</p>
                         </div>
+                    </a>
+                    <div class="flex justify-between items-center gap-2 text-xs oc-muted px-5 pb-5 pt-0">
+                        @if ($post->author)
+                            <button
+                                type="button"
+                                class="oc-link font-medium truncate max-w-[50%] border-0 bg-transparent cursor-pointer p-0 text-left"
+                                style="text-decoration: none;"
+                                data-oc-user-card="{{ $post->user_id }}"
+                            >{{ $post->author->name }}</button>
+                        @else
+                            <span>用户</span>
+                        @endif
+                        <span class="shrink-0">👁 {{ number_format($post->view_count) }} · ❤️ {{ number_format($post->like_count) }} · 💬 {{ number_format($post->comment_count) }}</span>
                     </div>
-                </a>
+                </div>
             @endforeach
         </div>
         <div class="mt-10 flex justify-center">

@@ -100,7 +100,7 @@ class AdminNavItemResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('icon')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('perm_key')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

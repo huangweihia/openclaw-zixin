@@ -90,7 +90,7 @@ class AdminUserResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('last_login_at')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('last_login_ip')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

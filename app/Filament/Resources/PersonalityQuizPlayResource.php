@@ -81,7 +81,7 @@ class PersonalityQuizPlayResource extends BaseAdminResource
                     ->placeholder('—'),
                 Tables\Columns\TextColumn::make('completed_at')->dateTime()->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ]))
             ->defaultSort('completed_at', 'desc')
             ->actions([
                 Tables\Actions\ViewAction::make(),

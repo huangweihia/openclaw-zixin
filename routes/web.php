@@ -38,6 +38,8 @@ use App\Http\Controllers\UserRichUploadController;
 use App\Http\Controllers\DashboardPointsController;
 use App\Http\Controllers\DashboardPointOrderController;
 use App\Http\Controllers\PublicUserController;
+use App\Http\Controllers\FollowController;
+use App\Http\Controllers\DashboardFollowController;
 use App\Http\Controllers\UserMessageController;
 /*
 |--------------------------------------------------------------------------
@@ -146,6 +148,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/subscriptions', [SvipCustomSubscriptionWebController::class, 'index'])->name('dashboard.subscriptions');
 
     Route::post('/users/{user}/message', [UserMessageController::class, 'store'])->name('users.message');
+    Route::post('/users/{user}/follow', [FollowController::class, 'store'])->name('users.follow');
+    Route::post('/users/{user}/unfollow', [FollowController::class, 'destroy'])->name('users.unfollow');
+
+    Route::get('/dashboard/followers', [DashboardFollowController::class, 'followers'])->name('dashboard.followers');
+    Route::get('/dashboard/following', [DashboardFollowController::class, 'following'])->name('dashboard.following');
 
     Route::post('/articles/{article}/like', [ArticleEngagementController::class, 'toggleLike'])->name('articles.like');
     Route::post('/articles/{article}/favorite', [ArticleEngagementController::class, 'toggleFavorite'])->name('articles.favorite');

@@ -75,7 +75,7 @@ class ProjectResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('language')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('stars')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

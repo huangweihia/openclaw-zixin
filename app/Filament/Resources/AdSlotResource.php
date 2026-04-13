@@ -175,7 +175,7 @@ class AdSlotResource extends BaseAdminResource
                     ->height(40)
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ]))
             ->actions([
                 Tables\Actions\Action::make('setActive')
                     ->label('设为启用')

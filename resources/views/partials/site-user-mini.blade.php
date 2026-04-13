@@ -44,6 +44,7 @@
                 body.textContent = '加载中…';
                 if (msgTa) msgTa.value = '';
                 msgWrap?.classList.add('hidden');
+                document.getElementById('oc-user-mini-follow-wrap')?.classList.add('hidden');
                 modal.classList.remove('hidden');
                 try {
                     const url = usersBase + '/' + encodeURIComponent(uid) + '/snippet';
@@ -64,6 +65,8 @@
                         : '<span class="inline-flex w-14 h-14 rounded-full items-center justify-center text-white font-bold mb-3" style="background:var(--gradient-primary)">' +
                           escHtml((data.name || '?').slice(0, 1)) +
                           '</span>';
+                    const fc = Number(data.followers_count || 0);
+                    const fg = Number(data.following_count || 0);
                     body.innerHTML =
                         '<div class="flex flex-col items-center text-center">' +
                         av +
@@ -72,12 +75,31 @@
                         '</p>' +
                         '<p class="text-xs oc-muted m-1">' +
                         escHtml(data.role_label || '') +
+                        ' · 粉丝 ' +
+                        fc +
+                        ' · 关注 ' +
+                        fg +
                         '</p>' +
                         '<p class="text-sm oc-heading m-0 mt-2 text-left w-full whitespace-pre-wrap">' +
                         escHtml(data.bio || '暂无简介') +
                         '</p></div>';
                     const self = data.is_self || String(currentUserId()) === String(uid);
                     const logged = !!currentUserId();
+                    const followWrap = document.getElementById('oc-user-mini-follow-wrap');
+                    const followBtn = document.getElementById('oc-user-mini-follow-btn');
+                    if (followWrap && followBtn) {
+                        if (logged && !self && data.can_follow) {
+                            followWrap.classList.remove('hidden');
+                            const isF = !!data.is_following;
+                            followBtn.textContent = isF ? '取消关注' : '关注';
+                            followBtn.setAttribute('data-following', isF ? '1' : '0');
+                            followBtn.className = isF
+                                ? 'btn btn-secondary text-sm w-full'
+                                : 'btn btn-primary text-sm w-full';
+                        } else {
+                            followWrap.classList.add('hidden');
+                        }
+                    }
                     if (msgWrap) {
                         if (logged && !self) msgWrap.classList.remove('hidden');
                         else msgWrap.classList.add('hidden');
@@ -94,6 +116,41 @@
             uModal?.addEventListener('click', function (e) {
                 if (e.target === uModal) uModal.classList.add('hidden');
             });
+            document.getElementById('oc-user-mini-follow-btn')?.addEventListener('click', async function () {
+                if (!miniUserId) return;
+                if (!currentUserId()) {
+                    toast('请先登录', 'error');
+                    return;
+                }
+                const btn = document.getElementById('oc-user-mini-follow-btn');
+                if (!btn) return;
+                const following = btn.getAttribute('data-following') === '1';
+                const path = following ? '/unfollow' : '/follow';
+                try {
+                    const res = await fetch(usersBase + '/' + encodeURIComponent(miniUserId) + path, {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'X-CSRF-TOKEN': csrf(),
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        credentials: 'same-origin',
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        toast(data.message || data.error || '操作失败', 'error');
+                        return;
+                    }
+                    const nowFollowing = !!data.is_following;
+                    btn.setAttribute('data-following', nowFollowing ? '1' : '0');
+                    btn.textContent = nowFollowing ? '取消关注' : '关注';
+                    btn.className = nowFollowing ? 'btn btn-secondary text-sm w-full' : 'btn btn-primary text-sm w-full';
+                    toast(data.message || (nowFollowing ? '已关注' : '已取消关注'), 'success');
+                } catch (err) {
+                    toast('网络错误', 'error');
+                }
+            });
+
             document.getElementById('oc-user-mini-send')?.addEventListener('click', async function () {
                 if (!miniUserId) return;
                 if (!currentUserId()) {

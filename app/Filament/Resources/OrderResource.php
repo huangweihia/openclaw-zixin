@@ -102,7 +102,7 @@ class OrderResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('amount')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('status')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

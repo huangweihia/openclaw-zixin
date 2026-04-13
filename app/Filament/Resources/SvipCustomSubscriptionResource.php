@@ -85,7 +85,7 @@ class SvipCustomSubscriptionResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('started_at')->dateTime()->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('expires_at')->dateTime()->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ]))
             ->defaultSort('created_at', 'desc')
             ->actions([
                 Tables\Actions\ViewAction::make(),

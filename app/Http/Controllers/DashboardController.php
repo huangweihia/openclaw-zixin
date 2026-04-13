@@ -12,6 +12,7 @@ use App\Models\UserPost;
 use App\Models\ViewHistory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -71,12 +72,17 @@ class DashboardController extends Controller
 
         $timeline = $this->buildTimeline($u);
 
+        $followersCount = Schema::hasTable('user_follows') ? $u->followers()->count() : 0;
+        $followingCount = Schema::hasTable('user_follows') ? $u->following()->count() : 0;
+
         return view('dashboard', compact(
             'postsCount',
             'viewsCount',
             'favoritesCount',
             'commentsCount',
             'footprintCount',
+            'followersCount',
+            'followingCount',
             'handle',
             'vipDays',
             'vipSecondsLeft',

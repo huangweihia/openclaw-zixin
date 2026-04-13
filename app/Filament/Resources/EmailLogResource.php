@@ -109,7 +109,7 @@ class EmailLogResource extends BaseAdminResource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('sent_at')->dateTime()->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ]))
             ->defaultSort('sent_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')

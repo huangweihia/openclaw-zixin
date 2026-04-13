@@ -65,7 +65,7 @@ class EmailSubscriptionTopicTemplateResource extends BaseAdminResource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ]))
             ->defaultSort('topic_key')
             ->actions([
                 Tables\Actions\EditAction::make(),

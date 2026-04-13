@@ -77,7 +77,7 @@ class EmailSubscriptionResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('is_unsubscribed')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('unsubscribed_at')->limit(40)->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true)
-            ])
+            ]))
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()

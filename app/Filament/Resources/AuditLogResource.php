@@ -83,7 +83,7 @@ class AuditLogResource extends BaseAdminResource
                 Tables\Columns\TextColumn::make('model_id')->label('ID')->toggleable(),
                 Tables\Columns\TextColumn::make('ip')->limit(24)->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(),
-            ])
+            ]))
             ->defaultSort('created_at', 'desc')
             ->actions([
                 Tables\Actions\ViewAction::make(),

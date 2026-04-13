@@ -1171,6 +1171,13 @@ nav.oc-site-nav a.btn.btn-primary,
     text-decoration: underline;
 }
 
+/* 猜你感兴趣：低于 sticky 顶栏/公告条与浮动公告的 z-index，避免层叠抢盖；锚点滚动预留顶栏+公告高度 */
+.oc-guess-you-like {
+    position: relative;
+    z-index: 0;
+    scroll-margin-top: 7rem;
+}
+
 @keyframes oc-announcement-marquee {
     0% {
         transform: translate3d(0, 0, 0);
