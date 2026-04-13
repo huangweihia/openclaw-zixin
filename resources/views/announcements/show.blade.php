@@ -1,8 +1,5 @@
 @extends('layouts.site')
 
-@section('suppress_floating_promos')
-@endsection
-
 @section('title', $announcement->title . ' — 公告')
 
 @section('content')

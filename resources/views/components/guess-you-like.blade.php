@@ -3,6 +3,8 @@
     'heading' => '猜你感兴趣',
     'description' => '基于热度与加热权重的用户投稿推荐。',
     'compact' => false,
+    /** 嵌入侧栏等窄区域：去掉通栏大间距与顶部分割线 */
+    'embedded' => false,
 ])
 
 @php
@@ -14,10 +16,13 @@
     $descClass = $compact
         ? 'text-xs oc-muted mb-3 m-0'
         : 'text-sm oc-muted mb-3 m-0';
+    $sectionClasses = $embedded
+        ? ['oc-guess-you-like', 'oc-guess-you-like--embedded']
+        : ['oc-guess-you-like', 'mt-10', 'pt-8', 'border-t', 'oc-border'];
 @endphp
 
 <section
-    {{ $attributes->class(['oc-guess-you-like', 'mt-10 pt-8 border-t oc-border']) }}
+    {{ $attributes->class($sectionClasses) }}
     aria-labelledby="oc-guess-you-like-h-{{ $guessSlot }}"
 >
     <h2 id="oc-guess-you-like-h-{{ $guessSlot }}" class="{{ $headingClass }}">{{ $heading }}</h2>

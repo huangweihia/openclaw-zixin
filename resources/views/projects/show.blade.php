@@ -1,8 +1,5 @@
 @extends('layouts.site')
 
-@section('suppress_floating_promos')
-@endsection
-
 @section('title', $project->name . ' — OpenClaw 智信')
 
 @section('content')

@@ -1186,6 +1186,13 @@ nav.oc-site-nav a.btn.btn-primary,
     scroll-margin-top: 7rem;
 }
 
+.oc-guess-you-like--embedded {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    scroll-margin-top: 5rem;
+}
+
 @keyframes oc-announcement-marquee {
     0% {
         transform: translate3d(0, 0, 0);

@@ -1,8 +1,5 @@
 @extends('layouts.site')
 
-@section('suppress_floating_promos')
-@endsection
-
 @section('title', $article->title . ' — OpenClaw 智信')
 
 @section('content')
@@ -127,25 +124,35 @@
             </section>
         </article>
 
-        <aside class="lg:col-span-4 mt-10 lg:mt-0">
+        <aside class="lg:col-span-4 mt-10 lg:mt-0 space-y-6">
             @include('partials.ad-slot', ['code' => 'article-sidebar'])
-            <div class="oc-surface p-6 sticky top-24">
-                <h3 class="text-lg font-bold mb-4" style="color: var(--dark);">相关文章</h3>
-                <ul class="space-y-3">
-                    @foreach ($related as $rel)
-                        <li>
-                            <a href="{{ route('articles.show', $rel) }}" class="block rounded-lg p-2 -mx-2 transition hover:bg-slate-50">
-                                <span class="text-sm font-medium line-clamp-2" style="color: var(--dark);">{{ $rel->title }}</span>
-                                <span class="text-xs mt-1 block" style="color: var(--gray-light);">👁 {{ number_format($rel->view_count) }}</span>
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
+            <div class="lg:sticky lg:top-24">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+                    <div class="oc-surface p-5 min-w-0">
+                        <h3 class="text-base font-bold mb-3 oc-heading m-0">相关文章</h3>
+                        <ul class="space-y-2 m-0 p-0 list-none">
+                            @foreach ($related as $rel)
+                                <li>
+                                    <a href="{{ route('articles.show', $rel) }}" class="block rounded-lg p-2 -mx-2 transition hover:bg-slate-50">
+                                        <span class="text-sm font-medium line-clamp-2 oc-heading">{{ $rel->title }}</span>
+                                        <span class="text-xs mt-1 block oc-muted">👁 {{ number_format($rel->view_count) }}</span>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    <div class="oc-surface p-5 min-w-0">
+                        <x-guess-you-like
+                            :embedded="true"
+                            :compact="true"
+                            heading="猜你感兴趣"
+                            description=""
+                        />
+                    </div>
+                </div>
             </div>
         </aside>
     </div>
-
-    <x-guess-you-like />
 
     @include('partials.comment-report-modal')
     @include('partials.comment-scripts')
