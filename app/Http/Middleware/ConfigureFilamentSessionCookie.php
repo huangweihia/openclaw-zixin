@@ -17,6 +17,9 @@ class ConfigureFilamentSessionCookie
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // 以当前请求协议为准兜底 session.secure，避免 HTTP 环境误配 SESSION_SECURE_COOKIE=true 导致 Cookie 丢失（Livewire 419 循环）。
+        config(['session.secure' => $request->isSecure()]);
+
         $cookie = trim((string) config('admin.session_cookie', ''));
         if ($cookie !== '' && $this->shouldUseFilamentSession($request)) {
             config(['session.cookie' => $cookie]);
@@ -71,7 +74,11 @@ class ConfigureFilamentSessionCookie
         }
 
         if ($request->is('livewire/*')) {
-            return true;
+            if ($this->refererPathMatchesAdmin($request, $adminBase)) {
+                return true;
+            }
+
+            return $this->requestHasFilamentSessionCookie($request);
         }
 
         return false;
@@ -104,5 +111,20 @@ class ConfigureFilamentSessionCookie
         $refHost = strtolower((string) (parse_url($ref, PHP_URL_HOST) ?? ''));
 
         return $refHost === $adminHost || ($refHost !== '' && str_ends_with($refHost, '.'.$adminHost));
+    }
+
+    private function refererPathMatchesAdmin(Request $request, string $adminBase): bool
+    {
+        $ref = (string) $request->headers->get('referer', '');
+        if ($ref === '') {
+            return false;
+        }
+
+        $refPath = trim((string) parse_url($ref, PHP_URL_PATH), '/');
+        if ($refPath === '') {
+            return false;
+        }
+
+        return $refPath === $adminBase || str_starts_with($refPath, $adminBase.'/');
     }
 }
