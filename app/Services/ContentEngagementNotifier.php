@@ -42,7 +42,7 @@ final class ContentEngagementNotifier
             'user_id' => $ownerId,
             'type' => $type,
             'title' => '「'.$actorName.'」'.$verb.'了你的'.$this->kindLabel($content).'《'.$title.'》',
-            'content' => null,
+            'content' => '详情见标题；若有关联链接，可从通知跳转查看原文。',
             'action_url' => $url,
         ]);
     }

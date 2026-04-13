@@ -26,7 +26,7 @@ class FollowController extends Controller
             'user_id' => $user->id,
             'type' => 'follow_received',
             'title' => '「'.$me->name.'」关注了你',
-            'content' => null,
+            'content' => '你有了新的关注者，可在个人中心查看粉丝列表。',
             'action_url' => null,
         ]);
 

@@ -22,6 +22,8 @@ class UserPostEngagementController extends Controller
         $user = $request->user();
 
         return DB::transaction(function () use ($user, $userPost, $request) {
+            UserPost::query()->whereKey($userPost->id)->lockForUpdate()->first();
+
             $row = UserAction::query()
                 ->where('user_id', $user->id)
                 ->where('actionable_type', $userPost->getMorphClass())
@@ -56,7 +58,7 @@ class UserPostEngagementController extends Controller
 
             $liked = ! $row;
             $count = (int) (UserPost::query()->whereKey($userPost->id)->value('like_count') ?? 0);
-            if ($request->wantsJson() || $request->ajax()) {
+            if ($request->expectsJson()) {
                 return response()->json(['ok' => true, 'liked' => $liked, 'count' => $count, 'message' => $message]);
             }
 
@@ -72,6 +74,8 @@ class UserPostEngagementController extends Controller
         $user = $request->user();
 
         return DB::transaction(function () use ($user, $userPost, $request) {
+            UserPost::query()->whereKey($userPost->id)->lockForUpdate()->first();
+
             $row = UserAction::query()
                 ->where('user_id', $user->id)
                 ->where('actionable_type', $userPost->getMorphClass())
@@ -106,7 +110,7 @@ class UserPostEngagementController extends Controller
 
             $favorited = ! $row;
             $count = (int) (UserPost::query()->whereKey($userPost->id)->value('favorite_count') ?? 0);
-            if ($request->wantsJson() || $request->ajax()) {
+            if ($request->expectsJson()) {
                 return response()->json(['ok' => true, 'favorited' => $favorited, 'count' => $count, 'message' => $message]);
             }
 

@@ -74,10 +74,10 @@
                                     <button type="submit" class="text-sm font-medium text-red-600 hover:underline bg-transparent border-0 cursor-pointer p-0">删除</button>
                                 </form>
                             </div>
-                            @if ($n->content)
+                            @if (filled($n->content))
                                 <p class="text-sm oc-muted m-0 mb-2 whitespace-pre-wrap">{{ $n->content }}</p>
                             @endif
-                            <time class="text-xs oc-muted">{{ $n->created_at->format('Y-m-d H:i') }}</time>
+                            <time class="text-xs oc-muted">{{ optional($n->created_at)->format('Y-m-d H:i') ?? '—' }}</time>
                             <div class="flex flex-wrap gap-3 mt-2">
                                 @if ($n->action_url)
                                     <a href="{{ route('notifications.open', $n) }}" class="oc-link text-sm font-medium" style="text-decoration: none;">查看详情</a>

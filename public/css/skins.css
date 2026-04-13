@@ -793,6 +793,14 @@ html[data-skin='style7'] {
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
 }
 
+.oc-confirm-modal {
+    z-index: 110;
+}
+
+.oc-confirm-modal__panel {
+    max-width: 28rem;
+}
+
 /* 文章正文 HTML（来自数据库） */
 .article-content p {
     margin-bottom: 1rem;

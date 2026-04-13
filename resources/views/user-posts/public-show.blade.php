@@ -77,10 +77,20 @@
                         </button>
                     </form>
                     @if ((int) ($boostCost ?? 0) > 0)
-                        <form method="post" action="{{ route('posts.boost', $post) }}" class="m-0" onsubmit="return confirm('确认消耗 {{ (int) $boostCost }} 积分加热本篇投稿？\n加热后将通过消息通知触达作者与部分用户，前台不展示加热人名单。');">
-                            @csrf
-                            <button type="submit" class="btn btn-secondary text-sm">🔥 加热（{{ (int) $boostCost }} 积分）</button>
-                        </form>
+                        <button
+                            type="button"
+                            id="oc-post-boost-open"
+                            class="btn btn-secondary text-sm"
+                            data-boost-url="{{ route('posts.boost', $post) }}"
+                        >🔥 加热（{{ (int) $boostCost }} 积分）</button>
+                        <x-confirm-modal id="oc-post-boost-modal" title="确认加热" confirm-label="确认加热" cancel-label="取消">
+                            <p class="m-0 mb-2">
+                                确认消耗 <strong class="oc-heading">{{ (int) $boostCost }}</strong> 积分加热本篇投稿？
+                            </p>
+                            <p class="m-0 text-xs">
+                                加热后将通过消息通知触达作者与部分用户；前台不展示加热人名单。
+                            </p>
+                        </x-confirm-modal>
                     @endif
                 @else
                     <a href="{{ route('login', ['return' => request()->path()]) }}" class="btn btn-secondary">登录后点赞 / 收藏</a>
@@ -119,4 +129,75 @@
         <x-guess-you-like :exclude-user-post-id="$post->id" />
     </div>
     @include('partials.engagement-scripts')
+    @if ((int) ($boostCost ?? 0) > 0 && auth()->check() && ($canReadFull ?? false))
+        @push('scripts')
+            <script>
+                (function () {
+                    const modal = document.getElementById('oc-post-boost-modal');
+                    const openBtn = document.getElementById('oc-post-boost-open');
+                    if (!modal || !openBtn) return;
+                    const ok = modal.querySelector('[data-oc-confirm-ok]');
+                    const cancel = modal.querySelector('[data-oc-confirm-cancel]');
+                    const url = openBtn.getAttribute('data-boost-url');
+                    const csrf = function () {
+                        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                    };
+                    const toast = function (msg, type) {
+                        if (typeof window.ocToast === 'function') window.ocToast(msg, type || 'success');
+                    };
+                    function open() {
+                        modal.classList.remove('hidden');
+                    }
+                    function close() {
+                        modal.classList.add('hidden');
+                    }
+                    openBtn.addEventListener('click', open);
+                    cancel.addEventListener('click', close);
+                    modal.addEventListener('click', function (e) {
+                        if (e.target === modal) close();
+                    });
+                    document.addEventListener('keydown', function (e) {
+                        if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+                    });
+                    ok.addEventListener('click', async function () {
+                        close();
+                        openBtn.disabled = true;
+                        try {
+                            var fd = new FormData();
+                            fd.append('_token', csrf());
+                            var res = await fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    Accept: 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-TOKEN': csrf(),
+                                },
+                                credentials: 'same-origin',
+                                body: fd,
+                            });
+                            var data = await res.json().catch(function () {
+                                return {};
+                            });
+                            if (res.status === 419) {
+                                toast('页面已过期，请刷新后重试', 'error');
+                                return;
+                            }
+                            if (!res.ok || !data.ok) {
+                                toast(data.message || data.error || '加热失败', 'error');
+                                return;
+                            }
+                            toast(data.message || '加热成功', 'success');
+                            window.setTimeout(function () {
+                                window.location.reload();
+                            }, 400);
+                        } catch (e) {
+                            toast('网络错误，请稍后重试', 'error');
+                        } finally {
+                            openBtn.disabled = false;
+                        }
+                    });
+                })();
+            </script>
+        @endpush
+    @endif
 @endsection

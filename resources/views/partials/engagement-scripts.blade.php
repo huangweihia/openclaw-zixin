@@ -25,9 +25,16 @@
                         body: new FormData(form),
                     });
                     const data = await res.json().catch(() => ({}));
-                    if (!res.ok || !data.ok) {
-                        toast(data.message || data.error || '操作失败', 'error');
+                    if (res.status === 419) {
+                        toast('登录状态已失效或页面已过期，请刷新后重试', 'error');
                         return;
+                    }
+                    if (!res.ok || !data.ok) {
+                        toast(data.message || data.error || ('操作失败（' + res.status + '）'), 'error');
+                        return;
+                    }
+                    if (data.message) {
+                        toast(data.message, 'success');
                     }
                     if (btn) {
                         const onText = btn.getAttribute('data-on-text') || btn.textContent || '';

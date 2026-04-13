@@ -38,6 +38,10 @@ class AppServiceProvider extends ServiceProvider
             if ($root !== '') {
                 URL::forceRootUrl($root);
             }
+            // 公网 HTTPS 部署时开启，避免生成 http 链接导致混合内容、Secure Cookie 与 Livewire/Filament CSRF 异常（419）
+            if (filter_var(env('FORCE_HTTPS', false), FILTER_VALIDATE_BOOLEAN)) {
+                URL::forceScheme('https');
+            }
         }
 
         AdminNavItem::observe(AdminNavItemObserver::class);
