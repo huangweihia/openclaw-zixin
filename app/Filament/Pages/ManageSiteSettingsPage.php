@@ -41,6 +41,15 @@ class ManageSiteSettingsPage extends Page implements HasForms
         'register_gift_role',
         'register_gift_days',
         'register_points_bonus',
+        'points_rule_login_daily',
+        'points_rule_post_approved',
+        'points_rule_post_liked_author',
+        'points_rule_post_favorited_author',
+        'points_rule_post_commented_author',
+        'points_rule_boost_cost',
+        'points_rule_boost_window_hours',
+        'points_rule_boost_random_notify_users',
+        'points_rule_boost_daily_cap_per_post',
         'pricing_vip_deadline',
         'pricing_svip_deadline',
         'pricing_vip_seats',
@@ -192,6 +201,56 @@ class ManageSiteSettingsPage extends Page implements HasForms
                             ->label('SVIP 营销副标题')
                             ->maxLength(120)
                             ->columnSpanFull(),
+                    ]),
+                Forms\Components\Section::make('积分规则（节点固定，分值可调）')
+                    ->description('仅调整分值，不改变触发节点。前台「积分与充值」页会同步展示此处配置。')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('points_rule_login_daily')
+                            ->label('每日首次登录奖励积分')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default((string) config('points_rewards.login_daily', 5)),
+                        Forms\Components\TextInput::make('points_rule_post_approved')
+                            ->label('投稿审核通过奖励积分')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default((string) config('points_rewards.post_approved', 20)),
+                        Forms\Components\TextInput::make('points_rule_post_liked_author')
+                            ->label('投稿被点赞（作者）奖励')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default((string) config('points_rewards.post_liked_author', 2)),
+                        Forms\Components\TextInput::make('points_rule_post_favorited_author')
+                            ->label('投稿被收藏（作者）奖励')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default((string) config('points_rewards.post_favorited_author', 3)),
+                        Forms\Components\TextInput::make('points_rule_post_commented_author')
+                            ->label('投稿被评论（作者）奖励')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default((string) config('points_rewards.post_commented_author', 2)),
+                        Forms\Components\TextInput::make('points_rule_boost_cost')
+                            ->label('单次加热消耗积分')
+                            ->numeric()
+                            ->minValue(1)
+                            ->default((string) config('boost.points_per_boost', 100)),
+                        Forms\Components\TextInput::make('points_rule_boost_window_hours')
+                            ->label('加热有效时长（小时）')
+                            ->numeric()
+                            ->minValue(1)
+                            ->default((string) config('boost.window_hours', 72)),
+                        Forms\Components\TextInput::make('points_rule_boost_random_notify_users')
+                            ->label('加热随机触达用户数')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default((string) config('boost.random_notify_users', 15)),
+                        Forms\Components\TextInput::make('points_rule_boost_daily_cap_per_post')
+                            ->label('单用户单帖每日加热上限')
+                            ->numeric()
+                            ->minValue(1)
+                            ->default((string) config('boost.max_boosts_per_actor_per_post_per_day', 3)),
                     ]),
                 Forms\Components\Section::make('邮件批处理与订阅摘要')
                     ->description('摘要类邮件由 Laravel 调度每分钟触发一次命令，仅在「当前时刻 = 用户所选时间」时发送。用户未选时间则使用下方默认 HH:mm。周精选仅在下方「每周发送星期」当天、且到达用户所选时刻时发送。时间窗仍限制命令是否在允许小时内执行。')

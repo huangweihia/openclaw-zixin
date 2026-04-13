@@ -67,6 +67,23 @@
                           '</span>';
                     const fc = Number(data.followers_count || 0);
                     const fg = Number(data.following_count || 0);
+                    const posts = Array.isArray(data.recent_posts) ? data.recent_posts : [];
+                    const postsHtml = posts.length
+                        ? (
+                            '<div class="mt-3 pt-3 border-t oc-divide w-full text-left">' +
+                            '<p class="text-xs font-semibold oc-muted m-0 mb-2">最近投稿</p>' +
+                            '<ul class="m-0 p-0 list-none space-y-2">' +
+                            posts.map(function (p) {
+                                return (
+                                    '<li>' +
+                                    '<a href="' + escHtml(p.url || '#') + '" class="oc-link font-medium text-sm" style="text-decoration:none;">' + escHtml(p.title || '未命名投稿') + '</a>' +
+                                    (p.summary ? '<p class="text-xs oc-muted m-0 mt-0.5 line-clamp-2">' + escHtml(p.summary) + '</p>' : '') +
+                                    '</li>'
+                                );
+                            }).join('') +
+                            '</ul></div>'
+                        )
+                        : '<p class="text-xs oc-muted m-0 mt-3 pt-3 border-t oc-divide w-full text-left">暂未公开投稿</p>';
                     body.innerHTML =
                         '<div class="flex flex-col items-center text-center">' +
                         av +
@@ -80,9 +97,8 @@
                         ' · 关注 ' +
                         fg +
                         '</p>' +
-                        '<p class="text-sm oc-heading m-0 mt-2 text-left w-full whitespace-pre-wrap">' +
-                        escHtml(data.bio || '暂无简介') +
-                        '</p></div>';
+                        postsHtml +
+                        '</div>';
                     const self = data.is_self || String(currentUserId()) === String(uid);
                     const logged = !!currentUserId();
                     const followWrap = document.getElementById('oc-user-mini-follow-wrap');

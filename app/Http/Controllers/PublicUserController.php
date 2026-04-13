@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class PublicUserController extends Controller
 {
@@ -25,17 +26,36 @@ class PublicUserController extends Controller
             ? $me->following()->whereKey($user->id)->exists()
             : false;
 
+        $recentPosts = collect();
+        if (Schema::hasTable('user_posts')) {
+            $recentPosts = $user->posts()
+                ->where('status', 'approved')
+                ->whereIn('visibility', ['public', 'vip'])
+                ->latest('id')
+                ->limit(3)
+                ->get(['id', 'title', 'content', 'updated_at'])
+                ->map(function ($post) {
+                    return [
+                        'id' => (int) $post->id,
+                        'title' => (string) ($post->title ?? ''),
+                        'summary' => Str::limit(trim(strip_tags((string) ($post->content ?? ''))), 90),
+                        'url' => route('posts.show', $post),
+                        'updated_at' => $post->updated_at?->format('Y-m-d'),
+                    ];
+                });
+        }
+
         return response()->json([
             'id' => $user->id,
             'name' => $user->name,
             'avatar' => $user->avatar,
-            'bio' => $user->bio,
             'role_label' => $roleLabel,
             'is_self' => $isSelf,
             'followers_count' => $hasFollows ? $user->followers()->count() : 0,
             'following_count' => $hasFollows ? $user->following()->count() : 0,
             'can_follow' => Auth::check() && ! $isSelf && $hasFollows,
             'is_following' => $isFollowing,
+            'recent_posts' => $recentPosts,
         ]);
     }
 }

@@ -7,8 +7,8 @@
         <div id="read-progress-bar" class="oc-read-bar"></div>
     </div>
 
-    <div class="lg:grid lg:grid-cols-12 lg:gap-10">
-        <article class="lg:col-span-8">
+    <div class="lg:grid lg:grid-cols-12 lg:gap-8">
+        <article class="lg:col-span-7">
             <header class="mb-6">
                 @if ($article->category)
                     <a href="{{ route('articles.index', ['category' => $article->category->slug]) }}"
@@ -124,10 +124,9 @@
             </section>
         </article>
 
-        <aside class="lg:col-span-4 mt-10 lg:mt-0 space-y-6">
-            @include('partials.ad-slot', ['code' => 'article-sidebar'])
+        <aside class="lg:col-span-5 mt-10 lg:mt-0">
             <div class="lg:sticky lg:top-24">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                     <div class="oc-surface p-5 min-w-0">
                         <h3 class="text-base font-bold mb-3 oc-heading m-0">相关文章</h3>
                         <ul class="space-y-2 m-0 p-0 list-none">

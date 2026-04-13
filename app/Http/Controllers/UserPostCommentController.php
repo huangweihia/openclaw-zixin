@@ -9,6 +9,7 @@ use App\Models\UserPost;
 use App\Services\CommentReplyNotifier;
 use App\Services\PointsService;
 use App\Services\UserPostHeatService;
+use App\Support\PointsRuleConfig;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,7 +62,7 @@ class UserPostCommentController extends Controller
             $author = $userPost->author;
             if ($author && (int) $author->id !== (int) $request->user()->id) {
                 UserPostHeatService::increment($userPost, (int) config('heat.root_comment', 12), 'comment');
-                $p = (int) config('points_rewards.post_commented_author', 0);
+                $p = PointsRuleConfig::postCommentedAuthor();
                 if ($p > 0) {
                     PointsService::earn(
                         $author,

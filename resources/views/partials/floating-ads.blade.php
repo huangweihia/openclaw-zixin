@@ -2,6 +2,9 @@
     $floatingAdPacks = $floatingAdPacks ?? [];
 @endphp
 @if (! empty($floatingAdPacks))
+    @php
+        $floatingAdPacks = [reset($floatingAdPacks)];
+    @endphp
     <div class="oc-floating-ads" aria-label="浮动推广（由「浮动」类广告位承载，非单条广告开关）">
         @foreach ($floatingAdPacks as $idx => $pack)
             @php

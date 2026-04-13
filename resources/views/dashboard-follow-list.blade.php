@@ -3,7 +3,7 @@
 @section('title', $title . ' — OpenClaw 智信')
 
 @section('content')
-    <div class="max-w-2xl mx-auto">
+    <div class="max-w-3xl mx-auto">
         <h1 class="text-2xl font-bold oc-heading mb-2">{{ $title }}</h1>
         <p class="text-sm oc-muted mb-6 m-0">点击头像可查看对方简介；在资料弹窗中可关注或取消关注。</p>
 
@@ -11,9 +11,9 @@
             @if ($users->isEmpty())
                 <p class="text-sm oc-muted m-0">{{ $emptyText }}</p>
             @else
-                <ul class="space-y-3 m-0 p-0 list-none">
+                <ul class="grid grid-cols-1 md:grid-cols-2 gap-4 m-0 p-0 list-none">
                     @foreach ($users as $row)
-                        <li class="flex items-center gap-3 border-b oc-divide pb-3 last:border-0 last:pb-0">
+                        <li class="oc-surface border oc-border rounded-xl p-4 flex items-center gap-3 hover:shadow-md transition">
                             <button
                                 type="button"
                                 class="shrink-0 p-0 border-0 bg-transparent cursor-pointer rounded-full"
@@ -37,10 +37,16 @@
                                 >
                                     {{ $row->name }}
                                 </button>
-                                @if (! empty($row->bio))
-                                    <p class="text-xs oc-muted m-0 mt-0.5 line-clamp-2">{{ $row->bio }}</p>
-                                @endif
+                                <p class="text-xs oc-muted m-0 mt-1">
+                                    粉丝 {{ number_format((int) ($row->followers_count ?? 0)) }}
+                                    · 关注 {{ number_format((int) ($row->following_count ?? 0)) }}
+                                </p>
                             </div>
+                            <button
+                                type="button"
+                                class="text-xs px-3 py-1.5 rounded-lg border oc-border oc-link bg-transparent"
+                                data-oc-user-card="{{ $row->id }}"
+                            >查看</button>
                         </li>
                     @endforeach
                 </ul>

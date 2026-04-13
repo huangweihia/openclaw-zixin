@@ -23,6 +23,22 @@
             <p class="text-xs oc-muted mt-3 m-0">单次加热约消耗 <strong class="oc-heading">{{ (int) $boostCost }}</strong> 积分（以系统配置为准）。</p>
         </div>
 
+        <div class="oc-surface p-6 mb-6">
+            <h2 class="text-lg font-bold oc-heading mb-4">积分规则说明</h2>
+            <ul class="m-0 p-0 list-none space-y-2 text-sm">
+                <li>每日首次登录奖励：<strong class="oc-heading">{{ (int) ($pointRules['daily_login'] ?? 0) }}</strong> 积分</li>
+                <li>投稿审核通过：<strong class="oc-heading">{{ (int) ($pointRules['post_approved'] ?? 0) }}</strong> 积分</li>
+                <li>投稿被点赞（作者）：<strong class="oc-heading">{{ (int) ($pointRules['post_liked_author'] ?? 0) }}</strong> 积分</li>
+                <li>投稿被收藏（作者）：<strong class="oc-heading">{{ (int) ($pointRules['post_favorited_author'] ?? 0) }}</strong> 积分</li>
+                <li>投稿被评论（作者）：<strong class="oc-heading">{{ (int) ($pointRules['post_commented_author'] ?? 0) }}</strong> 积分</li>
+                <li>单次加热消耗：<strong class="oc-heading">{{ (int) ($pointRules['boost_cost'] ?? 0) }}</strong> 积分（有效 {{ (int) ($pointRules['boost_window_hours'] ?? 0) }} 小时）</li>
+                <li>每次加热随机触达：<strong class="oc-heading">{{ (int) ($pointRules['boost_random_notify_users'] ?? 0) }}</strong> 位用户</li>
+            </ul>
+            <p class="text-xs oc-muted mt-4 m-0">
+                当前规则来自服务器配置文件与环境变量（`config/points_rewards.php`、`config/boost.php`、`.env`）。
+            </p>
+        </div>
+
         <div class="oc-surface p-6">
             <h2 class="text-lg font-bold oc-heading mb-4">积分套餐</h2>
             @if ($packages->isEmpty())

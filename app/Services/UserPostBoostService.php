@@ -6,6 +6,7 @@ use App\Models\ContentBoost;
 use App\Models\InboxNotification;
 use App\Models\User;
 use App\Models\UserPost;
+use App\Support\PointsRuleConfig;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -13,7 +14,7 @@ final class UserPostBoostService
 {
     public static function pointsCost(): int
     {
-        return max(1, (int) config('boost.points_per_boost', 100));
+        return PointsRuleConfig::boostCost();
     }
 
     public static function weightForSpend(int $pointsSpent): int
@@ -36,7 +37,7 @@ final class UserPostBoostService
         }
 
         $cost = self::pointsCost();
-        $cap = (int) config('boost.max_boosts_per_actor_per_post_per_day', 3);
+        $cap = PointsRuleConfig::boostDailyCapPerPost();
         $todayStart = now()->startOfDay();
         $todayCount = ContentBoost::query()
             ->where('actor_user_id', $actor->id)
@@ -48,7 +49,7 @@ final class UserPostBoostService
         }
 
         $weight = self::weightForSpend($cost);
-        $hours = max(1, (int) config('boost.window_hours', 72));
+        $hours = PointsRuleConfig::boostWindowHours();
         $starts = now();
         $ends = now()->addHours($hours);
 
@@ -123,7 +124,7 @@ final class UserPostBoostService
 
     private static function notifyRandomUsers(User $actor, UserPost $post): void
     {
-        $n = max(0, (int) config('boost.random_notify_users', 15));
+        $n = PointsRuleConfig::boostRandomNotifyUsers();
         if ($n === 0 || ! Schema::hasTable('users')) {
             return;
         }

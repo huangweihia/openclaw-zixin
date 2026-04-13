@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PointPackage;
+use App\Support\PointsRuleConfig;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
@@ -27,6 +28,16 @@ class DashboardPointsController extends Controller
         return view('dashboard-points', [
             'packages' => $packages,
             'boostCost' => \App\Services\UserPostBoostService::pointsCost(),
+            'pointRules' => [
+                'daily_login' => PointsRuleConfig::loginDaily(),
+                'post_approved' => PointsRuleConfig::postApproved(),
+                'post_liked_author' => PointsRuleConfig::postLikedAuthor(),
+                'post_favorited_author' => PointsRuleConfig::postFavoritedAuthor(),
+                'post_commented_author' => PointsRuleConfig::postCommentedAuthor(),
+                'boost_cost' => PointsRuleConfig::boostCost(),
+                'boost_window_hours' => PointsRuleConfig::boostWindowHours(),
+                'boost_random_notify_users' => PointsRuleConfig::boostRandomNotifyUsers(),
+            ],
         ]);
     }
 }

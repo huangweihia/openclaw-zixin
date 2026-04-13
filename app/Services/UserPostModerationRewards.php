@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\UserPost;
+use App\Support\PointsRuleConfig;
 
 /**
  * 投稿审核通过：积分 + 热度（Web / API 审核共用）。
@@ -14,7 +15,7 @@ final class UserPostModerationRewards
         $post->loadMissing('author');
         $author = $post->author;
         if ($author) {
-            $pts = (int) config('points_rewards.post_approved', 0);
+            $pts = PointsRuleConfig::postApproved();
             if ($pts > 0) {
                 PointsService::earn(
                     $author,

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Point;
 use App\Models\User;
+use App\Support\PointsRuleConfig;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -89,7 +90,7 @@ final class PointsService
      */
     public static function tryDailyLoginReward(User $user): void
     {
-        $amt = (int) config('points_rewards.login_daily', 0);
+        $amt = PointsRuleConfig::loginDaily();
         if ($amt <= 0 || ! Schema::hasTable('points')) {
             return;
         }
